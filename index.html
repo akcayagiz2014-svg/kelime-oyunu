@@ -1881,8 +1881,44 @@ fonksiyon MedalPopup({ tier, t, onClose }) {
   );
 }
 
+// Güvenlik önlemi: Uygulamanın herhangi bir yerinde, render işlemi sırasında herhangi bir hata oluşursa (örneğin bir
+// Verinin beklenmedik şekli), aksi takdirde React her şeyi kaldırır ve
+// Sayfanın düz koyu arka planını ("siyah ekran") görünür bırakın.
+// Bu hatayı yakalar ve bunun yerine yeniden yükleme düğmesi bulunan kurtarılabilir bir ekran gösterir.
+class ErrorBoundary extends React.Component {
+  yapıcı(özellikler) {
+    süper(özellikler);
+    bu.durum = { hata var: false };
+  }
+  statik getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error, info) {
+    console.error("Uygulama hatası:", hata, bilgi);
+  }
+  render() {
+    if (this.state.hasError) {
+      geri dönmek (
+        <div style={{
+          minHeight: "100vh", width: "100%", display: "flex", flexDirection: "column",
+          Öğeleri hizala: "ortala", İçeriği hizala: "ortala", boşluk: 16, dolgu: 24, Metin hizala: "ortala",
+          arka plan: "radyal-eğim (ellips %25 %15, #2d1755 %0, #1c0f38 %45, #0f0a1e %100)",
+          renk: "#fff", yazı tipi ailesi: "Inter, sans-serif",
+        }}>
+          <p style={{ fontSize: 18, fontWeight: 700 }}>Bir şeyler ters gitti</p>
+          <p style={{ opacity: 0.6, fontSize: 13, maxWidth: 280 }}>Ekran kilitlenmiş olabilir. Devam etmek için yazılımı yeniden yükleyin.</p>
+          <button onClick={() => window.location.reload()} style={{ padding: "12px 28px", borderRadius: 999, background: "#f2b705", color: "#1b1030", fontWeight: 700, border: "none" }}>
+            Yeniden Yükle
+          </button>
+        </div>
+      );
+    }
+    this.props.children'ı döndür;
+  }
+}
+
 const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(<App />);
+root.render(<ErrorBoundary><App /></ErrorBoundary>);
 </script>
 </body>
 </html>
