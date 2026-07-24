@@ -1,0 +1,1679 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kelime Türetmece</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Firebase (compat build so it works as plain <script> tags, no bundler needed) -->
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBcV5ATZ6-aPWegXF6z5zp5TkA0iw4x9hA",
+    authDomain: "kelime-oyunu-6d187.firebaseapp.com",
+    databaseURL: "https://kelime-oyunu-6d187-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "kelime-oyunu-6d187",
+    storageBucket: "kelime-oyunu-6d187.firebasestorage.app",
+    messagingSenderId: "675592794581",
+    appId: "1:675592794581:web:12535460b156552897cd5c",
+  };
+  firebase.initializeApp(firebaseConfig);
+  window.__fbdb = firebase.database();
+</script>
+<style>
+  html, body { margin:0; padding:0; background:#0f0a1e; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ---------- lightweight icon components (drop-in replacements for lucide-react so this runs with zero build step) ----------
+function makeIcon(glyph) {
+  return function IconCmp({ size = 16, color, className = "", style = {} }) {
+    return <span className={className} style={{ fontSize: size, lineHeight: 1, display: "inline-block", color, ...style }}>{glyph}</span>;
+  };
+}
+const Globe = makeIcon("🌐");
+const Users = makeIcon("👥");
+const Plus = makeIcon("➕");
+const Bell = makeIcon("🔔");
+const Trophy = makeIcon("🏆");
+const Send = makeIcon("➤");
+const X = makeIcon("✕");
+const LogOut = makeIcon("⏻");
+const Shield = makeIcon("🛡️");
+const ArrowLeft = makeIcon("←");
+const Play = makeIcon("▶");
+const Swords = makeIcon("⚔️");
+const Crown = makeIcon("👑");
+const Medal = makeIcon("🥉");
+const Gem = makeIcon("💎");
+const Star = makeIcon("⭐");
+const Check = makeIcon("✓");
+const Clock = makeIcon("⏱");
+
+/* ---------------------------------------------------------
+   KELİME TÜRETMECE
+   Storage note: uses window.storage as a stand-in "shared
+   backend" (users / groups / games all shared=true) so this
+   works today. Swap the load and save helpers below for real
+   Firestore calls later — the rest of the app doesn't need
+   to change.
+--------------------------------------------------------- */
+
+const ADMIN_NAME = "Yağız";
+const ADMIN_PASS = "030714yagiz";
+const WORD_TIME_SECONDS = 10;
+const ROUND_WORD_LIMIT = 25;
+const POINTS_PER_WORD = 10;
+const STREAK_BONUS = 20; // tur limitine kadar hiç kaçırmadan gidenin alacağı ekstra puan
+
+const ALPHABETS = {
+  tr: ["A","B","C","Ç","D","E","F","G","H","I","İ","J","K","L","M","N","O","Ö","P","R","S","Ş","T","U","Ü","V","Y","Z"],
+  en: ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"],
+  de: ["A","Ä","B","C","D","E","F","G","H","I","J","K","L","M","N","O","Ö","P","Q","R","S","T","U","Ü","V","W","X","Y","Z"],
+};
+
+const T = {
+  tr: {
+    appName: "Kelime Türetmece", login: "Giriş Yap", register: "Kaydol", username: "Kullanıcı adı", password: "Şifre",
+    noAccount: "Hesabın yok mu? Kaydol", haveAccount: "Zaten hesabın var mı? Giriş yap", wrongLogin: "Kullanıcı adı veya şifre hatalı",
+    userExists: "Bu kullanıcı adı zaten alınmış", fillFields: "Lütfen tüm alanları doldur",
+    mainMenu: "Ana Menü", createGroup: "Grup Oluştur", myGroups: "Gruplarım", soloPlay: "Tek Başına Oyna",
+    leaderboard: "Puan Sıralaması", notifications: "Bildirimler", admin: "Admin Paneli", logout: "Çıkış Yap",
+    groupName: "Grup adı", create: "Oluştur", cancel: "Vazgeç", noGroups: "Henüz bir grubun yok",
+    joinRequests: "Katılma İstekleri", members: "üye", writeMessage: "Bir mesaj yaz...", sendRequest: "İstek At",
+    gameInviteText: "Oyun daveti gönderdi. Katılmak için dokun!", joinLobby: "Lobiye Katıl",
+    lobby: "Lobi", waitingPlayers: "Oyuncular bekleniyor", leaveLobby: "Lobiden Çık", startGame: "Oyunu Başlat",
+    playersInLobby: "Lobideki Oyuncular", spinWheel: "Çarkı Çevir", yourTurn: "Sıra sende!",
+    writeWordStartingWith: "ile başlayan bir kelime yaz", timeLeft: "Süre", roundResults: "Tur Sonuçları",
+    back: "Geri", points: "puan", noWord: "Kelime yazılmadı", nextRound: "Sıradaki Turu Başlat",
+    worldLeaderboard: "Dünya Geneli Sıralama", groupLeaderboard: "Grup Sıralaması", rank: "Sıra",
+    score: "Puan", medals: "Madalyalar", noNotifications: "Bildirim yok", invitedYouToGroup: "seni gruba davet etti",
+    accept: "Kabul Et", decline: "Reddet", adminPanelDesc: "Kullanıcı puanlarını düzenle", increase: "Artır", decrease: "Azalt",
+    congrats: "Tebrikler!", earnedMedal: "madalyası kazandınız!", close: "Kapat", invalidWord: "Bu kelime geçerli değil, 0 puan",
+    soloAllCorrectMsg: "Tebrikler, hepsini doğru yaptığınız için +20 puan aldınız!",
+    groupAllCorrectMsg: "Tebrikler, hepsini doğru yaptığınız için extra 20 puan bölüştürülecektir!",
+    validWord: "Geçerli kelime!", checking: "Kontrol ediliyor...", groupLimitReached: "En fazla 50 gruba katılabilirsin",
+    dailyGroupLimit: "Günde en fazla 3 grup kurabilirsin", closesInGame: "Oyun bitince kapanacak", groupGone: "Bu grup artık mevcut değil.",
+    closesIn: "kapanıyor", worldRank: "sırada", nextMedal: "Sıradaki madalya",
+    lobbyFull: "Lobi dolu (15 kişi)", inviteMember: "Üye Davet Et", invite: "Davet Et", groupChat: "Grup Sohbeti",
+    submit: "Gönder", solo: "Tek Oyunculu", roundOf: "Kelime", of: "/", backToWheel: "Çarka Dön",
+    groupCallBtn: "Grup Çağırma", searchUser: "İsim ara...", noUserFound: "Kullanıcı bulunamadı",
+    alreadyMember: "Zaten üye", invited: "Davet edildi ✓", kickMember: "Gruptan At", kickConfirm: "gruptan atılsın mı?",
+    groupMembersTitle: "Grup Üyeleri", ownerTag: "Kurucu", watchMatch: "Maçını İzle", inMatch: "Maçta",
+    spectating: "İzleniyor", spectateBack: "Admin Paneline Dön", notInMatch: "Şu an bir maçta değil",
+    leaveGroup: "Gruptan Çık", deleteGroup: "Grubu Sil", leaveGroupConfirm: "Bu gruptan çıkmak istediğine emin misin?",
+    deleteGroupConfirm: "Bu grup tamamen silinsin mi? Bu işlem geri alınamaz.", you: "Sen",
+  },
+  en: {
+    appName: "Word Derivation", login: "Log In", register: "Sign Up", username: "Username", password: "Password",
+    noAccount: "No account? Sign up", haveAccount: "Already have an account? Log in", wrongLogin: "Wrong username or password",
+    userExists: "Username already taken", fillFields: "Please fill in all fields",
+    mainMenu: "Main Menu", createGroup: "Create Group", myGroups: "My Groups", soloPlay: "Play Solo",
+    leaderboard: "Leaderboard", notifications: "Notifications", admin: "Admin Panel", logout: "Log Out",
+    groupName: "Group name", create: "Create", cancel: "Cancel", noGroups: "You have no groups yet",
+    joinRequests: "Join Requests", members: "members", writeMessage: "Write a message...", sendRequest: "Send Invite",
+    gameInviteText: "sent a game invite. Tap to join!", joinLobby: "Join Lobby",
+    lobby: "Lobby", waitingPlayers: "Waiting for players", leaveLobby: "Leave Lobby", startGame: "Start Game",
+    playersInLobby: "Players in Lobby", spinWheel: "Spin the Wheel", yourTurn: "Your turn!",
+    writeWordStartingWith: "write a word starting with", timeLeft: "Time", roundResults: "Round Results",
+    back: "Back", points: "pts", noWord: "No word submitted", nextRound: "Start Next Round",
+    worldLeaderboard: "World Leaderboard", groupLeaderboard: "Group Leaderboard", rank: "Rank",
+    score: "Score", medals: "Medals", noNotifications: "No notifications", invitedYouToGroup: "invited you to a group",
+    accept: "Accept", decline: "Decline", adminPanelDesc: "Adjust user scores", increase: "Increase", decrease: "Decrease",
+    congrats: "Congratulations!", earnedMedal: "medal earned!", close: "Close", invalidWord: "Not a valid word, 0 points",
+    soloAllCorrectMsg: "Congratulations, you earned +20 points for getting them all right!",
+    groupAllCorrectMsg: "Congratulations, an extra 20 points will be shared among the group for getting them all right!",
+    validWord: "Valid word!", checking: "Checking...", groupLimitReached: "You can join at most 50 groups",
+    dailyGroupLimit: "You can create at most 3 groups per day", closesInGame: "Will close when the game ends", groupGone: "This group no longer exists.",
+    closesIn: "closes in", worldRank: "rank", nextMedal: "Next medal",
+    lobbyFull: "Lobby full (15 players)", inviteMember: "Invite Member", invite: "Invite", groupChat: "Group Chat",
+    submit: "Submit", solo: "Solo", roundOf: "Word", of: "/", backToWheel: "Back to Wheel",
+    groupCallBtn: "Invite to Group", searchUser: "Search name...", noUserFound: "No user found",
+    alreadyMember: "Already a member", invited: "Invited ✓", kickMember: "Remove from group", kickConfirm: "be removed from the group?",
+    groupMembersTitle: "Group Members", ownerTag: "Owner", watchMatch: "Watch Match", inMatch: "In match",
+    spectating: "Spectating", spectateBack: "Back to Admin Panel", notInMatch: "Not currently in a match",
+    leaveGroup: "Leave Group", deleteGroup: "Delete Group", leaveGroupConfirm: "Are you sure you want to leave this group?",
+    deleteGroupConfirm: "Delete this group permanently? This cannot be undone.", you: "You",
+  },
+  de: {
+    appName: "Wortkette", login: "Anmelden", register: "Registrieren", username: "Benutzername", password: "Passwort",
+    noAccount: "Kein Konto? Registrieren", haveAccount: "Schon ein Konto? Anmelden", wrongLogin: "Falscher Benutzername oder Passwort",
+    userExists: "Benutzername bereits vergeben", fillFields: "Bitte alle Felder ausfüllen",
+    mainMenu: "Hauptmenü", createGroup: "Gruppe erstellen", myGroups: "Meine Gruppen", soloPlay: "Alleine spielen",
+    leaderboard: "Rangliste", notifications: "Benachrichtigungen", admin: "Admin-Bereich", logout: "Abmelden",
+    groupName: "Gruppenname", create: "Erstellen", cancel: "Abbrechen", noGroups: "Noch keine Gruppen",
+    joinRequests: "Beitrittsanfragen", members: "Mitglieder", writeMessage: "Nachricht schreiben...", sendRequest: "Einladung senden",
+    gameInviteText: "hat eine Spieleinladung gesendet. Zum Beitreten tippen!", joinLobby: "Lobby beitreten",
+    lobby: "Lobby", waitingPlayers: "Warten auf Spieler", leaveLobby: "Lobby verlassen", startGame: "Spiel starten",
+    playersInLobby: "Spieler in der Lobby", spinWheel: "Rad drehen", yourTurn: "Du bist dran!",
+    writeWordStartingWith: "schreibe ein Wort beginnend mit", timeLeft: "Zeit", roundResults: "Rundenergebnis",
+    back: "Zurück", points: "Pkt", noWord: "Kein Wort eingegeben", nextRound: "Nächste Runde starten",
+    worldLeaderboard: "Weltweite Rangliste", groupLeaderboard: "Gruppenrangliste", rank: "Rang",
+    score: "Punkte", medals: "Medaillen", noNotifications: "Keine Benachrichtigungen", invitedYouToGroup: "hat dich zu einer Gruppe eingeladen",
+    accept: "Annehmen", decline: "Ablehnen", adminPanelDesc: "Punkte der Nutzer anpassen", increase: "Erhöhen", decrease: "Verringern",
+    congrats: "Glückwunsch!", earnedMedal: "Medaille erhalten!", close: "Schließen", invalidWord: "Ungültiges Wort, 0 Punkte",
+    soloAllCorrectMsg: "Glückwunsch, du hast +20 Punkte für alles richtig erhalten!",
+    groupAllCorrectMsg: "Glückwunsch, zusätzliche 20 Punkte werden in der Gruppe aufgeteilt!",
+    validWord: "Gültiges Wort!", checking: "Wird geprüft...", groupLimitReached: "Maximal 50 Gruppen möglich",
+    dailyGroupLimit: "Du kannst höchstens 3 Gruppen pro Tag erstellen", closesInGame: "Schließt, wenn das Spiel endet", groupGone: "Diese Gruppe existiert nicht mehr.",
+    closesIn: "schließt in", worldRank: "Rang", nextMedal: "Nächste Medaille",
+    lobbyFull: "Lobby voll (15 Spieler)", inviteMember: "Mitglied einladen", invite: "Einladen", groupChat: "Gruppenchat",
+    submit: "Senden", solo: "Solo", roundOf: "Wort", of: "/", backToWheel: "Zurück zum Rad",
+    groupCallBtn: "Zur Gruppe einladen", searchUser: "Name suchen...", noUserFound: "Kein Benutzer gefunden",
+    alreadyMember: "Bereits Mitglied", invited: "Eingeladen ✓", kickMember: "Aus der Gruppe entfernen", kickConfirm: "aus der Gruppe entfernen?",
+    groupMembersTitle: "Gruppenmitglieder", ownerTag: "Gründer", watchMatch: "Spiel ansehen", inMatch: "Im Spiel",
+    spectating: "Zuschauen", spectateBack: "Zurück zum Admin-Bereich", notInMatch: "Derzeit in keinem Spiel",
+    leaveGroup: "Gruppe verlassen", deleteGroup: "Gruppe löschen", leaveGroupConfirm: "Möchtest du diese Gruppe wirklich verlassen?",
+    deleteGroupConfirm: "Diese Gruppe endgültig löschen? Dies kann nicht rückgängig gemacht werden.", you: "Du",
+  },
+};
+
+const MedalBronze = makeIcon("🥉");
+const MedalSilver = makeIcon("🥈");
+const MedalGold = makeIcon("🥇");
+const MedalStart = makeIcon("🔰");
+const MedalUltra = makeIcon("🎖️");
+const MEDAL_TIERS = [
+  { key: "start", threshold: 5000, label: { tr: "Başlangıç", en: "Starter", de: "Start" }, color: "#8fb3ff", icon: MedalStart },
+  { key: "bronze", threshold: 10000, label: { tr: "Bronz", en: "Bronze", de: "Bronze" }, color: "#c17a4a", icon: MedalBronze },
+  { key: "silver", threshold: 20000, label: { tr: "Gümüş", en: "Silver", de: "Silber" }, color: "#b9c2cc", icon: MedalSilver },
+  { key: "gold", threshold: 35000, label: { tr: "Altın", en: "Gold", de: "Gold" }, color: "#f2b705", icon: MedalGold },
+  { key: "diamond", threshold: 60000, label: { tr: "Elmas", en: "Diamond", de: "Diamant" }, color: "#5fd1e0", icon: Gem },
+  { key: "strongest", threshold: 150000, label: { tr: "En İyi Oyuncu", en: "Best Player", de: "Bester Spieler" }, color: "#ff5d8f", icon: Crown },
+  { key: "ultra", threshold: 1000000, label: { tr: "Ultra Süper Oyuncu", en: "Ultra Super Player", de: "Ultra-Superspieler" }, color: "#ff2e63", icon: MedalUltra },
+];
+
+function medalsForScore(score) {
+  return MEDAL_TIERS.filter(m => score >= m.threshold).map(m => m.key);
+}
+
+// ---------- storage helpers (Firebase Realtime Database-backed shared state) ----------
+async function loadShared(key, fallback) {
+  try {
+    const snap = await window.__fbdb.ref(key).get();
+    const val = snap.exists() ? snap.val() : null;
+    return (val !== null && val !== undefined) ? val : fallback;
+  } catch (e) {
+    console.error("loadShared(" + key + ") failed", e);
+    return fallback;
+  }
+}
+async function saveShared(key, value) {
+  try {
+    await window.__fbdb.ref(key).set(value);
+  } catch (e) {
+    console.error("saveShared(" + key + ") failed", e);
+  }
+}
+// live subscription helper (used to push instant updates instead of waiting for the poll interval)
+function subscribeShared(key, cb) {
+  const ref = window.__fbdb.ref(key);
+  const handler = (snap) => cb(snap.exists() ? snap.val() : {});
+  ref.on("value", handler);
+  return () => ref.off("value", handler);
+}
+
+// ---------- word check: real dictionary lookup via Wiktionary's public,
+// key-free, CORS-enabled API (no backend needed).
+// Always queries English Wiktionary (by far the most complete edition) and
+// checks that the page actually has a section for the SELECTED language —
+// otherwise e.g. a Turkish word would wrongly pass while playing in English,
+// since Wiktionary pages list translations across many languages. ----------
+const WIKT_LANG_HEADER = { en: "English", tr: "Turkish", de: "German" };
+
+async function checkWordValid(word, lang, mustStartWith) {
+  const w = word.trim();
+  if (w.length < 2) return false;
+  const locale = lang === "tr" ? "tr-TR" : undefined;
+  const wFirst = w[0].toLocaleUpperCase(locale);
+  const reqUpper = mustStartWith.toLocaleUpperCase(locale);
+  if (wFirst !== reqUpper) return false; // wrong starting letter — no need to hit the network
+
+  const headerName = WIKT_LANG_HEADER[lang] || "English";
+  const headerRegex = new RegExp(`^==\\s*${headerName}\\s*==`, "m");
+  const candidates = [w.toLocaleLowerCase(locale), w]; // most entries are lowercase; also try as-typed
+
+  for (const candidate of candidates) {
+    try {
+      const url = `https://en.wiktionary.org/w/api.php?action=query&prop=revisions&titles=${encodeURIComponent(candidate)}&rvprop=content&rvslots=main&formatversion=2&format=json&origin=*`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const pages = (data && data.query && data.query.pages) || [];
+      for (const page of pages) {
+        if (page.missing) continue;
+        const rev = page.revisions && page.revisions[0];
+        const content = rev ? (rev.content || (rev.slots && rev.slots.main && rev.slots.main.content) || "") : "";
+        if (content && headerRegex.test(content)) return true; // confirmed: this page has a section specifically for the selected language
+      }
+    } catch (e) {
+      console.error("dictionary lookup failed", e);
+      // network hiccup: don't hard-fail on this candidate, try the next one / fall through
+    }
+  }
+  return false;
+}
+
+function lastLetter(word, lang) {
+  const w = word.trim();
+  if (!w) return "";
+  // handle Turkish dotted/dotless i correctly by just taking the last unicode char
+  return w[w.length - 1].toLocaleUpperCase(lang === "tr" ? "tr-TR" : undefined);
+}
+function firstLetter(word, lang) {
+  const w = word.trim();
+  if (!w) return "";
+  return w[0].toLocaleUpperCase(lang === "tr" ? "tr-TR" : undefined);
+}
+
+function uid() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
+
+function formatRemaining(ms) {
+  if (ms <= 0) return "0:00";
+  const totalSec = Math.floor(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function WordFeedbackBadge({ feedback, t }) {
+  if (!feedback) return null;
+  const ok = feedback.ok;
+  return (
+    <div key={feedback.key} className="flex items-center justify-center">
+      <div className="flex items-center gap-2 px-5 py-2.5 rounded-2xl font-bold text-sm"
+        style={{
+          background: ok ? "rgba(51,214,176,0.16)" : "rgba(255,111,97,0.16)",
+          border: `2px solid ${ok ? "#33d6b0" : "#ff6f61"}`,
+          color: ok ? "#33d6b0" : "#ff6f61",
+          animation: "wordPop 480ms cubic-bezier(.34,1.56,.64,1)",
+          boxShadow: ok ? "0 6px 22px rgba(51,214,176,0.35)" : "0 6px 22px rgba(255,111,97,0.3)",
+        }}>
+        {ok ? <Check size={16} /> : <X size={16} />}
+        <span>{ok ? t.validWord : t.invalidWord}</span>
+        <span style={{
+          padding: "2px 8px", borderRadius: 999, fontSize: 11, fontWeight: 800,
+          background: ok ? "rgba(51,214,176,0.28)" : "rgba(255,111,97,0.22)",
+          color: ok ? "#33d6b0" : "#ff6f61",
+        }}>{ok ? `+${POINTS_PER_WORD}` : "0"} {t.points}</span>
+        {feedback.word && <span style={{ opacity: 0.75, fontWeight: 500 }}>"{feedback.word}"</span>}
+      </div>
+      <style>{`
+        @keyframes wordPop {
+          0% { transform: scale(0.3); opacity: 0; }
+          55% { transform: scale(1.15); opacity: 1; }
+          75% { transform: scale(0.96); }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes inputShake {
+          0%, 100% { transform: translateX(0); }
+          20% { transform: translateX(-8px); }
+          40% { transform: translateX(7px); }
+          60% { transform: translateX(-5px); }
+          80% { transform: translateX(4px); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+function FullScreenFlash({ ok, onDone }) {
+  useEffect(() => {
+    const duration = ok ? 1500 : 1000;
+    const timer = setTimeout(() => { onDone && onDone(); }, duration);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line
+  }, []);
+  const color = ok ? "#33d6b0" : "#ff6f61";
+  const animName = ok ? "flashGrowCorrect" : "flashGrowWrong";
+  const animDur = ok ? "1.5s" : "1s";
+  return (
+    <div className="fixed inset-0 z-[9999] pointer-events-none" style={{ animation: `${animName} ${animDur} ease-in-out both` }}>
+      <div style={{ position: "absolute", inset: 0, background: color }} />
+      <style>{`
+        @keyframes flashGrowCorrect {
+          0% { clip-path: circle(0% at 50% 50%); opacity: 0; }
+          18% { opacity: 1; }
+          50% { clip-path: circle(150% at 50% 50%); opacity: 1; }
+          78% { clip-path: circle(150% at 50% 50%); opacity: 1; }
+          100% { clip-path: circle(0% at 50% 50%); opacity: 0; }
+        }
+        @keyframes flashGrowWrong {
+          0% { clip-path: circle(0% at 50% 50%); opacity: 0; }
+          22% { opacity: 1; }
+          45% { clip-path: circle(150% at 50% 50%); opacity: 1; }
+          62% { clip-path: circle(150% at 50% 50%); opacity: 1; }
+          100% { clip-path: circle(0% at 50% 50%); opacity: 0; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+function GoneScreen({ bg, message, backLabel, onBack }) {
+  return (
+    <div className="min-h-screen w-full flex flex-col items-center justify-center gap-4 p-6" style={{ fontFamily: "Inter, sans-serif" }}>
+      {bg}
+      <p className="text-white/60 text-center">{message}</p>
+      <button onClick={onBack} className="px-6 py-3 rounded-full font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>{backLabel}</button>
+    </div>
+  );
+}
+
+// =========================================================
+// WHEEL COMPONENT
+// =========================================================
+function Wheel({ lang, spinning, resultLetter, onSpinEnd, size = 260, excludeFirst }) {
+  const letters = ALPHABETS[lang].filter(l => (excludeFirst ? l !== excludeFirst : true));
+  const [rotation, setRotation] = useState(0);
+  const sliceAngle = 360 / letters.length;
+  const prevSpinning = useRef(false);
+
+  useEffect(() => {
+    if (spinning && !prevSpinning.current && resultLetter) {
+      const idx = letters.indexOf(resultLetter);
+      const targetIdx = idx >= 0 ? idx : 0;
+      // angle to bring slice center to top pointer (0deg)
+      const sliceCenter = targetIdx * sliceAngle + sliceAngle / 2;
+      const target = (360 - sliceCenter + 360) % 360;
+      setRotation(r => {
+        const currentMod = ((r % 360) + 360) % 360;
+        const delta = ((target - currentMod) + 360) % 360;
+        return r + 360 * 6 + delta;
+      });
+    }
+    prevSpinning.current = spinning;
+  }, [spinning, resultLetter]); // eslint-disable-line
+
+  return (
+    <div className="relative select-none" style={{ width: size, height: size }}>
+      <div
+        className="absolute left-1/2 -top-3 z-20"
+        style={{ transform: "translateX(-50%)", width: 0, height: 0, borderLeft: "12px solid transparent", borderRight: "12px solid transparent", borderTop: "20px solid #f2b705", filter: "drop-shadow(0 2px 3px rgba(0,0,0,.5))" }}
+      />
+      <div
+        className="absolute inset-0 rounded-full"
+        style={{
+          transform: `rotate(${rotation}deg)`,
+          transition: spinning ? "transform 3.2s cubic-bezier(.17,.67,.14,1)" : "none",
+          boxShadow: "0 0 0 6px #3a2265, 0 0 0 10px #f2b70555, 0 20px 50px rgba(0,0,0,.55)",
+        }}
+        onTransitionEnd={() => { if (spinning) onSpinEnd && onSpinEnd(); }}
+      >
+        <svg viewBox="0 0 200 200" width="100%" height="100%">
+          <circle cx="100" cy="100" r="99" fill="#241542" />
+          {letters.map((l, i) => {
+            const a0 = (i * sliceAngle - 90) * (Math.PI / 180);
+            const a1 = ((i + 1) * sliceAngle - 90) * (Math.PI / 180);
+            const x0 = 100 + 99 * Math.cos(a0), y0 = 100 + 99 * Math.sin(a0);
+            const x1 = 100 + 99 * Math.cos(a1), y1 = 100 + 99 * Math.sin(a1);
+            const large = sliceAngle > 180 ? 1 : 0;
+            const mid = (a0 + a1) / 2;
+            const lx = 100 + 68 * Math.cos(mid), ly = 100 + 68 * Math.sin(mid);
+            const fill = i % 2 === 0 ? "#2c1750" : "#33204f";
+            return (
+              <g key={l}>
+                <path d={`M100,100 L${x0},${y0} A99,99 0 ${large} 1 ${x1},${y1} Z`} fill={fill} stroke="#4a2f7a" strokeWidth="1" />
+                <text x={lx} y={ly} fill="#f5f0ff" fontSize="11" fontWeight="700" textAnchor="middle" dominantBaseline="middle"
+                  transform={`rotate(${(mid * 180 / Math.PI) + 90}, ${lx}, ${ly})`}>{l}</text>
+              </g>
+            );
+          })}
+          <circle cx="100" cy="100" r="16" fill="#f2b705" stroke="#3a2265" strokeWidth="3" />
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+// =========================================================
+// APP
+// =========================================================
+function App() {
+  const [lang, setLang] = useState("tr");
+  const t = T[lang];
+  const [screen, setScreen] = useState("auth"); // auth, menu, groups, chat, lobby, game, solo, leaderboard, notifications, admin
+  const [authMode, setAuthMode] = useState("login");
+  const [authForm, setAuthForm] = useState({ username: "", password: "" });
+  const [authError, setAuthError] = useState("");
+  const [me, setMe] = useState(null); // {username, isAdmin, score, medals}
+  const [users, setUsers] = useState({});
+  const [groups, setGroups] = useState({});
+  const [activeGroupId, setActiveGroupId] = useState(null);
+  const [activeGameId, setActiveGameId] = useState(null);
+  const [games, setGames] = useState({});
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [showGroupInvite, setShowGroupInvite] = useState(false);
+  const [groupInviteSearch, setGroupInviteSearch] = useState("");
+  const [showMedalInfo, setShowMedalInfo] = useState(false);
+  const [adminSpectateGameId, setAdminSpectateGameId] = useState(null);
+  const [medalPopup, setMedalPopup] = useState(null);
+  const [tick, setTick] = useState(Date.now());
+  useEffect(() => {
+    const iv = setInterval(() => setTick(Date.now()), 1000);
+    return () => clearInterval(iv);
+  }, []);
+
+  // ---- expired-group cleanup: groups auto-delete 1h after creation, unless
+  // a round is actively being played in them, in which case deletion waits
+  // until that round reaches "results" ----
+  function cleanExpiredGroups(groupsObj, gamesObj) {
+    const now = Date.now();
+    let groupsChanged = false;
+    const nextGroups = { ...groupsObj };
+    for (const [id, g] of Object.entries(groupsObj)) {
+      if (!g.expiresAt) continue; // legacy groups created before this feature: never auto-expire
+      const activeGame = Object.values(gamesObj).find(gm2 => gm2.groupId === id && (gm2.status === "playing" || gm2.status === "spinning"));
+      if (now >= g.expiresAt) {
+        if (activeGame) {
+          if (!g.pendingDelete) { nextGroups[id] = { ...g, pendingDelete: true }; groupsChanged = true; }
+        } else {
+          delete nextGroups[id];
+          groupsChanged = true;
+        }
+      }
+    }
+    let gamesChanged = false;
+    const nextGames = { ...gamesObj };
+    for (const [gid, game] of Object.entries(gamesObj)) {
+      if (!nextGroups[game.groupId]) { delete nextGames[gid]; gamesChanged = true; }
+    }
+    return { groups: nextGroups, games: nextGames, groupsChanged, gamesChanged };
+  }
+
+  // ---- initial load (also reusable as a one-off refresh, e.g. right after auth) ----
+  const refreshAll = useCallback(async () => {
+    const [u, g0, gm0] = await Promise.all([
+      loadShared("users", {}),
+      loadShared("groups", {}),
+      loadShared("games", {}),
+    ]);
+    const { groups: g, games: gm, groupsChanged, gamesChanged } = cleanExpiredGroups(g0, gm0);
+    if (groupsChanged) await saveShared("groups", g);
+    if (gamesChanged) await saveShared("games", gm);
+    setUsers(u); setGroups(g); setGames(gm);
+    return { u, g, gm };
+  }, []);
+
+  useEffect(() => { refreshAll(); }, [refreshAll]);
+
+  // ---- live sync: Firebase Realtime Database pushes changes to every
+  // connected client instantly, so no more polling on an interval ----
+  useEffect(() => {
+    const unsubUsers = subscribeShared("users", setUsers);
+    const unsubGroups = subscribeShared("groups", setGroups);
+    const unsubGames = subscribeShared("games", setGames);
+    return () => { unsubUsers(); unsubGroups(); unsubGames(); };
+  }, []);
+
+  // ---- expiry sweep: group expiry is time-based (not triggered by any data
+  // change), so it still needs its own lightweight periodic check ----
+  const groupsRef = useRef(groups);
+  const gamesRef = useRef(games);
+  useEffect(() => { groupsRef.current = groups; }, [groups]);
+  useEffect(() => { gamesRef.current = games; }, [games]);
+  useEffect(() => {
+    const iv = setInterval(async () => {
+      const { groups: g, games: gm, groupsChanged, gamesChanged } = cleanExpiredGroups(groupsRef.current, gamesRef.current);
+      if (groupsChanged) await saveShared("groups", g);
+      if (gamesChanged) await saveShared("games", gm);
+    }, 5000);
+    return () => clearInterval(iv);
+  }, []);
+
+  // keep `me` synced with latest users store (for score updates elsewhere)
+  useEffect(() => {
+    if (me && users[me.username]) {
+      const fresh = users[me.username];
+      const newMedals = medalsForScore(fresh.score);
+      if (newMedals.length > (me.medals || []).length) {
+        const justEarned = newMedals[newMedals.length - 1];
+        const tier = MEDAL_TIERS.find(m => m.key === justEarned);
+        setMedalPopup(tier);
+      }
+      setMe({ username: me.username, isAdmin: fresh.isAdmin, score: fresh.score, medals: newMedals });
+    }
+  }, [users]); // eslint-disable-line
+
+  // ---------------- AUTH ----------------
+  async function handleAuth() {
+    setAuthError("");
+    const uname = authForm.username.trim();
+    const pass = authForm.password;
+    if (!uname || !pass) { setAuthError(t.fillFields); return; }
+    const { u } = await refreshAll();
+    if (authMode === "login") {
+      const isAdminLogin = uname === ADMIN_NAME && pass === ADMIN_PASS;
+      const rec = u[uname];
+      if (isAdminLogin) {
+        const adminRec = rec || { password: ADMIN_PASS, score: 0, isAdmin: true };
+        adminRec.isAdmin = true;
+        const nu = { ...u, [uname]: adminRec };
+        await saveShared("users", nu); setUsers(nu);
+        setMe({ username: uname, isAdmin: true, score: adminRec.score, medals: medalsForScore(adminRec.score) });
+        setScreen("menu"); return;
+      }
+      if (!rec || rec.password !== pass) { setAuthError(t.wrongLogin); return; }
+      setMe({ username: uname, isAdmin: !!rec.isAdmin, score: rec.score || 0, medals: medalsForScore(rec.score || 0) });
+      setScreen("menu");
+    } else {
+      if (u[uname] || uname === ADMIN_NAME) { setAuthError(t.userExists); return; }
+      const rec = { password: pass, score: 0, isAdmin: false };
+      const nu = { ...u, [uname]: rec };
+      await saveShared("users", nu); setUsers(nu);
+      setMe({ username: uname, isAdmin: false, score: 0, medals: [] });
+      setScreen("menu");
+    }
+  }
+
+  function logout() { setMe(null); setScreen("auth"); setAuthForm({ username: "", password: "" }); }
+
+  async function adjustScore(username, delta) {
+    const nu = { ...users, [username]: { ...users[username], score: Math.max(0, (users[username].score || 0) + delta) } };
+    setUsers(nu); await saveShared("users", nu);
+  }
+
+  async function addPoints(username, delta) {
+    const cur = await loadShared("users", {});
+    const rec = cur[username] || { password: "", score: 0, isAdmin: false };
+    const nu = { ...cur, [username]: { ...rec, score: (rec.score || 0) + delta } };
+    await saveShared("users", nu); setUsers(nu);
+  }
+
+  // ---------------- GROUPS ----------------
+  async function createGroup() {
+    if (!newGroupName.trim()) return;
+    const myGroupCount = Object.values(groups).filter(g => g.members.includes(me.username)).length;
+    if (myGroupCount >= 50) { alert(t.groupLimitReached); return; }
+
+    const today = new Date().toISOString().slice(0, 10);
+    const freshUsers = await loadShared("users", {});
+    const myRec = freshUsers[me.username] || { password: "", score: 0, isAdmin: false };
+    const countToday = myRec.groupsCreatedDate === today ? (myRec.groupsCreatedCount || 0) : 0;
+    if (countToday >= 3) { alert(t.dailyGroupLimit); return; }
+
+    const id = uid();
+    const now = Date.now();
+    const g = { id, name: newGroupName.trim(), owner: me.username, members: [me.username], messages: [], createdAt: now, expiresAt: now + 2 * 60 * 60 * 1000, pendingDelete: false };
+    const ng = { ...groups, [id]: g };
+    await saveShared("groups", ng); setGroups(ng);
+
+    const nu = { ...freshUsers, [me.username]: { ...myRec, groupsCreatedDate: today, groupsCreatedCount: countToday + 1 } };
+    await saveShared("users", nu); setUsers(nu);
+
+    setNewGroupName(""); setShowCreateGroup(false);
+    setActiveGroupId(id); setScreen("chat");
+  }
+
+  async function inviteToGroup(groupId, username) {
+    const g = groups[groupId];
+    if (!g || g.members.includes(username)) return;
+    const notifs = await loadShared("notifications", {});
+    const userNotifs = notifs[username] || [];
+    userNotifs.push({ id: uid(), type: "groupInvite", from: me.username, groupId, groupName: g.name, ts: Date.now() });
+    const nn = { ...notifs, [username]: userNotifs };
+    await saveShared("notifications", nn);
+    alert(`${username} — ${t.invite} ✓`);
+  }
+
+  async function kickFromGroup(groupId, username) {
+    const g = await loadShared("groups", {});
+    const grp = g[groupId];
+    if (!grp || grp.owner !== me.username || username === grp.owner) return;
+    grp.members = grp.members.filter(m => m !== username);
+    await saveShared("groups", g); setGroups(g);
+  }
+
+  async function leaveGroupFn(groupId) {
+    const g = await loadShared("groups", {});
+    const grp = g[groupId];
+    if (!grp) { setActiveGroupId(null); setScreen("groups"); return; }
+    if (grp.owner === me.username) { await deleteGroupFn(groupId); return; }
+    grp.members = grp.members.filter(m => m !== me.username);
+    await saveShared("groups", g); setGroups(g);
+    setActiveGroupId(null); setScreen("groups");
+  }
+
+  async function deleteGroupFn(groupId) {
+    const g = await loadShared("groups", {});
+    if (!g[groupId]) { setActiveGroupId(null); setScreen("groups"); return; }
+    delete g[groupId];
+    await saveShared("groups", g); setGroups(g);
+    const gm = await loadShared("games", {});
+    const ng = { ...gm };
+    let changed = false;
+    for (const [gid, game] of Object.entries(gm)) {
+      if (game.groupId === groupId) { delete ng[gid]; changed = true; }
+    }
+    if (changed) { await saveShared("games", ng); setGames(ng); }
+    setActiveGroupId(null); setScreen("groups");
+  }
+
+  async function acceptGroupInvite(notif) {
+    const g = await loadShared("groups", {});
+    const grp = g[notif.groupId];
+    if (grp && !grp.members.includes(me.username)) {
+      grp.members.push(me.username);
+      await saveShared("groups", g); setGroups(g);
+    }
+    await removeNotification(notif.id);
+  }
+
+  async function removeNotification(id) {
+    const notifs = await loadShared("notifications", {});
+    const mine = (notifs[me.username] || []).filter(n => n.id !== id);
+    const nn = { ...notifs, [me.username]: mine };
+    await saveShared("notifications", nn);
+    setMyNotifs(mine);
+  }
+
+  const [myNotifs, setMyNotifs] = useState([]);
+  useEffect(() => {
+    if (screen === "notifications" && me) {
+      loadShared("notifications", {}).then(n => setMyNotifs(n[me.username] || []));
+    }
+  }, [screen, me]);
+
+  // ---------------- CHAT / GAME INVITE ----------------
+  const [chatInput, setChatInput] = useState("");
+  async function sendMessage(groupId) {
+    if (!chatInput.trim()) return;
+    const g = await loadShared("groups", {});
+    const grp = g[groupId];
+    grp.messages.push({ id: uid(), from: me.username, type: "text", text: chatInput.trim(), ts: Date.now() });
+    await saveShared("groups", g); setGroups(g); setChatInput("");
+  }
+
+  async function sendGameInvite(groupId) {
+    const g = await loadShared("groups", {});
+    const grp = g[groupId];
+    const gameId = uid();
+    grp.messages.push({ id: uid(), from: me.username, type: "invite", gameId, ts: Date.now() });
+    const gm = await loadShared("games", {});
+    gm[gameId] = {
+      id: gameId, groupId, host: me.username, lang, status: "lobby",
+      members: [me.username], maxMembers: 15,
+      currentLetter: null, turnIndex: 0, roundNumber: 0,
+      wordChain: [], lastResults: [], spinToken: 0,
+    };
+    await Promise.all([saveShared("groups", g), saveShared("games", gm)]);
+    setGroups(g); setGames(gm);
+  }
+
+  async function joinLobby(gameId) {
+    const gm = await loadShared("games", {});
+    const game = gm[gameId];
+    if (!game || game.members.includes(me.username)) { setActiveGameId(gameId); setScreen("lobby"); return; }
+    if (game.members.length >= game.maxMembers) { alert(t.lobbyFull); return; }
+    game.members.push(me.username);
+    await saveShared("games", gm); setGames(gm);
+    setActiveGameId(gameId); setScreen("lobby");
+  }
+
+  async function leaveLobby(gameId) {
+    const gm = await loadShared("games", {});
+    const game = gm[gameId];
+    if (game) {
+      game.members = game.members.filter(m => m !== me.username);
+      await saveShared("games", gm); setGames(gm);
+    }
+    setScreen("chat");
+  }
+
+  async function startSpin(gameId) {
+    const gm = await loadShared("games", {});
+    const game = gm[gameId];
+    const letters = ALPHABETS[game.lang].filter(l => game.lang === "tr" ? l !== "Ğ" : true);
+    const pick = letters[Math.floor(Math.random() * letters.length)];
+    game.status = "spinning";
+    game.currentLetter = pick;
+    game.spinToken = (game.spinToken || 0) + 1;
+    game.turnIndex = 0;
+    game.wordChain = [];
+    game.roundNumber = (game.roundNumber || 0) + 1;
+    await saveShared("games", gm); setGames(gm);
+  }
+
+  async function finishSpin(gameId) {
+    const gm = await loadShared("games", {});
+    const game = gm[gameId];
+    if (game.status === "spinning") {
+      game.status = "playing";
+      await saveShared("games", gm); setGames(gm);
+    }
+  }
+
+  async function submitWord(gameId, word, isValid, timedOut) {
+    const gm = await loadShared("games", {});
+    const game = gm[gameId];
+
+    if (timedOut) {
+      // süresi dolan oyuncunun serisi bozulur: sıra sıradaki kişiye geçer ve
+      // onun için baştan yeni bir çark çevirme turu başlar
+      const letters = ALPHABETS[game.lang].filter(l => game.lang === "tr" ? l !== "Ğ" : true);
+      const pick = letters[Math.floor(Math.random() * letters.length)];
+      game.turnIndex = (game.turnIndex + 1) % game.members.length;
+      game.status = "spinning";
+      game.currentLetter = pick;
+      game.spinToken = (game.spinToken || 0) + 1;
+      game.wordChain = [];
+      game.roundNumber = (game.roundNumber || 0) + 1;
+      await saveShared("games", gm); setGames(gm);
+      return;
+    }
+
+    const points = isValid && word.trim() ? POINTS_PER_WORD : 0;
+    game.wordChain.push({ username: me.username, word: word.trim(), points });
+    if (points > 0) await addPoints(me.username, POINTS_PER_WORD);
+    if (game.wordChain.length >= ROUND_WORD_LIMIT) {
+      game.status = "results";
+      game.lastResults = game.wordChain;
+      const allCorrect = game.wordChain.every(w => w.points > 0);
+      if (allCorrect) {
+        // hiç kaçırılmadan tur limitine ulaşıldı: bonus tüm gruba paylaştırılır,
+        // kişisel olarak kazanılmış kelime puanları olduğu gibi kalır
+        const share = Math.round(STREAK_BONUS / game.members.length);
+        for (const m of game.members) {
+          await addPoints(m, share);
+        }
+      }
+    } else {
+      game.turnIndex = (game.turnIndex + 1) % game.members.length; // keep looping through the lobby's members
+    }
+    await saveShared("games", gm); setGames(gm);
+  }
+
+  async function backToWheelScreen(gameId) {
+    const gm = await loadShared("games", {});
+    const game = gm[gameId];
+    game.status = "lobby";
+    await saveShared("games", gm); setGames(gm);
+  }
+
+  // ---------------- RENDER HELPERS ----------------
+  const bg = (
+    <div className="fixed inset-0 -z-10 overflow-hidden" style={{ background: "radial-gradient(ellipse at 25% 15%, #2d1755 0%, #1c0f38 45%, #0f0a1e 100%)" }}>
+      {/* soft glowing color blobs for depth */}
+      <div className="absolute rounded-full" style={{ width: 460, height: 460, left: "-8%", top: "-10%", background: "#f2b705", opacity: 0.16, filter: "blur(110px)", animation: "drift1 22s ease-in-out infinite" }} />
+      <div className="absolute rounded-full" style={{ width: 420, height: 420, right: "-10%", top: "20%", background: "#33d6b0", opacity: 0.14, filter: "blur(110px)", animation: "drift2 26s ease-in-out infinite" }} />
+      <div className="absolute rounded-full" style={{ width: 380, height: 380, left: "10%", bottom: "-14%", background: "#ff6f61", opacity: 0.12, filter: "blur(110px)", animation: "drift3 19s ease-in-out infinite" }} />
+
+      {/* faint grid for texture */}
+      <div className="absolute inset-0 opacity-[0.05]" style={{
+        backgroundImage: "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
+        backgroundSize: "52px 52px"
+      }} />
+
+      {/* scattered scrabble-style letter tiles, ghosted into the background */}
+      {[
+        { ch: "K", pt: 1 }, { ch: "E", pt: 1 }, { ch: "L", pt: 2 }, { ch: "İ", pt: 3 },
+        { ch: "M", pt: 2 }, { ch: "E", pt: 1 }, { ch: "T", pt: 1 }, { ch: "Ü", pt: 3 },
+      ].map((tile, i) => (
+        <div key={i} className="absolute flex items-center justify-center select-none" style={{
+          left: `${(i * 29 + 6) % 92}%`, top: `${(i * 41 + 10) % 88}%`,
+          width: 44, height: 44, borderRadius: 8,
+          background: "rgba(245,240,255,0.045)", border: "1px solid rgba(245,240,255,0.08)",
+          boxShadow: "0 6px 16px rgba(0,0,0,0.25)",
+          transform: `rotate(${(i % 2 ? -1 : 1) * (8 + i * 5)}deg)`,
+          animation: `float${i % 3} ${9 + i}s ease-in-out infinite`,
+        }}>
+          <span style={{ fontFamily: "Fredoka, sans-serif", fontWeight: 700, fontSize: 20, color: "rgba(245,240,255,0.16)" }}>{tile.ch}</span>
+          <span style={{ position: "absolute", right: 4, bottom: 2, fontSize: 8, fontWeight: 700, color: "rgba(245,240,255,0.12)" }}>{tile.pt}</span>
+        </div>
+      ))}
+
+      {/* subtle vignette */}
+      <div className="absolute inset-0" style={{ boxShadow: "inset 0 0 180px rgba(0,0,0,0.55)" }} />
+
+      <style>{`
+        @keyframes float0 { 0%,100%{transform:translateY(0) rotate(var(--r,0deg))} 50%{transform:translateY(-16px) rotate(var(--r,0deg))} }
+        @keyframes float1 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(12px)} }
+        @keyframes float2 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-9px)} }
+        @keyframes drift1 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(30px,20px) scale(1.08)} }
+        @keyframes drift2 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-25px,25px) scale(1.1)} }
+        @keyframes drift3 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(20px,-20px) scale(1.06)} }
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Inter:wght@400;500;600;700&display=swap');
+      `}</style>
+    </div>
+  );
+
+  const TopLangSwitch = (
+    <div className="flex gap-1 bg-black/20 rounded-full p-1">
+      {["tr", "en", "de"].map(l => (
+        <button key={l} onClick={() => setLang(l)}
+          className="px-3 py-1 rounded-full text-xs font-semibold transition"
+          style={{ background: lang === l ? "#f2b705" : "transparent", color: lang === l ? "#1b1030" : "#f5f0ff" }}>
+          {l.toUpperCase()}
+        </button>
+      ))}
+    </div>
+  );
+
+  function Header(title, showBack) {
+    return (
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2">
+          {showBack && (
+            <button onClick={() => setScreen("menu")} className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white">
+              <ArrowLeft size={18} />
+            </button>
+          )}
+          <h1 className="font-bold text-lg" style={{ fontFamily: "Fredoka, sans-serif", color: "#f5f0ff" }}>{title}</h1>
+        </div>
+        {TopLangSwitch}
+      </div>
+    );
+  }
+
+  // ---------------- AUTH SCREEN ----------------
+  if (screen === "auth" || !me) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center p-6" style={{ fontFamily: "Inter, sans-serif" }}>
+        {bg}
+        <div className="absolute top-4 right-4">{TopLangSwitch}</div>
+        <div className="w-full max-w-sm rounded-3xl p-7" style={{ background: "rgba(36,21,66,0.85)", backdropFilter: "blur(12px)", boxShadow: "0 20px 60px rgba(0,0,0,.5)", border: "1px solid rgba(255,255,255,0.08)" }}>
+          <div className="text-center mb-6">
+            <div className="mx-auto mb-3 flex items-center justify-center" style={{ filter: "drop-shadow(0 8px 20px rgba(242,183,5,0.25))" }}>
+              <Wheel lang={lang} spinning={false} resultLetter={null} size={84} excludeFirst={lang === "tr" ? "Ğ" : null} />
+            </div>
+            <h1 className="text-2xl font-bold" style={{ fontFamily: "Fredoka, sans-serif", color: "#f5f0ff" }}>{t.appName}</h1>
+          </div>
+          <div className="space-y-3">
+            <input value={authForm.username} onChange={e => setAuthForm(f => ({ ...f, username: e.target.value }))}
+              placeholder={t.username} className="w-full px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/40 outline-none focus:ring-2 focus:ring-yellow-500" />
+            <input value={authForm.password} onChange={e => setAuthForm(f => ({ ...f, password: e.target.value }))} type="password"
+              placeholder={t.password} className="w-full px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/40 outline-none focus:ring-2 focus:ring-yellow-500"
+              onKeyDown={e => e.key === "Enter" && handleAuth()} />
+            {authError && <p className="text-red-400 text-sm">{authError}</p>}
+            <button onClick={handleAuth} className="w-full py-3 rounded-xl font-bold transition hover:opacity-90"
+              style={{ background: "#f2b705", color: "#1b1030", fontFamily: "Fredoka, sans-serif" }}>
+              {authMode === "login" ? t.login : t.register}
+            </button>
+            <button onClick={() => { setAuthMode(m => m === "login" ? "register" : "login"); setAuthError(""); }}
+              className="w-full text-center text-sm text-white/60 hover:text-white/90 pt-1">
+              {authMode === "login" ? t.noAccount : t.haveAccount}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const myGroups = Object.values(groups).filter(g => g.members.includes(me.username));
+  const sortedUsersForRank = Object.entries(users).sort((a, b) => (b[1].score || 0) - (a[1].score || 0));
+  const myRank = sortedUsersForRank.findIndex(([name]) => name === me.username) + 1;
+  const nextTier = MEDAL_TIERS.find(mt => me.score < mt.threshold);
+  const prevThreshold = nextTier ? (MEDAL_TIERS[MEDAL_TIERS.indexOf(nextTier) - 1]?.threshold || 0) : MEDAL_TIERS[MEDAL_TIERS.length - 1].threshold;
+  const progressPct = nextTier ? Math.min(100, Math.max(0, ((me.score - prevThreshold) / (nextTier.threshold - prevThreshold)) * 100)) : 100;
+
+  // ---------------- MAIN MENU ----------------
+  if (screen === "menu") {
+    return (
+      <div className="min-h-screen w-full p-5" style={{ fontFamily: "Inter, sans-serif" }}>
+        {bg}
+        <div className="flex items-center justify-between mb-6">
+          <button onClick={() => setShowCreateGroup(true)} className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-white text-sm font-semibold hover:bg-white/20">
+            <Plus size={16} /> {t.createGroup}
+          </button>
+          {TopLangSwitch}
+        </div>
+
+        <div className="max-w-md mx-auto mb-7 rounded-3xl p-5" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02))", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(10px)", boxShadow: "0 20px 40px rgba(0,0,0,0.35)" }}>
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 relative" style={{ background: "linear-gradient(135deg,#f2b705,#ff8a3d)", boxShadow: "0 8px 22px rgba(242,183,5,0.35)" }}>
+              <span className="text-2xl font-black" style={{ fontFamily: "Fredoka, sans-serif", color: "#1b1030" }}>
+                {me.username.slice(0, 1).toLocaleUpperCase(lang === "tr" ? "tr-TR" : undefined)}
+              </span>
+              {me.isAdmin && (
+                <div className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full flex items-center justify-center" style={{ background: "#2c1750", border: "2px solid #1b1030" }}>
+                  <Shield size={11} color="#c9a8ff" />
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-bold text-lg truncate" style={{ fontFamily: "Fredoka, sans-serif" }}>{me.username}</p>
+              <div className="flex items-center gap-3 mt-1 flex-wrap">
+                <span className="flex items-center gap-1 text-yellow-400 font-bold text-sm"><Trophy size={13} />{me.score}</span>
+                {myRank > 0 && <span className="text-white/35 text-xs font-semibold">#{myRank} {t.worldRank}</span>}
+              </div>
+            </div>
+          </div>
+
+          <div onClick={() => setShowMedalInfo(true)} className="cursor-pointer">
+            {me.medals.length > 0 && (
+              <div className="flex items-center gap-2 mt-4 flex-wrap">
+                {me.medals.map(mk => {
+                  const tier = MEDAL_TIERS.find(x => x.key === mk); const Icon = tier.icon;
+                  return (
+                    <div key={mk} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: `${tier.color}22`, border: `1px solid ${tier.color}55` }}>
+                      <Icon size={16} color={tier.color} />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {nextTier && (
+              <div className="mt-4">
+                <div className="flex justify-between text-[10px] text-white/40 mb-1.5 font-semibold">
+                  <span>{t.nextMedal}: {nextTier.label[lang]}</span>
+                  <span>{me.score}/{nextTier.threshold}</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+                  <div className="h-full rounded-full transition-all" style={{ width: `${progressPct}%`, background: nextTier.color }} />
+              </div>
+            </div>
+          )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
+          <button onClick={() => setScreen("groups")} className="col-span-2 flex items-center justify-center gap-2 py-5 rounded-2xl font-bold text-lg" style={{ background: "linear-gradient(135deg,#f2b705,#ff8a3d)", color: "#1b1030", fontFamily: "Fredoka, sans-serif" }}>
+            <Users size={22} /> {t.myGroups} ({myGroups.length})
+          </button>
+          <button onClick={() => setScreen("solo")} className="flex flex-col items-center justify-center gap-2 py-6 rounded-2xl bg-white/10 text-white font-semibold hover:bg-white/20">
+            <Play size={26} /> {t.soloPlay}
+          </button>
+          <button onClick={() => setScreen("leaderboard")} className="flex flex-col items-center justify-center gap-2 py-6 rounded-2xl bg-white/10 text-white font-semibold hover:bg-white/20">
+            <Trophy size={26} /> {t.leaderboard}
+          </button>
+          {me.isAdmin && (
+            <button onClick={() => setScreen("admin")} className="col-span-2 flex items-center justify-center gap-2 py-4 rounded-2xl bg-purple-900/50 border border-purple-400/30 text-purple-200 font-semibold hover:bg-purple-900/70">
+              <Shield size={20} /> {t.admin}
+            </button>
+          )}
+        </div>
+
+        <div className="fixed bottom-6 left-0 right-0 flex justify-center gap-3">
+          <button onClick={() => setScreen("notifications")} className="flex items-center gap-2 px-5 py-3 rounded-full bg-black/40 backdrop-blur text-white font-semibold border border-white/10">
+            <Bell size={18} /> {t.notifications}
+          </button>
+          <button onClick={logout} className="flex items-center gap-2 px-5 py-3 rounded-full bg-black/40 backdrop-blur text-white/70 font-semibold border border-white/10">
+            <LogOut size={18} />
+          </button>
+        </div>
+
+        {showCreateGroup && (
+          <Modal onClose={() => setShowCreateGroup(false)}>
+            <h3 className="text-white font-bold mb-3" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.createGroup}</h3>
+            <input value={newGroupName} onChange={e => setNewGroupName(e.target.value)} placeholder={t.groupName}
+              className="w-full px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/40 outline-none mb-3" />
+            <div className="flex gap-2">
+              <button onClick={() => setShowCreateGroup(false)} className="flex-1 py-2.5 rounded-xl bg-white/10 text-white">{t.cancel}</button>
+              <button onClick={createGroup} className="flex-1 py-2.5 rounded-xl font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>{t.create}</button>
+            </div>
+          </Modal>
+        )}
+        {medalPopup && <MedalPopup tier={medalPopup} t={t} onClose={() => setMedalPopup(null)} />}
+        {showMedalInfo && (
+          <Modal onClose={() => setShowMedalInfo(false)}>
+            <h3 className="text-white font-bold mb-1" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.medals}</h3>
+            <p className="text-white/40 text-xs mb-4">{t.score}: <span className="text-yellow-400 font-bold">{me.score}</span></p>
+            <div className="space-y-2">
+              {MEDAL_TIERS.map(tier => {
+                const Icon = tier.icon;
+                const earned = me.score >= tier.threshold;
+                return (
+                  <div key={tier.key} className="flex items-center justify-between px-3 py-2.5 rounded-xl"
+                    style={{ background: earned ? `${tier.color}1a` : "rgba(255,255,255,0.05)", border: `1px solid ${earned ? tier.color + "66" : "rgba(255,255,255,0.08)"}` }}>
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: `${tier.color}22` }}>
+                        <Icon size={16} color={tier.color} />
+                      </div>
+                      <span className={`font-semibold text-sm ${earned ? "text-white" : "text-white/50"}`}>{tier.label[lang]}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold" style={{ color: earned ? tier.color : "rgba(255,255,255,0.4)" }}>{tier.threshold.toLocaleString(lang === "tr" ? "tr-TR" : undefined)}</span>
+                      {earned && <Check size={14} color={tier.color} />}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <button onClick={() => setShowMedalInfo(false)} className="w-full mt-4 py-2.5 rounded-xl bg-white/10 text-white">{t.close}</button>
+          </Modal>
+        )}
+      </div>
+    );
+  }
+
+  // ---------------- GROUPS LIST ----------------
+  if (screen === "groups") {
+    return (
+      <div className="min-h-screen w-full p-5" style={{ fontFamily: "Inter, sans-serif" }}>
+        {bg}
+        {Header(t.myGroups)}
+        <button onClick={() => setShowCreateGroup(true)} className="mb-4 flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-white text-sm font-semibold hover:bg-white/20">
+          <Plus size={16} /> {t.createGroup}
+        </button>
+        {myGroups.length === 0 && <p className="text-white/50 text-center mt-10">{t.noGroups}</p>}
+        <div className="space-y-2 max-w-md mx-auto">
+          {myGroups.map(g => {
+            const remaining = g.expiresAt ? g.expiresAt - tick : null;
+            return (
+              <button key={g.id} onClick={() => { setActiveGroupId(g.id); setScreen("chat"); }}
+                className="w-full flex items-center justify-between px-4 py-4 rounded-2xl bg-white/10 hover:bg-white/20 text-left">
+                <div>
+                  <p className="text-white font-semibold">{g.name}</p>
+                  <p className="text-white/50 text-xs">{g.members.length} {t.members}</p>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <Swords size={18} className="text-white/40" />
+                  {remaining != null && (
+                    <span className="flex items-center gap-1 text-[10px] font-semibold" style={{ color: remaining <= 0 ? "#ff8a8a" : remaining < 5 * 60 * 1000 ? "#ffb84d" : "rgba(255,255,255,0.35)" }}>
+                      <Clock size={9} /> {remaining > 0 ? formatRemaining(remaining) : g.pendingDelete ? t.closesInGame : "0:00"}
+                    </span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        <button onClick={() => setScreen("menu")} className="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-6 py-3 rounded-full bg-black/40 backdrop-blur text-white font-semibold border border-white/10">
+          <ArrowLeft size={16} /> {t.back}
+        </button>
+        {showCreateGroup && (
+          <Modal onClose={() => setShowCreateGroup(false)}>
+            <h3 className="text-white font-bold mb-3">{t.createGroup}</h3>
+            <input value={newGroupName} onChange={e => setNewGroupName(e.target.value)} placeholder={t.groupName}
+              className="w-full px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/40 outline-none mb-3" />
+            <div className="flex gap-2">
+              <button onClick={() => setShowCreateGroup(false)} className="flex-1 py-2.5 rounded-xl bg-white/10 text-white">{t.cancel}</button>
+              <button onClick={createGroup} className="flex-1 py-2.5 rounded-xl font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>{t.create}</button>
+            </div>
+          </Modal>
+        )}
+      </div>
+    );
+  }
+
+  // ---------------- CHAT ----------------
+  if (screen === "chat" && activeGroupId) {
+    const grp = groups[activeGroupId];
+    if (!grp) {
+      return <GoneScreen bg={bg} message={t.groupGone} backLabel={t.back} onBack={() => setScreen("groups")} />;
+    }
+    const remaining = grp.expiresAt ? grp.expiresAt - tick : null;
+    const isOwner = grp.owner === me.username;
+    const filteredUsers = Object.keys(users).filter(u => u !== me.username && u.toLocaleLowerCase(lang === "tr" ? "tr-TR" : undefined).includes(groupInviteSearch.trim().toLocaleLowerCase(lang === "tr" ? "tr-TR" : undefined)));
+    return (
+      <div className="min-h-screen w-full p-5 flex flex-col" style={{ fontFamily: "Inter, sans-serif" }}>
+        {bg}
+        {isOwner ? (
+          <div className="max-w-md w-full mx-auto mb-2 flex justify-center gap-2">
+            <button onClick={() => { setGroupInviteSearch(""); setShowGroupInvite(true); }}
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold" style={{ background: "#2c1750", border: "1px solid rgba(255,255,255,0.15)", color: "#f5f0ff" }}>
+              <Users size={14} /> {t.groupCallBtn}
+            </button>
+            <button onClick={() => { if (window.confirm(t.deleteGroupConfirm)) deleteGroupFn(activeGroupId); }}
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold bg-red-500/80 text-white">
+              <X size={14} /> {t.deleteGroup}
+            </button>
+          </div>
+        ) : (
+          <div className="max-w-md w-full mx-auto mb-2 flex justify-center">
+            <button onClick={() => { if (window.confirm(t.leaveGroupConfirm)) leaveGroupFn(activeGroupId); }}
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold bg-red-500/80 text-white">
+              <LogOut size={14} /> {t.leaveGroup}
+            </button>
+          </div>
+        )}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <button onClick={() => setScreen("groups")} className="p-2 rounded-full bg-white/10 text-white"><ArrowLeft size={18} /></button>
+            <div>
+              <p className="text-white font-bold">{grp.name}</p>
+              <p className="text-white/40 text-xs">{grp.members.length} {t.members}</p>
+            </div>
+          </div>
+          <div className="flex flex-col items-end gap-1">
+            <button onClick={() => sendGameInvite(activeGroupId)} className="flex items-center gap-1 px-3 py-2 rounded-full text-xs font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>
+              <Swords size={14} /> {t.sendRequest}
+            </button>
+            {remaining != null && (
+              <span className="flex items-center gap-1 text-[10px] font-semibold" style={{ color: remaining <= 0 ? "#ff8a8a" : remaining < 5 * 60 * 1000 ? "#ffb84d" : "rgba(255,255,255,0.4)" }}>
+                <Clock size={10} /> {remaining > 0 ? formatRemaining(remaining) : grp.pendingDelete ? t.closesInGame : "0:00"}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="max-w-md w-full mx-auto flex flex-wrap gap-1.5 mb-3">
+          {grp.members.map(m => (
+            <span key={m} className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white/10 text-white">
+              {m === grp.owner && <Crown size={10} color="#f2b705" />} {m}
+              {isOwner && m !== grp.owner && (
+                <button onClick={() => { if (window.confirm(`${m} ${t.kickConfirm}`)) kickFromGroup(activeGroupId, m); }}
+                  className="ml-0.5 w-4 h-4 rounded-full flex items-center justify-center bg-red-500/70 hover:bg-red-500 text-white" title={t.kickMember}>
+                  <X size={9} />
+                </button>
+              )}
+            </span>
+          ))}
+        </div>
+
+        <div className="flex-1 space-y-2 overflow-y-auto mb-3 max-w-md w-full mx-auto" style={{ maxHeight: "60vh" }}>
+          {grp.messages.map(m => (
+            <div key={m.id} className={`max-w-[80%] ${m.from === me.username ? "ml-auto" : ""}`}>
+              {m.type === "text" ? (
+                <div className={`px-4 py-2 rounded-2xl text-sm ${m.from === me.username ? "bg-yellow-500 text-[#1b1030]" : "bg-white/10 text-white"}`}>
+                  <p className="text-[10px] opacity-60 font-semibold">{m.from === me.username ? t.you : m.from}</p>
+                  {m.text}
+                </div>
+              ) : (
+                <button onClick={() => joinLobby(m.gameId)} className="w-full px-4 py-3 rounded-2xl text-left border-2 border-dashed border-yellow-400/60 bg-yellow-400/10 hover:bg-yellow-400/20">
+                  <p className="text-yellow-300 text-xs font-bold flex items-center gap-1"><Swords size={14} /> {m.from} {t.gameInviteText}</p>
+                </button>
+              )}
+            </div>
+          ))}
+          {grp.messages.length === 0 && <p className="text-white/40 text-center text-sm mt-8">…</p>}
+        </div>
+
+        <div className="max-w-md w-full mx-auto flex gap-2">
+          <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMessage(activeGroupId)}
+            placeholder={t.writeMessage} className="flex-1 px-4 py-3 rounded-full bg-white/10 text-white placeholder-white/40 outline-none" />
+          <button onClick={() => sendMessage(activeGroupId)} className="p-3 rounded-full" style={{ background: "#f2b705" }}><Send size={18} color="#1b1030" /></button>
+        </div>
+
+        {showGroupInvite && isOwner && (
+          <Modal onClose={() => setShowGroupInvite(false)}>
+            <h3 className="text-white font-bold mb-3" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.groupCallBtn}</h3>
+            <input value={groupInviteSearch} onChange={e => setGroupInviteSearch(e.target.value)} placeholder={t.searchUser}
+              className="w-full px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/40 outline-none mb-3" autoFocus />
+            <div className="space-y-1.5 overflow-y-auto" style={{ maxHeight: "50vh" }}>
+              {filteredUsers.length === 0 && <p className="text-white/40 text-sm text-center py-4">{t.noUserFound}</p>}
+              {filteredUsers.map(u => {
+                const already = grp.members.includes(u);
+                return (
+                  <div key={u} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-white/10">
+                    <span className="text-white text-sm font-semibold">{u}</span>
+                    <button disabled={already} onClick={() => inviteToGroup(activeGroupId, u)}
+                      className="px-3 py-1.5 rounded-full text-xs font-bold disabled:opacity-40"
+                      style={{ background: already ? "rgba(255,255,255,0.1)" : "#f2b705", color: already ? "#fff" : "#1b1030" }}>
+                      {already ? t.alreadyMember : t.invite}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            <button onClick={() => setShowGroupInvite(false)} className="w-full mt-3 py-2.5 rounded-xl bg-white/10 text-white">{t.close}</button>
+          </Modal>
+        )}
+      </div>
+    );
+  }
+
+  // ---------------- LOBBY ----------------
+  if (screen === "lobby" && activeGameId) {
+    const game = games[activeGameId];
+    if (!game) {
+      return <GoneScreen bg={bg} message={t.groupGone} backLabel={t.back} onBack={() => setScreen("groups")} />;
+    }
+    if (game.status !== "lobby") {
+      return <GroupGameView game={game} me={me} t={t} onSpinEnd={() => finishSpin(activeGameId)}
+        onSubmitWord={(w, ok, timedOut) => submitWord(activeGameId, w, ok, timedOut)}
+        onNextRound={() => backToWheelScreen(activeGameId)}
+        onExitToChat={() => setScreen("chat")} lang={game.lang} />;
+    }
+    const isHost = game.host === me.username;
+    const canLeave = game.members.length > 1;
+    return (
+      <div className="min-h-screen w-full p-5 flex flex-col items-center" style={{ fontFamily: "Inter, sans-serif" }}>
+        {bg}
+        {canLeave && (
+          <button onClick={() => leaveLobby(activeGameId)} className="absolute top-5 left-1/2 -translate-x-1/2 flex items-center gap-1 px-4 py-2 rounded-full bg-red-500/80 text-white text-xs font-bold">
+            <X size={14} /> {t.leaveLobby}
+          </button>
+        )}
+        <div className="mt-16 text-center mb-6">
+          <h2 className="text-xl font-bold text-white" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.lobby}</h2>
+          <p className="text-white/50 text-sm">{game.members.length}/{game.maxMembers} · {t.waitingPlayers}</p>
+        </div>
+        <div className="flex flex-wrap gap-2 justify-center max-w-md mb-8">
+          {game.members.map(m => (
+            <div key={m} className="px-3 py-2 rounded-full bg-white/10 text-white text-sm flex items-center gap-1">
+              {m === game.host && <Crown size={12} color="#f2b705" />} {m}
+            </div>
+          ))}
+        </div>
+        {isHost && (
+          <button onClick={() => startSpin(activeGameId)} className="px-8 py-4 rounded-full font-bold text-lg flex items-center gap-2" style={{ background: "#f2b705", color: "#1b1030", fontFamily: "Fredoka, sans-serif" }}>
+            <Play size={20} /> {t.startGame}
+          </button>
+        )}
+        {!isHost && <p className="text-white/40 text-sm">{t.waitingPlayers}...</p>}
+      </div>
+    );
+  }
+
+  // ---------------- SOLO ----------------
+  if (screen === "solo") {
+    return <SoloGameView t={t} lang={lang} me={me} onAddPoints={(d) => addPoints(me.username, d)} onExit={() => setScreen("menu")} />;
+  }
+
+  // ---------------- LEADERBOARD ----------------
+  if (screen === "leaderboard") {
+    const sorted = Object.entries(users).sort((a, b) => (b[1].score || 0) - (a[1].score || 0));
+    return (
+      <div className="min-h-screen w-full p-5" style={{ fontFamily: "Inter, sans-serif" }}>
+        {bg}
+        {Header(t.worldLeaderboard, true)}
+        <div className="max-w-md mx-auto space-y-2">
+          {sorted.map(([name, rec], i) => {
+            const mkeys = medalsForScore(rec.score || 0);
+            return (
+              <div key={name} className="flex items-center justify-between px-4 py-3 rounded-2xl bg-white/10">
+                <div className="flex items-center gap-3">
+                  <span className="w-6 text-center font-bold" style={{ color: i === 0 ? "#f2b705" : i === 1 ? "#c9c9d6" : i === 2 ? "#c17a4a" : "#ffffff80" }}>{i + 1}</span>
+                  <span className="text-white font-semibold">{name}</span>
+                  {mkeys.map(mk => { const tier = MEDAL_TIERS.find(x => x.key === mk); const Icon = tier.icon; return <Icon key={mk} size={14} color={tier.color} />; })}
+                </div>
+                <span className="text-yellow-400 font-bold">{rec.score || 0}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // ---------------- NOTIFICATIONS ----------------
+  if (screen === "notifications") {
+    return (
+      <div className="min-h-screen w-full p-5" style={{ fontFamily: "Inter, sans-serif" }}>
+        {bg}
+        {Header(t.notifications, true)}
+        <div className="max-w-md mx-auto space-y-2">
+          {myNotifs.length === 0 && <p className="text-white/40 text-center mt-10">{t.noNotifications}</p>}
+          {myNotifs.map(n => (
+            <div key={n.id} className="px-4 py-3 rounded-2xl bg-white/10">
+              <p className="text-white text-sm mb-2"><b>{n.from}</b> {t.invitedYouToGroup}: <b>{n.groupName}</b></p>
+              <div className="flex gap-2">
+                <button onClick={() => acceptGroupInvite(n)} className="flex-1 py-1.5 rounded-full text-xs font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>{t.accept}</button>
+                <button onClick={() => removeNotification(n.id)} className="flex-1 py-1.5 rounded-full text-xs font-bold bg-white/10 text-white">{t.decline}</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // ---------------- ADMIN ----------------
+  if (screen === "admin" && me.isAdmin) {
+    return (
+      <div className="min-h-screen w-full p-5" style={{ fontFamily: "Inter, sans-serif" }}>
+        {bg}
+        {Header(t.admin, true)}
+        <p className="text-white/50 text-sm mb-4 max-w-md mx-auto">{t.adminPanelDesc}</p>
+        <div className="max-w-md mx-auto space-y-2">
+          {Object.entries(users).map(([name, rec]) => {
+            const liveGame = Object.values(games).find(gm2 => (gm2.status === "playing" || gm2.status === "spinning") && gm2.members.includes(name));
+            return (
+              <div key={name} className="flex items-center justify-between px-4 py-3 rounded-2xl bg-white/10">
+                <div>
+                  <p className="text-white font-semibold">{name} {rec.isAdmin && <Shield size={12} className="inline text-purple-300 ml-1" />}</p>
+                  <p className="text-yellow-400 text-sm font-bold">{rec.score || 0}</p>
+                </div>
+                <div className="flex gap-1 items-center">
+                  <button onClick={() => adjustScore(name, -100)} className="px-3 py-1.5 rounded-full bg-red-500/70 text-white text-xs font-bold">-100</button>
+                  <button onClick={() => adjustScore(name, 100)} className="px-3 py-1.5 rounded-full bg-green-500/70 text-white text-xs font-bold">+100</button>
+                  {liveGame && (
+                    <button onClick={() => { setAdminSpectateGameId(liveGame.id); setScreen("adminSpectate"); }}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-bold">
+                      <Play size={11} /> {t.watchMatch}
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // ---------------- ADMIN SPECTATE ----------------
+  if (screen === "adminSpectate" && me.isAdmin) {
+    const game = games[adminSpectateGameId];
+    if (!game) {
+      return <GoneScreen bg={bg} message={t.groupGone} backLabel={t.back} onBack={() => setScreen("admin")} />;
+    }
+    return <GroupGameView game={game} me={me} t={t} lang={game.lang} isSpectator
+      onSpinEnd={() => finishSpin(adminSpectateGameId)}
+      onSubmitWord={() => {}}
+      onNextRound={() => setScreen("admin")}
+      onExitToChat={() => setScreen("admin")} />;
+  }
+
+  return null;
+}
+
+// =========================================================
+// GROUP GAME VIEW (wheel + relay chain for a lobby's round)
+// =========================================================
+function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onExitToChat, lang, isSpectator }) {
+  const [wordInput, setWordInput] = useState("");
+  const [timeLeft, setTimeLeft] = useState(WORD_TIME_SECONDS);
+  const [checking, setChecking] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+  const [shake, setShake] = useState(false);
+  const [flash, setFlash] = useState(null);
+  const feedbackKeyRef = useRef(0);
+  const timerRef = useRef(null);
+  const feedbackTimeoutRef = useRef(null);
+  const currentPlayer = game.members[game.turnIndex];
+  const isMyTurn = !isSpectator && currentPlayer === me.username && game.status === "playing";
+  const requiredLetter = game.wordChain.length === 0 ? game.currentLetter : lastLetter(game.wordChain[game.wordChain.length - 1].word, lang);
+
+  useEffect(() => {
+    if (!isMyTurn) return;
+    setTimeLeft(WORD_TIME_SECONDS);
+    clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setTimeLeft(tl => {
+        if (tl <= 1) { clearInterval(timerRef.current); handleSubmit(true); return 0; }
+        return tl - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timerRef.current);
+  }, [isMyTurn, game.turnIndex]); // eslint-disable-line
+
+  useEffect(() => () => clearTimeout(feedbackTimeoutRef.current), []);
+
+  function showFeedback(ok, word) {
+    clearTimeout(feedbackTimeoutRef.current);
+    setFeedback({ ok, word, key: ++feedbackKeyRef.current });
+    if (!ok) { setShake(true); setTimeout(() => setShake(false), 420); }
+    feedbackTimeoutRef.current = setTimeout(() => setFeedback(null), 1600);
+  }
+
+  async function handleSubmit(timedOut) {
+    clearInterval(timerRef.current);
+    const w = timedOut ? "" : wordInput.trim();
+    setWordInput("");
+    if (!w) { showFeedback(false, ""); setFlash({ ok: false, key: ++feedbackKeyRef.current }); onSubmitWord("", false, timedOut); return; }
+    setChecking(true);
+    const ok = await checkWordValid(w, lang, requiredLetter);
+    setChecking(false);
+    showFeedback(ok, w);
+    setFlash({ ok, key: ++feedbackKeyRef.current });
+    onSubmitWord(w, ok, false);
+  }
+
+  return (
+    <div className="min-h-screen w-full p-5 flex flex-col items-center" style={{ fontFamily: "Inter, sans-serif" }}>
+      <div className="fixed inset-0 -z-10" style={{ background: "radial-gradient(ellipse at 25% 15%, #2d1755 0%, #1c0f38 45%, #0f0a1e 100%)" }} />
+      {flash && <FullScreenFlash key={flash.key} ok={flash.ok} onDone={() => setFlash(null)} />}
+      <button onClick={onExitToChat} className="absolute top-5 left-5 p-2 rounded-full bg-white/10 text-white"><ArrowLeft size={18} /></button>
+      {isSpectator && (
+        <span className="absolute top-5 right-5 flex items-center gap-1 px-3 py-2 rounded-full bg-purple-600/70 text-white text-xs font-bold">
+          <Shield size={12} /> {t.spectating}
+        </span>
+      )}
+      <p className="text-white/40 text-xs mt-14 mb-2">{t.roundOf} {game.roundNumber} · {game.wordChain.length}{t.of}{ROUND_WORD_LIMIT}</p>
+
+      {(game.status === "spinning" || (game.status === "playing" && game.wordChain.length === 0)) && (
+        <div className="flex flex-col items-center mt-4">
+          <Wheel lang={lang} spinning={game.status === "spinning"} resultLetter={game.currentLetter} onSpinEnd={onSpinEnd} excludeFirst={lang === "tr" ? "Ğ" : null} />
+          {game.status === "playing" && <p className="text-3xl font-black text-yellow-400 mt-4">{game.currentLetter}</p>}
+        </div>
+      )}
+
+      {game.status === "playing" && (
+        <div className="w-full max-w-sm mt-6">
+          <div className="flex flex-wrap gap-2 justify-center mb-6">
+            {game.members.map((m, i) => (
+              <span key={m} className={`px-3 py-1.5 rounded-full text-xs font-semibold ${i === game.turnIndex ? "bg-yellow-400 text-[#1b1030]" : "bg-white/10 text-white/60"}`}>{m}</span>
+            ))}
+          </div>
+          {game.wordChain.length > 0 && (
+            <div className="text-center mb-4 text-white/70 text-sm">
+              {game.wordChain[game.wordChain.length - 1].username}: <b className="text-white">{game.wordChain[game.wordChain.length - 1].word || "—"}</b>
+            </div>
+          )}
+          <div className="text-center mb-3">
+            <p className="text-white/50 text-sm">{isMyTurn ? t.yourTurn : `${currentPlayer}...`}</p>
+            <p className="text-white text-lg"><b className="text-yellow-400 text-2xl">{requiredLetter}</b> {t.writeWordStartingWith}</p>
+          </div>
+          <div className="mb-3 min-h-[44px] flex items-center justify-center">
+            <WordFeedbackBadge feedback={feedback} t={t} />
+          </div>
+          {isMyTurn && (
+            <>
+              <div className="flex items-center justify-center gap-1 text-white/60 text-sm mb-2"><Clock size={14} /> {timeLeft}s</div>
+              <div className="flex gap-2">
+                <input autoFocus value={wordInput} onChange={e => setWordInput(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSubmit(false)}
+                  disabled={checking} className="flex-1 px-4 py-3 rounded-full bg-white/10 text-white outline-none border-2 border-yellow-400/40"
+                  style={{ animation: shake ? "inputShake 420ms ease" : "none" }} />
+                <button onClick={() => handleSubmit(false)} disabled={checking} className="px-5 py-3 rounded-full font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>
+                  {checking ? t.checking : t.submit}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {game.status === "results" && (
+        <div className="w-full max-w-sm mt-6">
+          <h3 className="text-white font-bold text-center mb-1" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.roundResults}</h3>
+          <p className="text-white/40 text-xs text-center mb-4">{game.lastResults.length} {t.roundOf.toLowerCase()}</p>
+
+          {game.lastResults.length > 0 && game.lastResults.every(r => r.points > 0) && (
+            <div className="mb-4 px-4 py-3 rounded-2xl text-center font-bold text-sm"
+              style={{ background: "#f2b70522", border: "1px solid #f2b70566", color: "#f2b705" }}>
+              🎉 {t.groupAllCorrectMsg}
+            </div>
+          )}
+
+          {/* per-player totals for this round */}
+          <div className="flex flex-wrap gap-2 justify-center mb-4">
+            {game.members.map(m => {
+              const total = game.lastResults.filter(r => r.username === m).reduce((s, r) => s + r.points, 0);
+              return (
+                <span key={m} className="px-3 py-1.5 rounded-full text-xs font-bold bg-white/10 text-white">
+                  {m}: <span className="text-yellow-400">{total}</span>
+                </span>
+              );
+            })}
+          </div>
+
+          <div className="space-y-2 mb-6 overflow-y-auto pr-1" style={{ maxHeight: "42vh" }}>
+            {game.lastResults.map((r, i) => (
+              <div key={i} className="flex items-center justify-between px-4 py-3 rounded-2xl bg-white/10">
+                <span className="text-white">{r.username}: <b>{r.word || t.noWord}</b></span>
+                <span className={`font-bold ${r.points > 0 ? "text-green-400" : "text-red-400"}`}>+{r.points} {t.points}</span>
+              </div>
+            ))}
+          </div>
+          <button onClick={isSpectator ? onExitToChat : onNextRound} className="w-full py-3 rounded-full font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>{isSpectator ? t.spectateBack : t.back}</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// =========================================================
+// SOLO GAME VIEW
+// =========================================================
+function SoloGameView({ t, lang, me, onAddPoints, onExit }) {
+  const [status, setStatus] = useState("wheel"); // wheel, spinning, playing
+  const [letter, setLetter] = useState(null);
+  const [chain, setChain] = useState([]);
+  const [wordInput, setWordInput] = useState("");
+  const [checking, setChecking] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+  const [shake, setShake] = useState(false);
+  const [flash, setFlash] = useState(null);
+  const [allCorrectMsg, setAllCorrectMsg] = useState(false);
+  const feedbackKeyRef = useRef(0);
+  const [timeLeft, setTimeLeft] = useState(WORD_TIME_SECONDS);
+  const timerRef = useRef(null);
+  const required = chain.length === 0 ? letter : lastLetter(chain[chain.length - 1].word, lang);
+
+  useEffect(() => {
+    if (status !== "playing") return;
+    setTimeLeft(WORD_TIME_SECONDS);
+    clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setTimeLeft(tl => {
+        if (tl <= 1) { clearInterval(timerRef.current); submit(true); return 0; }
+        return tl - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timerRef.current);
+  }, [status, chain.length]); // eslint-disable-line
+
+  function spin() {
+    const letters = ALPHABETS[lang].filter(l => lang === "tr" ? l !== "Ğ" : true);
+    const pick = letters[Math.floor(Math.random() * letters.length)];
+    setLetter(pick);
+    setChain([]);
+    setFeedback(null);
+    setStatus("spinning");
+  }
+
+  function flashFeedback(ok, word) {
+    setFeedback({ ok, word, key: ++feedbackKeyRef.current });
+    if (!ok) { setShake(true); setTimeout(() => setShake(false), 420); }
+  }
+
+  async function submit(timedOut) {
+    clearInterval(timerRef.current);
+    const w = timedOut ? "" : wordInput.trim();
+    setWordInput("");
+
+    if (timedOut) {
+      // süre yetişmedi: seri burada bozulur, en baştan çark çevirmeye dön
+      flashFeedback(false, "");
+      setFlash({ ok: false, key: ++feedbackKeyRef.current });
+      setTimeout(() => { setStatus("wheel"); setChain([]); }, 1200);
+      return;
+    }
+
+    if (!w) {
+      flashFeedback(false, ""); setFlash({ ok: false, key: ++feedbackKeyRef.current });
+      const newChain = [...chain, { word: "", points: 0 }]; setChain(newChain);
+      if (newChain.length >= ROUND_WORD_LIMIT) setTimeout(() => { setStatus("wheel"); setChain([]); }, 1200);
+      return;
+    }
+
+    setChecking(true);
+    const ok = await checkWordValid(w, lang, required);
+    setChecking(false);
+    if (ok) await onAddPoints(POINTS_PER_WORD);
+    flashFeedback(ok, w);
+    setFlash({ ok, key: ++feedbackKeyRef.current });
+    const newChain = [...chain, { word: w, points: ok ? POINTS_PER_WORD : 0 }];
+    setChain(newChain);
+    if (newChain.length >= ROUND_WORD_LIMIT) {
+      const allCorrect = newChain.every(c => c.points > 0);
+      if (allCorrect) {
+        await onAddPoints(STREAK_BONUS);
+        setAllCorrectMsg(true);
+        setTimeout(() => { setStatus("wheel"); setChain([]); setAllCorrectMsg(false); }, 2200);
+      } else {
+        setTimeout(() => { setStatus("wheel"); setChain([]); }, 1200);
+      }
+    }
+  }
+
+  return (
+    <div className="min-h-screen w-full p-5 flex flex-col items-center" style={{ fontFamily: "Inter, sans-serif" }}>
+      <div className="fixed inset-0 -z-10" style={{ background: "radial-gradient(ellipse at 25% 15%, #2d1755 0%, #1c0f38 45%, #0f0a1e 100%)" }} />
+      {flash && <FullScreenFlash key={flash.key} ok={flash.ok} onDone={() => setFlash(null)} />}
+      <button onClick={onExit} className="absolute top-5 left-5 p-2 rounded-full bg-white/10 text-white"><ArrowLeft size={18} /></button>
+      {allCorrectMsg && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl text-center font-bold text-sm shadow-lg"
+          style={{ background: "#f2b705", color: "#1b1030", maxWidth: "88vw" }}>
+          🎉 {t.soloAllCorrectMsg}
+        </div>
+      )}
+      <p className="text-white/40 text-xs mt-14 mb-2">{t.solo} · {t.roundOf} {chain.length}{t.of}{ROUND_WORD_LIMIT}</p>
+
+      {status !== "playing" && (
+        <div className="flex flex-col items-center mt-4">
+          <Wheel lang={lang} spinning={status === "spinning"} resultLetter={letter} excludeFirst={lang === "tr" ? "Ğ" : null}
+            onSpinEnd={() => setStatus("playing")} />
+          {status === "wheel" && (
+            <button onClick={spin} className="mt-8 px-8 py-4 rounded-full font-bold text-lg flex items-center gap-2" style={{ background: "#f2b705", color: "#1b1030", fontFamily: "Fredoka, sans-serif" }}>
+              <Play size={20} /> {t.spinWheel}
+            </button>
+          )}
+        </div>
+      )}
+
+      {status === "playing" && (
+        <div className="w-full max-w-sm mt-6">
+          <div className="text-center mb-4">
+            <p className="text-white text-lg"><b className="text-yellow-400 text-2xl">{required}</b> {t.writeWordStartingWith}</p>
+          </div>
+          <div className="flex items-center justify-center gap-1 text-sm mb-2" style={{ color: timeLeft <= 5 ? "#ff6f61" : "rgba(255,255,255,0.6)" }}>
+            <Clock size={14} /> {timeLeft}s
+          </div>
+          <div className="flex gap-2 mb-4">
+            <input autoFocus value={wordInput} onChange={e => setWordInput(e.target.value)} onKeyDown={e => e.key === "Enter" && submit(false)}
+              disabled={checking} className="flex-1 px-4 py-3 rounded-full bg-white/10 text-white outline-none border-2 border-yellow-400/40"
+              style={{ animation: shake ? "inputShake 420ms ease" : "none" }} />
+            <button onClick={() => submit(false)} disabled={checking} className="px-5 py-3 rounded-full font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>
+              {checking ? t.checking : t.submit}
+            </button>
+          </div>
+          <div className="mb-2 min-h-[44px] flex items-center justify-center">
+            <WordFeedbackBadge feedback={feedback} t={t} />
+          </div>
+          <div className="mt-4 flex flex-wrap gap-1 justify-center">
+            {chain.slice(-10).map((c, i) => (
+              <span key={i} className={`px-2 py-1 rounded-full text-xs ${c.points > 0 ? "bg-green-500/20 text-green-300" : "bg-red-500/20 text-red-300"}`}>{c.word || "—"}</span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// =========================================================
+// SMALL SHARED UI
+// =========================================================
+function Modal({ children, onClose }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6" onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} className="w-full max-w-sm rounded-2xl p-5" style={{ background: "#241542", border: "1px solid rgba(255,255,255,0.1)" }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function MedalPopup({ tier, t, onClose }) {
+  const Icon = tier.icon;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
+      <div className="w-full max-w-xs rounded-3xl p-7 text-center" style={{ background: "linear-gradient(160deg,#2c1750,#1b1030)", border: `2px solid ${tier.color}` }}>
+        <Icon size={56} color={tier.color} className="mx-auto mb-3" />
+        <h2 className="text-xl font-bold text-white mb-1" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.congrats}</h2>
+        <p className="text-white/80 mb-5">{tier.label[Object.keys(T).find(k => T[k] === t) || "tr"]} {t.earnedMedal}</p>
+        <button onClick={onClose} className="w-full py-2.5 rounded-full font-bold" style={{ background: tier.color, color: "#1b1030" }}>{t.close}</button>
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+</body>
+</html>
