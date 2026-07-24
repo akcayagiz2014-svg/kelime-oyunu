@@ -916,7 +916,7 @@ fonksiyon App() {
         }
       }
     } başka {
-      oyun.turnIndex = (oyun.turnIndex + 1) % oyun.members.length; // Lobi üyeleri arasında döngüyü sürdür
+      oyun.turnIndex = (oyun.turnIndex + 1) % oyun.members.length; // Lobi üyeleri arasında döngüyü sürdürün
     }
     await saveShared("games", gm); setGames(gm);
   }
@@ -1706,7 +1706,7 @@ fonksiyon SoloGameView({ t, lang, me, onAddPoints, onExit }) {
     clearInterval(timerRef.current);
     zamanlayıcıRef.current = setInterval(() => {
       setTimeLeft(tl => {
-        Eğer tl değeri 1'den küçük veya eşitse, zamanlayıcı referansının geçerli değerini temizleyip, işlemi başlatıp, sonucu 0 olarak döndürün.
+        Eğer tl değeri 1'den küçük veya eşitse, zamanlayıcı referansının geçerli olduğu aralığı temizle ve işlemi başlat (true) olarak gönder; 0 döndür.
         tl - 1'i döndür;
       });
     }, 1000);
