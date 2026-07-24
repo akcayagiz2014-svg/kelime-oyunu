@@ -1647,9 +1647,12 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
   const feedbackKeyRef = useRef(0);
   const timerRef = useRef(null);
   const feedbackTimeoutRef = useRef(null);
-  const currentPlayer = game.members[game.turnIndex];
+  const members = game.members || [];
+  const wordChain = game.wordChain || [];
+  const lastResults = game.lastResults || [];
+  const currentPlayer = members[game.turnIndex];
   const isMyTurn = !isSpectator && currentPlayer === me.username && game.status === "playing";
-  const requiredLetter = game.wordChain.length === 0 ? game.currentLetter : lastLetter(game.wordChain[game.wordChain.length - 1].word, lang);
+  const requiredLetter = wordChain.length === 0 ? game.currentLetter : lastLetter(wordChain[wordChain.length - 1].word, lang);
 
   useEffect(() => {
     if (!isMyTurn) return;
@@ -1696,9 +1699,9 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
           <Shield size={12} /> {t.spectating}
         </span>
       )}
-      <p className="text-white/40 text-xs mt-14 mb-2">{t.roundOf} {game.roundNumber} · {game.wordChain.length}{t.of}{ROUND_WORD_LIMIT}</p>
+      <p className="text-white/40 text-xs mt-14 mb-2">{t.roundOf} {game.roundNumber} · {wordChain.length}{t.of}{ROUND_WORD_LIMIT}</p>
 
-      {(game.status === "spinning" || (game.status === "playing" && game.wordChain.length === 0)) && (
+      {(game.status === "spinning" || (game.status === "playing" && wordChain.length === 0)) && (
         <div className="flex flex-col items-center mt-4">
           <Wheel lang={lang} spinning={game.status === "spinning"} resultLetter={game.currentLetter} onSpinEnd={() => onSpinEnd(game.spinToken)} excludeFirst={lang === "tr" ? "Ğ" : null} />
           {game.status === "playing" && <p className="text-3xl font-black text-yellow-400 mt-4">{game.currentLetter}</p>}
@@ -1708,13 +1711,13 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
       {game.status === "playing" && (
         <div className="w-full max-w-sm mt-6">
           <div className="flex flex-wrap gap-2 justify-center mb-6">
-            {game.members.map((m, i) => (
+            {members.map((m, i) => (
               <span key={m} className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1 ${i === game.turnIndex ? "bg-yellow-400 text-[#1b1030]" : "bg-white/10 text-white/60"}`}>{m} <OnlineDot online={!!onlineUsers[m]} /></span>
             ))}
           </div>
-          {game.wordChain.length > 0 && (
+          {wordChain.length > 0 && (
             <div className="text-center mb-4 text-white/70 text-sm">
-              {game.wordChain[game.wordChain.length - 1].username}: <b className="text-white">{game.wordChain[game.wordChain.length - 1].word || "—"}</b>
+              {wordChain[wordChain.length - 1].username}: <b className="text-white">{wordChain[wordChain.length - 1].word || "—"}</b>
             </div>
           )}
           <div className="text-center mb-3">
@@ -1753,9 +1756,9 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
       {game.status === "results" && (
         <div className="w-full max-w-sm mt-6">
           <h3 className="text-white font-bold text-center mb-1" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.roundResults}</h3>
-          <p className="text-white/40 text-xs text-center mb-4">{game.lastResults.length} {t.roundOf.toLowerCase()}</p>
+          <p className="text-white/40 text-xs text-center mb-4">{lastResults.length} {t.roundOf.toLowerCase()}</p>
 
-          {game.lastResults.length > 0 && game.lastResults.every(r => r.points > 0) && (
+          {lastResults.length > 0 && lastResults.every(r => r.points > 0) && (
             <div className="mb-4 px-4 py-3 rounded-2xl text-center font-bold text-sm"
               style={{ background: "#f2b70522", border: "1px solid #f2b70566", color: "#f2b705" }}>
               🎉 {t.groupAllCorrectMsg}
@@ -1764,8 +1767,8 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
 
           {/* per-player totals for this round */}
           <div className="flex flex-wrap gap-2 justify-center mb-4">
-            {game.members.map(m => {
-              const total = game.lastResults.filter(r => r.username === m).reduce((s, r) => s + r.points, 0);
+            {members.map(m => {
+              const total = lastResults.filter(r => r.username === m).reduce((s, r) => s + r.points, 0);
               return (
                 <span key={m} className="px-3 py-1.5 rounded-full text-xs font-bold bg-white/10 text-white flex items-center gap-1">
                   {m}: <span className="text-yellow-400">{total}</span> <OnlineDot online={!!onlineUsers[m]} />
@@ -1775,7 +1778,7 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
           </div>
 
           <div className="space-y-2 mb-6 overflow-y-auto pr-1" style={{ maxHeight: "42vh" }}>
-            {game.lastResults.map((r, i) => (
+            {lastResults.map((r, i) => (
               <div key={i} className="flex items-center justify-between px-4 py-3 rounded-2xl bg-white/10">
                 <span className="text-white">{r.username}: <b>{r.word || t.noWord}</b></span>
                 <span className={`font-bold ${r.points > 0 ? "text-green-400" : "text-red-400"}`}>+{r.points} {t.points}</span>
