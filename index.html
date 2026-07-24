@@ -352,8 +352,8 @@ function formatRemaining(ms) {
 // için usedMs alanı yoktur; onlar için null döner (süresiz).
 function groupRemainingMs(g, gamesObj, now) {
   if (!g || g.usedMs === undefined) return null;
-  const isPlaying = Object.values(gamesObj).some(
-    gm2 => gm2.groupId === g.id && (gm2.status === "playing" || gm2.status === "spinning")
+  const isPlaying = Object.values(gamesObj || {}).some(
+    gm2 => gm2 && gm2.groupId === g.id && (gm2.status === "playing" || gm2.status === "spinning")
   );
   const consumed = (g.usedMs || 0) + (g.activeSince && isPlaying ? now - g.activeSince : 0);
   return GROUP_BUDGET_MS - consumed;
@@ -566,7 +566,7 @@ function App() {
     const nextGroups = { ...groupsObj };
     for (const [id, g] of Object.entries(groupsObj)) {
       if (g.usedMs === undefined) continue; // legacy groups created before this feature: never auto-expire
-      const gamesForGroup = Object.values(gamesObj).filter(gm2 => gm2.groupId === id);
+      const gamesForGroup = Object.values(gamesObj || {}).filter(gm2 => gm2 && gm2.groupId === id);
       const isPlaying = gamesForGroup.some(gm2 => gm2.status === "playing" || gm2.status === "spinning");
       const hasSession = gamesForGroup.some(gm2 => gm2.status === "playing" || gm2.status === "spinning" || gm2.status === "lobby");
 
@@ -2007,14 +2007,19 @@ function MedalPopup({ tier, t, onClose }) {
 // throws while rendering (e.g. right when entering a group), this catches
 // it and shows a recoverable screen instead of a black page.
 class ErrorBoundary extends React.Component {
-  constructor(props) { super(props); this.state = { hasError: false }; }
-  static getDerivedStateFromError() { return { hasError: true }; }
+  constructor(props) { super(props); this.state = { hasError: false, err: null }; }
+  static getDerivedStateFromError(err) { return { hasError: true, err }; }
   componentDidCatch(err, info) { console.error("App crashed:", err, info); }
   render() {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen w-full flex flex-col items-center justify-center p-6 text-center" style={{ background: "#0f0a1e" }}>
           <p className="text-white font-bold mb-4">Bir şeyler ters gitti. Devam etmek için sayfayı yenile.</p>
+          {this.state.err && (
+            <pre className="text-red-300 text-xs text-left max-w-lg overflow-auto mb-4 p-3 rounded-lg bg-white/5" style={{ whiteSpace: "pre-wrap" }}>
+              {String(this.state.err && (this.state.err.stack || this.state.err.message || this.state.err))}
+            </pre>
+          )}
           <button onClick={() => window.location.reload()} className="px-6 py-3 rounded-full font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>
             Sayfayı Yenile
           </button>
