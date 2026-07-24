@@ -22,12 +22,26 @@
     messagingSenderId: "675592794581",
     appId: "1:675592794581:web:12535460b156552897cd5c",
   };
-  firebase.initializeApp(firebaseConfig);
-  window.__fbdb = firebase.database();
-  window.__fbauth = firebase.auth();
-  window.__googleProvider = new firebase.auth.GoogleAuthProvider();
+  // Firebase SDK dosyaları (gstatic.com'dan) yavaş/zayıf bir bağlantıda geç
+  // yüklenebilir ya da hiç yüklenemeyebilir (ağ sorunu, DNS, bazı
+  // firewall/ad-blocker ayarları). Bu durumda firebase objesi tanımsız
+  // kalır ve initializeApp burada patlar. try/catch ile bunu yakalayıp
+  // window.__fbInitError üzerinden okunabilir hale getiriyoruz; uygulama
+  // tarafında (subscribeShared / loadShared / vb.) bu, "sayfa çöktü" yerine
+  // anlaşılır bir hata mesajına çevriliyor.
+  try {
+    if (typeof firebase === "undefined") throw new Error("Firebase SDK yüklenemedi (ağ bağlantısını kontrol edin).");
+    firebase.initializeApp(firebaseConfig);
+    window.__fbdb = firebase.database();
+    window.__fbauth = firebase.auth();
+    window.__googleProvider = new firebase.auth.GoogleAuthProvider();
+  } catch (e) {
+    console.error("Firebase başlatılamadı:", e);
+    window.__fbInitError = e;
+  }
 </script>
 <style>
+
   @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Inter:wght@400;500;600;700&display=swap');
   html, body { margin:0; padding:0; background:#0f0a1e; }
 </style>
@@ -248,9 +262,30 @@ function medalsForScore(score) {
 }
 
 // ---------- storage helpers (Firebase Realtime Database-backed shared state) ----------
+// window.__fbdb normally gets set synchronously by the <script> block in
+// <head> right after the Firebase SDK tags. But on a slow/unstable
+// connection those SDK files can fail to load (or initializeApp can throw),
+// leaving window.__fbdb undefined — which used to crash the whole app with
+// "Cannot read properties of undefined (reading 'ref')" the moment
+// subscribeShared ran. waitForFbdb waits a few seconds for it to show up
+// before giving up with a clear, readable error instead of that crash.
+function waitForFbdb(timeoutMs = 8000) {
+  return new Promise((resolve, reject) => {
+    if (window.__fbdb) return resolve(window.__fbdb);
+    const start = Date.now();
+    const iv = setInterval(() => {
+      if (window.__fbdb) { clearInterval(iv); resolve(window.__fbdb); return; }
+      if (Date.now() - start > timeoutMs) {
+        clearInterval(iv);
+        reject(window.__fbInitError || new Error("Firebase'e bağlanılamadı (internet bağlantınızı kontrol edip sayfayı yenileyin)."));
+      }
+    }, 150);
+  });
+}
 async function loadShared(key, fallback) {
   try {
-    const snap = await window.__fbdb.ref(key).get();
+    const db = await waitForFbdb();
+    const snap = await db.ref(key).get();
     const val = snap.exists() ? snap.val() : null;
     return (val !== null && val !== undefined) ? val : fallback;
   } catch (e) {
@@ -260,17 +295,52 @@ async function loadShared(key, fallback) {
 }
 async function saveShared(key, value) {
   try {
-    await window.__fbdb.ref(key).set(value);
+    const db = await waitForFbdb();
+    await db.ref(key).set(value);
   } catch (e) {
     console.error("saveShared(" + key + ") failed", e);
   }
 }
 // live subscription helper (used to push instant updates instead of waiting for the poll interval)
 function subscribeShared(key, cb) {
-  const ref = window.__fbdb.ref(key);
-  const handler = (snap) => cb(snap.exists() ? snap.val() : {});
-  ref.on("value", handler);
-  return () => ref.off("value", handler);
+  let ref = null, handler = null, cancelled = false;
+  waitForFbdb().then(db => {
+    if (cancelled) return;
+    ref = db.ref(key);
+    handler = (snap) => cb(snap.exists() ? snap.val() : {});
+    ref.on("value", handler);
+  }).catch(e => console.error("subscribeShared(" + key + ") failed", e));
+  return () => {
+    cancelled = true;
+    if (ref && handler) ref.off("value", handler);
+  };
+}
+
+// ---- atomic single-record helpers ----
+// The bug behind "her katılımcı gruptan bağımsız hareket ediyor" and the
+// occasional broken spin was that every action (spin, submit word, join,
+// leave...) used to read the WHOLE "games" object, change one game inside
+// it, and .set() the WHOLE object back. If two clients did this within
+// milliseconds of each other (very common in a live group game), the
+// second .set() would silently wipe out whatever the first one had just
+// written — so different players ended up seeing different, diverging
+// states of the same match. Firebase's transaction() runs against a single
+// record (games/<id> or users/<username>) and automatically retries with
+// the latest server value if another client wrote in the meantime, so
+// concurrent actions from different players can no longer clobber each
+// other.
+async function transactRecord(path, mutator) {
+  const db = await waitForFbdb();
+  const ref = db.ref(path);
+  const result = await ref.transaction(current => mutator(current));
+  return result.committed ? result.snapshot.val() : null;
+}
+async function updatePaths(updates) {
+  // Firebase multi-path update: only the listed paths are touched, so this
+  // never clobbers unrelated games/groups the way overwriting the entire
+  // "games" or "groups" node used to.
+  const db = await waitForFbdb();
+  await db.ref().update(updates);
 }
 
 // ---------- word check: real dictionary lookup via Wiktionary's public,
@@ -562,8 +632,14 @@ function App() {
   // in progress reaches "results", same as before. ----
   function cleanExpiredGroups(groupsObj, gamesObj) {
     const now = Date.now();
-    let groupsChanged = false;
     const nextGroups = { ...groupsObj };
+    // groupUpdates/gameUpdates only ever contain the specific records that
+    // actually changed (keyed by their full db path), so the caller can
+    // save them with a Firebase multi-path update() instead of overwriting
+    // the entire "groups"/"games" tree — the periodic sweep used to do a
+    // full-tree overwrite every 5s on every connected client, which is
+    // exactly what was clobbering other players' concurrent game actions.
+    const groupUpdates = {};
     for (const [id, g] of Object.entries(groupsObj)) {
       if (g.usedMs === undefined) continue; // legacy groups created before this feature: never auto-expire
       const gamesForGroup = Object.values(gamesObj || {}).filter(gm2 => gm2 && gm2.groupId === id);
@@ -584,24 +660,29 @@ function App() {
       const consumed = usedMs + (activeSince ? now - activeSince : 0);
       if (consumed >= GROUP_BUDGET_MS) {
         if (hasSession) {
-          if (!g.pendingDelete || touched) { nextGroups[id] = { ...g, usedMs, activeSince, pendingDelete: true }; groupsChanged = true; }
+          if (!g.pendingDelete || touched) {
+            const updated = { ...g, usedMs, activeSince, pendingDelete: true };
+            nextGroups[id] = updated;
+            groupUpdates["groups/" + id] = updated;
+          }
         } else {
           delete nextGroups[id];
-          groupsChanged = true;
+          groupUpdates["groups/" + id] = null;
         }
         continue;
       }
       if (touched) {
-        nextGroups[id] = { ...g, usedMs, activeSince };
-        groupsChanged = true;
+        const updated = { ...g, usedMs, activeSince };
+        nextGroups[id] = updated;
+        groupUpdates["groups/" + id] = updated;
       }
     }
-    let gamesChanged = false;
     const nextGames = { ...gamesObj };
+    const gameUpdates = {};
     for (const [gid, game] of Object.entries(gamesObj)) {
-      if (!nextGroups[game.groupId]) { delete nextGames[gid]; gamesChanged = true; }
+      if (!nextGroups[game.groupId]) { delete nextGames[gid]; gameUpdates["games/" + gid] = null; }
     }
-    return { groups: nextGroups, games: nextGames, groupsChanged, gamesChanged };
+    return { groups: nextGroups, games: nextGames, groupUpdates, gameUpdates };
   }
 
   // ---- initial load (also reusable as a one-off refresh, e.g. right after auth) ----
@@ -611,9 +692,9 @@ function App() {
       loadShared("groups", {}),
       loadShared("games", {}),
     ]);
-    const { groups: g, games: gm, groupsChanged, gamesChanged } = cleanExpiredGroups(g0, gm0);
-    if (groupsChanged) await saveShared("groups", g);
-    if (gamesChanged) await saveShared("games", gm);
+    const { groups: g, games: gm, groupUpdates, gameUpdates } = cleanExpiredGroups(g0, gm0);
+    const cleanupUpdates = { ...groupUpdates, ...gameUpdates };
+    if (Object.keys(cleanupUpdates).length) await updatePaths(cleanupUpdates);
     setUsers(u); setGroups(g); setGames(gm);
     return { u, g, gm };
   }, []);
@@ -663,18 +744,23 @@ function App() {
   const [onlineUsers, setOnlineUsers] = useState({});
   useEffect(() => {
     if (!me) return;
-    const presenceRef = window.__fbdb.ref("presence/" + me.username);
-    const connectedRef = window.__fbdb.ref(".info/connected");
-    const handler = (snap) => {
-      if (snap.val() === true) {
-        presenceRef.onDisconnect().remove();
-        presenceRef.set(true);
-      }
-    };
-    connectedRef.on("value", handler);
+    let presenceRef = null, connectedRef = null, handler = null, cancelled = false;
+    waitForFbdb().then(db => {
+      if (cancelled) return;
+      presenceRef = db.ref("presence/" + me.username);
+      connectedRef = db.ref(".info/connected");
+      handler = (snap) => {
+        if (snap.val() === true) {
+          presenceRef.onDisconnect().remove();
+          presenceRef.set(true);
+        }
+      };
+      connectedRef.on("value", handler);
+    }).catch(e => console.error("presence setup failed", e));
     return () => {
-      connectedRef.off("value", handler);
-      presenceRef.remove();
+      cancelled = true;
+      if (connectedRef && handler) connectedRef.off("value", handler);
+      if (presenceRef) presenceRef.remove();
     };
   }, [me && me.username]); // eslint-disable-line
   const isOnline = useCallback((username) => !!onlineUsers[username], [onlineUsers]);
@@ -687,9 +773,9 @@ function App() {
   useEffect(() => { gamesRef.current = games; }, [games]);
   useEffect(() => {
     const iv = setInterval(async () => {
-      const { groups: g, games: gm, groupsChanged, gamesChanged } = cleanExpiredGroups(groupsRef.current, gamesRef.current);
-      if (groupsChanged) await saveShared("groups", g);
-      if (gamesChanged) await saveShared("games", gm);
+      const { groupUpdates, gameUpdates } = cleanExpiredGroups(groupsRef.current, gamesRef.current);
+      const cleanupUpdates = { ...groupUpdates, ...gameUpdates };
+      if (Object.keys(cleanupUpdates).length) await updatePaths(cleanupUpdates);
     }, 5000);
     return () => clearInterval(iv);
   }, []);
@@ -782,10 +868,14 @@ function App() {
   }
 
   async function addPoints(username, delta) {
-    const cur = await loadShared("users", {});
-    const rec = cur[username] || { password: "", score: 0, isAdmin: false };
-    const nu = { ...cur, [username]: { ...rec, score: (rec.score || 0) + delta } };
-    await saveShared("users", nu); setUsers(nu);
+    // atomic per-user update: two group games finishing a word at the same
+    // moment (very common — several matches can run in parallel) used to
+    // both read the whole "users" tree and overwrite it in turn, silently
+    // dropping one of the two point awards.
+    await transactRecord("users/" + username, current => {
+      const rec = current || { password: "", score: 0, isAdmin: false };
+      return { ...rec, score: (rec.score || 0) + delta };
+    });
   }
 
   // ---------------- GROUPS ----------------
@@ -795,19 +885,26 @@ function App() {
     if (myGroupCount >= 50) { alert(t.groupLimitReached); return; }
 
     const today = new Date().toISOString().slice(0, 10);
-    const freshUsers = await loadShared("users", {});
-    const myRec = freshUsers[me.username] || { password: "", score: 0, isAdmin: false };
-    const countToday = myRec.groupsCreatedDate === today ? (myRec.groupsCreatedCount || 0) : 0;
-    if (countToday >= 3) { alert(t.dailyGroupLimit); return; }
+    // atomic per-user check-and-increment: two "create group" taps landing
+    // in the same instant no longer race on a shared read of the whole
+    // "users" tree
+    let limitHit = false;
+    const freshUserRec = await transactRecord("users/" + me.username, current => {
+      const rec = current || { password: "", score: 0, isAdmin: false };
+      const countToday = rec.groupsCreatedDate === today ? (rec.groupsCreatedCount || 0) : 0;
+      if (countToday >= 3) { limitHit = true; return; } // abort
+      return { ...rec, groupsCreatedDate: today, groupsCreatedCount: countToday + 1 };
+    });
+    if (limitHit) { alert(t.dailyGroupLimit); return; }
+    if (freshUserRec) setUsers(prev => ({ ...prev, [me.username]: freshUserRec }));
 
     const id = uid();
     const now = Date.now();
     const g = { id, name: newGroupName.trim(), owner: me.username, members: [me.username], messages: [], createdAt: now, usedMs: 0, activeSince: null, pendingDelete: false };
-    const ng = { ...groups, [id]: g };
-    await saveShared("groups", ng); setGroups(ng);
-
-    const nu = { ...freshUsers, [me.username]: { ...myRec, groupsCreatedDate: today, groupsCreatedCount: countToday + 1 } };
-    await saveShared("users", nu); setUsers(nu);
+    // brand-new id, so a plain scoped set is safe — nothing else can already
+    // be writing to this path
+    await (await waitForFbdb()).ref("groups/" + id).set(g);
+    setGroups(prev => ({ ...prev, [id]: g }));
 
     setNewGroupName(""); setShowCreateGroup(false);
     setActiveGroupId(id); setScreen("chat");
@@ -816,64 +913,60 @@ function App() {
   async function inviteToGroup(groupId, username) {
     const g = groups[groupId];
     if (!g || g.members.includes(username)) return;
-    const notifs = await loadShared("notifications", {});
-    const userNotifs = notifs[username] || [];
-    userNotifs.push({ id: uid(), type: "groupInvite", from: me.username, groupId, groupName: g.name, ts: Date.now() });
-    const nn = { ...notifs, [username]: userNotifs };
-    await saveShared("notifications", nn);
+    await transactRecord("notifications/" + username, current => {
+      const userNotifs = current || [];
+      return [...userNotifs, { id: uid(), type: "groupInvite", from: me.username, groupId, groupName: g.name, ts: Date.now() }];
+    });
     alert(`${username} — ${t.invite} ✓`);
   }
 
   async function kickFromGroup(groupId, username) {
-    const g = await loadShared("groups", {});
-    const grp = g[groupId];
-    if (!grp || grp.owner !== me.username || username === grp.owner) return;
-    grp.members = grp.members.filter(m => m !== username);
-    await saveShared("groups", g); setGroups(g);
+    await transactRecord("groups/" + groupId, current => {
+      if (!current || current.owner !== me.username || username === current.owner) return current;
+      return { ...current, members: current.members.filter(m => m !== username) };
+    });
   }
 
   async function leaveGroupFn(groupId) {
-    const g = await loadShared("groups", {});
-    const grp = g[groupId];
+    const grp = groups[groupId];
     if (!grp) { setActiveGroupId(null); setScreen("groups"); return; }
     if (grp.owner === me.username) { await deleteGroupFn(groupId); return; }
-    grp.members = grp.members.filter(m => m !== me.username);
-    await saveShared("groups", g); setGroups(g);
+    await transactRecord("groups/" + groupId, current => {
+      if (!current) return current;
+      return { ...current, members: current.members.filter(m => m !== me.username) };
+    });
     setActiveGroupId(null); setScreen("groups");
   }
 
   async function deleteGroupFn(groupId) {
-    const g = await loadShared("groups", {});
-    if (!g[groupId]) { setActiveGroupId(null); setScreen("groups"); return; }
-    delete g[groupId];
-    await saveShared("groups", g); setGroups(g);
+    // scoped delete: only this one group's record is removed, every other
+    // group is left completely untouched
+    await (await waitForFbdb()).ref("groups/" + groupId).remove();
     const gm = await loadShared("games", {});
     const ng = { ...gm };
-    let changed = false;
+    const deletions = {};
     for (const [gid, game] of Object.entries(gm)) {
-      if (game.groupId === groupId) { delete ng[gid]; changed = true; }
+      if (game.groupId === groupId) { delete ng[gid]; deletions["games/" + gid] = null; }
     }
-    if (changed) { await saveShared("games", ng); setGames(ng); }
+    if (Object.keys(deletions).length) { await updatePaths(deletions); setGames(ng); }
     setActiveGroupId(null); setScreen("groups");
   }
 
   async function acceptGroupInvite(notif) {
-    const g = await loadShared("groups", {});
-    const grp = g[notif.groupId];
-    if (grp && !grp.members.includes(me.username)) {
-      grp.members.push(me.username);
-      await saveShared("groups", g); setGroups(g);
-    }
+    const grp = await transactRecord("groups/" + notif.groupId, current => {
+      if (!current) return current;
+      if (current.members.includes(me.username)) return current;
+      return { ...current, members: [...current.members, me.username] };
+    });
     await removeNotification(notif.id);
     if (grp) { setActiveGroupId(notif.groupId); setScreen("chat"); }
   }
 
   async function removeNotification(id) {
-    const notifs = await loadShared("notifications", {});
-    const mine = (notifs[me.username] || []).filter(n => n.id !== id);
-    const nn = { ...notifs, [me.username]: mine };
-    await saveShared("notifications", nn);
-    setMyNotifs(mine);
+    const mine = await transactRecord("notifications/" + me.username, current => {
+      return (current || []).filter(n => n.id !== id);
+    });
+    setMyNotifs(mine || []);
   }
 
   const [myNotifs, setMyNotifs] = useState([]);
@@ -887,138 +980,151 @@ function App() {
   const [chatInput, setChatInput] = useState("");
   async function sendMessage(groupId) {
     if (!chatInput.trim()) return;
-    const g = await loadShared("groups", {});
-    const grp = g[groupId];
-    grp.messages.push({ id: uid(), from: me.username, type: "text", text: chatInput.trim(), ts: Date.now() });
-    await saveShared("groups", g); setGroups(g); setChatInput("");
+    const text = chatInput.trim();
+    setChatInput("");
+    await transactRecord("groups/" + groupId, current => {
+      if (!current) return current;
+      const messages = current.messages || [];
+      return { ...current, messages: [...messages, { id: uid(), from: me.username, type: "text", text, ts: Date.now() }] };
+    });
   }
 
   async function sendGameInvite(groupId) {
-    const g = await loadShared("groups", {});
-    const grp = g[groupId];
-    if (!grp) { alert(t.groupGone); return; }
-    if (!Array.isArray(grp.messages)) grp.messages = [];
     const gameId = uid();
-    grp.messages.push({ id: uid(), from: me.username, type: "invite", gameId, ts: Date.now() });
-    const gm = await loadShared("games", {});
-    gm[gameId] = {
+    const newGame = {
       id: gameId, groupId, host: me.username, lang, status: "lobby",
       members: [me.username], maxMembers: 15,
       currentLetter: null, turnIndex: 0, roundNumber: 0,
       wordChain: [], lastResults: [], spinToken: 0,
     };
-    await Promise.all([saveShared("groups", g), saveShared("games", gm)]);
-    setGroups(g); setGames(gm);
+    const grp = await transactRecord("groups/" + groupId, current => {
+      if (!current) return current;
+      const messages = current.messages || [];
+      return { ...current, messages: [...messages, { id: uid(), from: me.username, type: "invite", gameId, ts: Date.now() }] };
+    });
+    if (!grp) { alert(t.groupGone); return; }
+    // Only this brand-new game record is touched — other games in flight
+    // elsewhere are left alone.
+    await (await waitForFbdb()).ref("games/" + gameId).set(newGame);
+    setGames(prev => ({ ...prev, [gameId]: newGame }));
     setActiveGameId(gameId); setScreen("lobby");
   }
 
   async function joinLobby(gameId) {
-    const gm = await loadShared("games", {});
-    const game = gm[gameId];
-    if (!game || game.members.includes(me.username)) { setActiveGameId(gameId); setScreen("lobby"); return; }
-    if (game.members.length >= game.maxMembers) { alert(t.lobbyFull); return; }
-    game.members.push(me.username);
-    await saveShared("games", gm); setGames(gm);
+    let full = false;
+    const game = await transactRecord("games/" + gameId, current => {
+      if (!current) return; // abort — this game no longer exists
+      if (current.members.includes(me.username)) return current;
+      if (current.members.length >= current.maxMembers) { full = true; return; } // abort transaction
+      return { ...current, members: [...current.members, me.username] };
+    });
+    if (!game) { if (full) alert(t.lobbyFull); return; }
     setActiveGameId(gameId); setScreen("lobby");
   }
 
   async function leaveLobby(gameId) {
-    const gm = await loadShared("games", {});
-    const game = gm[gameId];
-    if (game) {
-      game.members = game.members.filter(m => m !== me.username);
-      await saveShared("games", gm); setGames(gm);
-    }
+    await transactRecord("games/" + gameId, current => {
+      if (!current) return current;
+      return { ...current, members: current.members.filter(m => m !== me.username) };
+    });
     setScreen("chat");
   }
 
   async function startSpin(gameId) {
-    const gm = await loadShared("games", {});
-    const game = gm[gameId];
-    const letters = ALPHABETS[game.lang].filter(l => game.lang === "tr" ? l !== "Ğ" : true);
-    const pick = letters[Math.floor(Math.random() * letters.length)];
-    game.status = "spinning";
-    game.currentLetter = pick;
-    game.spinToken = (game.spinToken || 0) + 1;
-    game.turnIndex = 0;
-    game.wordChain = [];
-    game.roundNumber = (game.roundNumber || 0) + 1;
-    await saveShared("games", gm); setGames(gm);
+    await transactRecord("games/" + gameId, current => {
+      if (!current) return current;
+      const letters = ALPHABETS[current.lang].filter(l => current.lang === "tr" ? l !== "Ğ" : true);
+      const pick = letters[Math.floor(Math.random() * letters.length)];
+      return {
+        ...current,
+        status: "spinning",
+        currentLetter: pick,
+        spinToken: (current.spinToken || 0) + 1,
+        turnIndex: 0,
+        wordChain: [],
+        roundNumber: (current.roundNumber || 0) + 1,
+      };
+    });
   }
 
   async function finishSpin(gameId, expectedToken) {
-    const gm = await loadShared("games", {});
-    const game = gm[gameId];
-    if (!game) return;
-    // guard: ignore a stale onSpinEnd firing from an old animation that
-    // finishes late (e.g. a laggy client) after the round has already
-    // moved on to a newer spin
-    if (expectedToken !== undefined && game.spinToken !== expectedToken) return;
-    if (game.status === "spinning") {
-      game.status = "playing";
-      await saveShared("games", gm); setGames(gm);
-    }
+    await transactRecord("games/" + gameId, current => {
+      if (!current) return current;
+      // guard: ignore a stale onSpinEnd firing from an old animation that
+      // finishes late (e.g. a laggy client) after the round has already
+      // moved on to a newer spin
+      if (expectedToken !== undefined && current.spinToken !== expectedToken) return current;
+      if (current.status !== "spinning") return current;
+      return { ...current, status: "playing" };
+    });
   }
 
   async function submitWord(gameId, word, isValid, timedOut) {
-    const gm = await loadShared("games", {});
-    const game = gm[gameId];
+    let pointsAwarded = 0;
+    let bonusShare = null;
+    const game = await transactRecord("games/" + gameId, current => {
+      if (!current) return current;
+      pointsAwarded = 0;
+      bonusShare = null;
 
-    if (timedOut) {
-      // süresi dolan oyuncunun serisi bozulur: sıra sıradaki kişiye geçer ve
-      // onun için baştan yeni bir çark çevirme turu başlar
-      const letters = ALPHABETS[game.lang].filter(l => game.lang === "tr" ? l !== "Ğ" : true);
-      const pick = letters[Math.floor(Math.random() * letters.length)];
-      game.turnIndex = (game.turnIndex + 1) % game.members.length;
-      game.status = "spinning";
-      game.currentLetter = pick;
-      game.spinToken = (game.spinToken || 0) + 1;
-      game.wordChain = [];
-      game.roundNumber = (game.roundNumber || 0) + 1;
-      await saveShared("games", gm); setGames(gm);
-      return;
-    }
-
-    const trimmed = word.trim();
-    const isDuplicate = trimmed && game.wordChain.some(
-      w => w.word && normalizeWord(w.word, game.lang) === normalizeWord(trimmed, game.lang)
-    );
-    if (isDuplicate) {
-      // aynı kelime bu turda daha önce kullanılmış: oyun herkes için burada biter
-      game.wordChain.push({ username: me.username, word: trimmed, points: 0 });
-      game.status = "gameover";
-      game.gameOverWord = trimmed;
-      game.gameOverBy = me.username;
-      await saveShared("games", gm); setGames(gm);
-      return;
-    }
-
-    const points = isValid && trimmed ? POINTS_PER_WORD : 0;
-    game.wordChain.push({ username: me.username, word: trimmed, points });
-    if (points > 0) await addPoints(me.username, POINTS_PER_WORD);
-    if (game.wordChain.length >= ROUND_WORD_LIMIT) {
-      game.status = "results";
-      game.lastResults = game.wordChain;
-      const allCorrect = game.wordChain.every(w => w.points > 0);
-      if (allCorrect) {
-        // hiç kaçırılmadan tur limitine ulaşıldı: bonus tüm gruba paylaştırılır,
-        // kişisel olarak kazanılmış kelime puanları olduğu gibi kalır
-        const share = Math.round(STREAK_BONUS / game.members.length);
-        for (const m of game.members) {
-          await addPoints(m, share);
-        }
+      if (timedOut) {
+        // süresi dolan oyuncunun serisi bozulur: sıra sıradaki kişiye geçer ve
+        // onun için baştan yeni bir çark çevirme turu başlar
+        const letters = ALPHABETS[current.lang].filter(l => current.lang === "tr" ? l !== "Ğ" : true);
+        const pick = letters[Math.floor(Math.random() * letters.length)];
+        return {
+          ...current,
+          turnIndex: (current.turnIndex + 1) % current.members.length,
+          status: "spinning",
+          currentLetter: pick,
+          spinToken: (current.spinToken || 0) + 1,
+          wordChain: [],
+          roundNumber: (current.roundNumber || 0) + 1,
+        };
       }
-    } else {
-      game.turnIndex = (game.turnIndex + 1) % game.members.length; // keep looping through the lobby's members
+
+      const trimmed = word.trim();
+      const wordChain = current.wordChain || [];
+      const isDuplicate = trimmed && wordChain.some(
+        w => w.word && normalizeWord(w.word, current.lang) === normalizeWord(trimmed, current.lang)
+      );
+      if (isDuplicate) {
+        // aynı kelime bu turda daha önce kullanılmış: oyun herkes için burada biter
+        return {
+          ...current,
+          wordChain: [...wordChain, { username: me.username, word: trimmed, points: 0 }],
+          status: "gameover",
+          gameOverWord: trimmed,
+          gameOverBy: me.username,
+        };
+      }
+
+      const points = isValid && trimmed ? POINTS_PER_WORD : 0;
+      pointsAwarded = points;
+      const nextChain = [...wordChain, { username: me.username, word: trimmed, points }];
+      if (nextChain.length >= ROUND_WORD_LIMIT) {
+        const allCorrect = nextChain.every(w => w.points > 0);
+        if (allCorrect) {
+          // hiç kaçırılmadan tur limitine ulaşıldı: bonus tüm gruba paylaştırılır,
+          // kişisel olarak kazanılmış kelime puanları olduğu gibi kalır
+          bonusShare = { members: current.members, share: Math.round(STREAK_BONUS / current.members.length) };
+        }
+        return { ...current, wordChain: nextChain, status: "results", lastResults: nextChain };
+      }
+      return { ...current, wordChain: nextChain, turnIndex: (current.turnIndex + 1) % current.members.length };
+    });
+    if (!game) return;
+    if (pointsAwarded > 0) await addPoints(me.username, pointsAwarded);
+    if (bonusShare) {
+      for (const m of bonusShare.members) await addPoints(m, bonusShare.share);
     }
-    await saveShared("games", gm); setGames(gm);
   }
 
   async function backToWheelScreen(gameId) {
-    const gm = await loadShared("games", {});
-    const game = gm[gameId];
-    game.status = "lobby";
-    await saveShared("games", gm); setGames(gm);
+    await transactRecord("games/" + gameId, current => {
+      if (!current) return current;
+      return { ...current, status: "lobby" };
+    });
   }
 
   // ---------------- RENDER HELPERS ----------------
@@ -1416,7 +1522,11 @@ function App() {
         </div>
 
         <div className="flex-1 space-y-2 overflow-y-auto mb-3 max-w-md w-full mx-auto" style={{ maxHeight: "60vh" }}>
-          {(grp.messages || []).map(m => (
+          {/* Oyun daveti balonları gönderildikten 30 saniye sonra sohbetten
+              otomatik kaybolur (metin mesajları kalıcı kalmaya devam eder).
+              `tick` her saniye güncellendiği için bu filtre otomatik olarak
+              yeniden hesaplanır, ayrıca sayfayı yenilemeye gerek kalmaz. */}
+          {(grp.messages || []).filter(m => m.type !== "invite" || (tick - m.ts) < 30000).map(m => (
             <div key={m.id} className={`max-w-[80%] ${m.from === me.username ? "ml-auto" : ""}`}>
               {m.type === "text" ? (
                 <div className={`px-4 py-2 rounded-2xl text-sm ${m.from === me.username ? "bg-yellow-500 text-[#1b1030]" : "bg-white/10 text-white"}`}>
@@ -1430,7 +1540,7 @@ function App() {
               )}
             </div>
           ))}
-          {(grp.messages || []).length === 0 && <p className="text-white/40 text-center text-sm mt-8">…</p>}
+          {(grp.messages || []).filter(m => m.type !== "invite" || (tick - m.ts) < 30000).length === 0 && <p className="text-white/40 text-center text-sm mt-8">…</p>}
         </div>
 
         <div className="max-w-md w-full mx-auto flex gap-2">
@@ -1647,6 +1757,7 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
   const feedbackKeyRef = useRef(0);
   const timerRef = useRef(null);
   const feedbackTimeoutRef = useRef(null);
+  const wordInputRef = useRef(null);
   const members = game.members || [];
   const wordChain = game.wordChain || [];
   const lastResults = game.lastResults || [];
@@ -1666,6 +1777,17 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
     }, 1000);
     return () => clearInterval(timerRef.current);
   }, [isMyTurn, game.turnIndex]); // eslint-disable-line
+
+  // Kelime giriş alanı her yeni kelimede kullanıcı tıklamadan otomatik
+  // seçili (odaklı) hale gelsin. `autoFocus` sadece input ilk kez DOM'a
+  // eklendiğinde çalışır; sıra tekrar aynı oyuncuya geldiğinde (input
+  // yeniden mount edilmiyor) bu efekt her yeni kelimede odağı elle
+  // tazeler. Not: bazı mobil tarayıcılar, kullanıcı dokunuşu olmadan
+  // programatik odaklanmayla klavyeyi açmayı engelleyebilir; bu tarayıcı
+  // kısıtı olup kod tarafından aşılamaz.
+  useEffect(() => {
+    if (isMyTurn) wordInputRef.current && wordInputRef.current.focus();
+  }, [isMyTurn, wordChain.length]);
 
   useEffect(() => () => clearTimeout(feedbackTimeoutRef.current), []);
 
@@ -1731,7 +1853,7 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
             <>
               <div className="flex items-center justify-center gap-1 text-white/60 text-sm mb-2"><Clock size={14} /> {timeLeft}s</div>
               <div className="flex gap-2">
-                <input autoFocus value={wordInput}
+                <input ref={wordInputRef} autoFocus value={wordInput}
                   onChange={e => {
                     const v = e.target.value;
                     // Some mobile keyboards don't fire a proper "Enter" keydown event;
@@ -1825,6 +1947,7 @@ function SoloGameView({ t, lang, me, onAddPoints, onExit }) {
   const feedbackKeyRef = useRef(0);
   const [timeLeft, setTimeLeft] = useState(WORD_TIME_SECONDS);
   const timerRef = useRef(null);
+  const wordInputRef = useRef(null);
   const required = chain.length === 0 ? letter : lastLetter(chain[chain.length - 1].word, lang);
 
   useEffect(() => {
@@ -1839,6 +1962,12 @@ function SoloGameView({ t, lang, me, onAddPoints, onExit }) {
     }, 1000);
     return () => clearInterval(timerRef.current);
   }, [status, chain.length]); // eslint-disable-line
+
+  // Kelime giriş alanı her yeni kelimede kullanıcı tıklamadan otomatik
+  // seçili (odaklı) olsun — bkz. GroupGameView'daki aynı notu.
+  useEffect(() => {
+    if (status === "playing") wordInputRef.current && wordInputRef.current.focus();
+  }, [status, chain.length]);
 
   function spin() {
     const letters = ALPHABETS[lang].filter(l => lang === "tr" ? l !== "Ğ" : true);
@@ -1951,7 +2080,7 @@ function SoloGameView({ t, lang, me, onAddPoints, onExit }) {
             <Clock size={14} /> {timeLeft}s
           </div>
           <div className="flex gap-2 mb-4">
-            <input autoFocus value={wordInput}
+            <input ref={wordInputRef} autoFocus value={wordInput}
               onChange={e => {
                 const v = e.target.value;
                 if (v.includes("\n")) { submit(false); return; }
