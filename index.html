@@ -1,347 +1,1827 @@
-From: <Saved by Blink>
-Snapshot-Content-Location: https://a96aa6b9-352f-4b39-9cd8-3af79baa0d00-00-27lwwf1f5hcil.pike.replit.dev/
-Subject: =?utf-8?Q?Kelime=20T=C3=BCretmece?=
-Date: Fri, 24 Jul 2026 18:28:39 +0300
-MIME-Version: 1.0
-Content-Type: multipart/related;
-	type="text/html";
-	boundary="----MultipartBoundary--lxu9pNUKZvL23nCRyILZLF1cYqjj5X8XQNuPG8tmqL----"
-
-
-------MultipartBoundary--lxu9pNUKZvL23nCRyILZLF1cYqjj5X8XQNuPG8tmqL----
-Content-Type: text/html
-Content-ID: <frame-C0282784702FEADB2FC3EA290BAB8016@mhtml.blink>
-Content-Transfer-Encoding: binary
-Content-Location: https://a96aa6b9-352f-4b39-9cd8-3af79baa0d00-00-27lwwf1f5hcil.pike.replit.dev/
-
-<!DOCTYPE html><html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><link rel="stylesheet" type="text/css" href="cid:css-d7fceded-7800-4f0f-abc7-2c259f5c18c2@mhtml.blink" /><link rel="stylesheet" type="text/css" href="cid:css-f919c198-1b65-4518-a260-328136c3cc6f@mhtml.blink" /><link rel="stylesheet" type="text/css" href="cid:css-3ca3a177-e674-4336-bfcc-9196ca9d91df@mhtml.blink" /><link rel="stylesheet" type="text/css" href="cid:css-25b71c07-a8b0-4699-8bfa-347c75ef219f@mhtml.blink" />
-  
-
-  
-
-  
-
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!DOCTYPE html>
+<html lang="tr">
+<başlık>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Kelime Türetmece</title>
-
-
-
-
-<!-- Firebase (compat build so it works as plain <script> tags, no bundler needed) -->
-
-
-
-
-
-  
-  
-  
-  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- Firebase (uyumluluk derlemesi, düz <script> etiketleri olarak çalışır, paketleyiciye gerek yoktur) -->
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script>
+  sabit firebaseConfig = {
+    apiKey: "AIzaSyBcV5ATZ6-aPWegXF6z5zp5TkA0iw4x9hA",
+    authDomain: "kelime-oyunu-6d187.firebaseapp.com",
+    databaseURL: "https://kelime-oyunu-6d187-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "kelime-oyunu-6d187",
+    depolama kovası: "kelime-oyunu-6d187.firebasestorage.app",
+    messagingSenderId: "675592794581",
+    appId: "1:675592794581:web:12535460b156552897cd5c",
+  };
+  firebase.initializeApp(firebaseConfig);
+  pencere.__fbdb = firebase.veritabanı();
+  pencere.__fbauth = firebase.auth();
+  window.__googleProvider = new firebase.auth.GoogleAuthProvider();
+</script>
+<style>
+  html, body { margin:0; padding:0; background:#0f0a1e; }
+</style>
 </head>
-<body style="padding-top: 0px;">
-<div id="root"><div class="min-h-screen w-full flex items-center justify-center p-6" style="font-family: Inter, sans-serif;"><div class="fixed inset-0 -z-10 overflow-hidden" style="background: radial-gradient(at 25% 15%, rgb(45, 23, 85) 0%, rgb(28, 15, 56) 45%, rgb(15, 10, 30) 100%);"><div class="absolute rounded-full" style="width: 460px; height: 460px; left: -8%; top: -10%; background: rgb(242, 183, 5); opacity: 0.16; filter: blur(110px); animation: 22s ease-in-out 0s infinite normal none running drift1;"></div><div class="absolute rounded-full" style="width: 420px; height: 420px; right: -10%; top: 20%; background: rgb(51, 214, 176); opacity: 0.14; filter: blur(110px); animation: 26s ease-in-out 0s infinite normal none running drift2;"></div><div class="absolute rounded-full" style="width: 380px; height: 380px; left: 10%; bottom: -14%; background: rgb(255, 111, 97); opacity: 0.12; filter: blur(110px); animation: 19s ease-in-out 0s infinite normal none running drift3;"></div><div class="absolute inset-0 opacity-[0.05]" style="background-image: linear-gradient(rgb(255, 255, 255) 1px, transparent 1px), linear-gradient(90deg, rgb(255, 255, 255) 1px, transparent 1px); background-size: 52px 52px;"></div><div class="absolute flex items-center justify-center select-none" style="left: 6%; top: 10%; width: 44px; height: 44px; border-radius: 8px; background: rgba(245, 240, 255, 0.043); border: 1px solid rgba(245, 240, 255, 0.08); box-shadow: rgba(0, 0, 0, 0.25) 0px 6px 16px; transform: rotate(8deg); animation: 9s ease-in-out 0s infinite normal none running float0;"><span style="font-family: Fredoka, sans-serif; font-weight: 700; font-size: 20px; color: rgba(245, 240, 255, 0.16);">K</span><span style="position: absolute; right: 4px; bottom: 2px; font-size: 8px; font-weight: 700; color: rgba(245, 240, 255, 0.12);">1</span></div><div class="absolute flex items-center justify-center select-none" style="left: 35%; top: 51%; width: 44px; height: 44px; border-radius: 8px; background: rgba(245, 240, 255, 0.043); border: 1px solid rgba(245, 240, 255, 0.08); box-shadow: rgba(0, 0, 0, 0.25) 0px 6px 16px; transform: rotate(-13deg); animation: 10s ease-in-out 0s infinite normal none running float1;"><span style="font-family: Fredoka, sans-serif; font-weight: 700; font-size: 20px; color: rgba(245, 240, 255, 0.16);">E</span><span style="position: absolute; right: 4px; bottom: 2px; font-size: 8px; font-weight: 700; color: rgba(245, 240, 255, 0.12);">1</span></div><div class="absolute flex items-center justify-center select-none" style="left: 64%; top: 4%; width: 44px; height: 44px; border-radius: 8px; background: rgba(245, 240, 255, 0.043); border: 1px solid rgba(245, 240, 255, 0.08); box-shadow: rgba(0, 0, 0, 0.25) 0px 6px 16px; transform: rotate(18deg); animation: 11s ease-in-out 0s infinite normal none running float2;"><span style="font-family: Fredoka, sans-serif; font-weight: 700; font-size: 20px; color: rgba(245, 240, 255, 0.16);">L</span><span style="position: absolute; right: 4px; bottom: 2px; font-size: 8px; font-weight: 700; color: rgba(245, 240, 255, 0.12);">2</span></div><div class="absolute flex items-center justify-center select-none" style="left: 1%; top: 45%; width: 44px; height: 44px; border-radius: 8px; background: rgba(245, 240, 255, 0.043); border: 1px solid rgba(245, 240, 255, 0.08); box-shadow: rgba(0, 0, 0, 0.25) 0px 6px 16px; transform: rotate(-23deg); animation: 12s ease-in-out 0s infinite normal none running float0;"><span style="font-family: Fredoka, sans-serif; font-weight: 700; font-size: 20px; color: rgba(245, 240, 255, 0.16);">İ</span><span style="position: absolute; right: 4px; bottom: 2px; font-size: 8px; font-weight: 700; color: rgba(245, 240, 255, 0.12);">3</span></div><div class="absolute flex items-center justify-center select-none" style="left: 30%; top: 86%; width: 44px; height: 44px; border-radius: 8px; background: rgba(245, 240, 255, 0.043); border: 1px solid rgba(245, 240, 255, 0.08); box-shadow: rgba(0, 0, 0, 0.25) 0px 6px 16px; transform: rotate(28deg); animation: 13s ease-in-out 0s infinite normal none running float1;"><span style="font-family: Fredoka, sans-serif; font-weight: 700; font-size: 20px; color: rgba(245, 240, 255, 0.16);">M</span><span style="position: absolute; right: 4px; bottom: 2px; font-size: 8px; font-weight: 700; color: rgba(245, 240, 255, 0.12);">2</span></div><div class="absolute flex items-center justify-center select-none" style="left: 59%; top: 39%; width: 44px; height: 44px; border-radius: 8px; background: rgba(245, 240, 255, 0.043); border: 1px solid rgba(245, 240, 255, 0.08); box-shadow: rgba(0, 0, 0, 0.25) 0px 6px 16px; transform: rotate(-33deg); animation: 14s ease-in-out 0s infinite normal none running float2;"><span style="font-family: Fredoka, sans-serif; font-weight: 700; font-size: 20px; color: rgba(245, 240, 255, 0.16);">E</span><span style="position: absolute; right: 4px; bottom: 2px; font-size: 8px; font-weight: 700; color: rgba(245, 240, 255, 0.12);">1</span></div><div class="absolute flex items-center justify-center select-none" style="left: 88%; top: 80%; width: 44px; height: 44px; border-radius: 8px; background: rgba(245, 240, 255, 0.043); border: 1px solid rgba(245, 240, 255, 0.08); box-shadow: rgba(0, 0, 0, 0.25) 0px 6px 16px; transform: rotate(38deg); animation: 15s ease-in-out 0s infinite normal none running float0;"><span style="font-family: Fredoka, sans-serif; font-weight: 700; font-size: 20px; color: rgba(245, 240, 255, 0.16);">T</span><span style="position: absolute; right: 4px; bottom: 2px; font-size: 8px; font-weight: 700; color: rgba(245, 240, 255, 0.12);">1</span></div><div class="absolute flex items-center justify-center select-none" style="left: 25%; top: 33%; width: 44px; height: 44px; border-radius: 8px; background: rgba(245, 240, 255, 0.043); border: 1px solid rgba(245, 240, 255, 0.08); box-shadow: rgba(0, 0, 0, 0.25) 0px 6px 16px; transform: rotate(-43deg); animation: 16s ease-in-out 0s infinite normal none running float1;"><span style="font-family: Fredoka, sans-serif; font-weight: 700; font-size: 20px; color: rgba(245, 240, 255, 0.16);">Ü</span><span style="position: absolute; right: 4px; bottom: 2px; font-size: 8px; font-weight: 700; color: rgba(245, 240, 255, 0.12);">3</span></div><div class="absolute inset-0" style="box-shadow: rgba(0, 0, 0, 0.55) 0px 0px 180px inset;"></div></div><div class="absolute top-4 right-4"><div class="flex gap-1 bg-black/20 rounded-full p-1"><button class="px-3 py-1 rounded-full text-xs font-semibold transition" style="background: rgb(242, 183, 5); color: rgb(27, 16, 48);">TR</button><button class="px-3 py-1 rounded-full text-xs font-semibold transition" style="background: transparent; color: rgb(245, 240, 255);">EN</button><button class="px-3 py-1 rounded-full text-xs font-semibold transition" style="background: transparent; color: rgb(245, 240, 255);">DE</button></div></div><div class="w-full max-w-sm rounded-3xl p-7" style="background: rgba(36, 21, 66, 0.85); backdrop-filter: blur(12px); box-shadow: rgba(0, 0, 0, 0.5) 0px 20px 60px; border: 1px solid rgba(255, 255, 255, 0.08);"><div class="text-center mb-6"><div class="mx-auto mb-3 flex items-center justify-center" style="filter: drop-shadow(rgba(242, 183, 5, 0.25) 0px 8px 20px);"><div class="relative select-none" style="width: 84px; height: 84px;"><div class="absolute left-1/2 -top-3 z-20" style="transform: translateX(-50%); width: 0px; height: 0px; border-left: 12px solid transparent; border-right: 12px solid transparent; border-top: 20px solid rgb(242, 183, 5); filter: drop-shadow(rgba(0, 0, 0, 0.5) 0px 2px 3px);"></div><div class="absolute inset-0 rounded-full" style="transform: rotate(0deg); transition: none; box-shadow: rgb(58, 34, 101) 0px 0px 0px 6px, rgba(242, 183, 5, 0.333) 0px 0px 0px 10px, rgba(0, 0, 0, 0.55) 0px 20px 50px;"><svg viewBox="0 0 200 200" width="100%" height="100%"><circle cx="100" cy="100" r="99" fill="#241542"></circle><g><path d="M100,100 L100,1 A99,99 0 0 1 122.02957246167513,3.4821366939994647 Z" fill="#2c1750" stroke="#4a2f7a" stroke-width="1"></path><text x="107.61358437502494" y="32.42756972725951" fill="#f5f0ff" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(6.428571428571431, 107.61358437502494, 32.42756972725951)">A</text></g><g><path d="M100,100 L122.02957246167513,3.4821366939994647 A99,99 0 0 1 142.95449017263826,10.80408207766051 Z" fill="#33204f" stroke="#4a2f7a" stroke-width="1"></path><text x="122.45897621295137" y="35.81593353903101" fill="#f5f0ff" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(19.285714285714292, 122.45897621295137, 35.81593353903101)">B</text></g><g><path d="M100,100 L142.95449017263826,10.80408207766051 A99,99 0 0 1 161.72549038401462,22.59868323566505 Z" fill="#2c1750" stroke="#4a2f7a" stroke-width="1"></path><text x="136.1781812030429" y="42.42275445247668" fill="#f5f0ff" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(32.142857142857146, 136.1781812030429, 42.42275445247668)">C</text></g><g><path d="M100,100 L161.72549038401462,22.59868323566505 A99,99 0 0 1 177.40131676433495,38.27450961598539 Z" fill="#33204f" stroke="#4a2f7a" stroke-width="1"></path><text x="148.08326112068522" y="51.91673887931477" fill="#f5f0ff" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(45, 148.08326112068522, 51.91673887931477)">Ç</text></g><g><path d="M100,100 L177.40131676433495,38.27450961598539 A99,99 0 0 1 189.1959179223395,57.045509827361755 Z" fill="#2c1750" stroke="#4a2f7a" stroke-width="1"></path><text x="157.57724554752332" y="63.82181879695711" fill="#f5f0ff" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(57.85714285714286, 157.57724554752332, 63.82181879695711)">D</text></g><g><path d="M100,100 L189.1959179223395,57.045509827361755 A99,99 0 0 1 196.51786330600055,77.97042753832487 Z" fill="#33204f" stroke="#4a2f7a" stroke-width="1"></path><text x="164.184066460969" y="77.54102378704863" fill="#f5f0ff" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(70.71428571428571, 164.184066460969, 77.54102378704863)">E</text></g><g><path d="M100,100 L196.51786330600055,77.97042753832487 A99,99 0 0 1 199,100 Z" fill="#2c1750" stroke="#4a2f7a" stroke-width="1"></path><text x="167.5724302727405" y="92.38641562497506" fill="#f5f0ff" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(83.57142857142857, 167.5724302727405, 92.38641562497506)">F</text></g><g><path d="M100,100 L199,100 A99,99 0 0 1 196.51786330600055,122.02957246167513 Z" fill="#33204f" stroke="#4a2f7a" stroke-width="1"></path><text x="167.5724302727405" y="107.61358437502494" fill="#f5f0ff" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(96.42857142857143, 167.5724302727405, 107.61358437502494)">G</text></g><g><path d="M100,100 L196.51786330600055,122.02957246167513 A99,99 0 0 1 189.1959179223395,142.95449017263826 Z" fill="#2c1750" stroke="#4a2f7a" stroke-width="1"></path><text x="164.184066460969" y="122.45897621295137" fill="#f5f0ff" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(109.28571428571429, 164.184066460969, 122.45897621295137)">H</text></g><g><path d="M100,100 L189.1959179223395,142.95449017263826 A99,99 0 0 1 177.40131676433492,161.72549038401462 Z" fill="#33204f" stroke="#4a2f7a" stroke-width="1"></path><text x="157.57724554752332" y="136.1781812030429" fill="#f5f0ff" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(122.14285714285715, 157.57724554752332, 136.1781812030429)">I</text></g><g><path d="M100,100 L177.40131676433492,161.72549038401462 A99,99 0 0 1 161.7254903840146,177.40131676433498 Z" fill="#2c1750" stroke="#4a2f7a" stroke-width="1"></path><text x="148.08326112068522" y="148.08326112068525" fill="#f5f0ff" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(135, 148.08326112068522, 148.08326112068525)">İ</text></g><g><path d="M100,100 L161.7254903840146,177.40131676433498 A99,99 0 0 1 142.95449017263826,189.1959179223395 Z" fill="#33204f" stroke="#4a2f7a" stroke-width="1"></path><text x="136.1781812030429" y="157.57724554752332" fill="#f5f0ff" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(147.85714285714286, 136.1781812030429, 157.57724554752332)">J</text></g><g><path d="M100,100 L142.95449017263826,189.1959179223395 A99,99 0 0 1 122.02957246167513,196.51786330600055 Z" fill="#2c1750" stroke="#4a2f7a" stroke-width="1"></path><text x="122.45897621295137" y="164.184066460969" fill="#f5f0ff" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(160.71428571428572, 122.45897621295137, 164.184066460969)">K</text></g><g><path d="M100,100 L122.02957246167513,196.51786330600055 A99,99 0 0 1 100,199 Z" fill="#33204f" stroke="#4a2f7a" stroke-width="1"></path><text x="107.61358437502494" y="167.5724302727405" fill="#f5f0ff" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(173.57142857142856, 107.61358437502494, 167.5724302727405)">L</text></g><g><path d="M100,100 L100,199 A99,99 0 0 1 77.97042753832488,196.51786330600055 Z" fill="#2c1750" stroke="#4a2f7a" stroke-width="1"></path><text x="92.38641562497507" y="167.5724302727405" fill="#f5f0ff" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(186.42857142857144, 92.38641562497507, 167.5724302727405)">M</text></g><g><path d="M100,100 L77.97042753832488,196.51786330600055 A99,99 0 0 1 57.045509827361755,189.1959179223395 Z" fill="#33204f" stroke="#4a2f7a" stroke-width="1"></path><text x="77.54102378704864" y="164.184066460969" fill="#f5f0ff" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(199.28571428571428, 77.54102378704864, 164.184066460969)">N</text></g><g><path d="M100,100 L57.045509827361755,189.1959179223395 A99,99 0 0 1 38.27450961598535,177.40131676433492 Z" fill="#2c1750" stroke="#4a2f7a" stroke-width="1"></path><text x="63.82181879695712" y="157.57724554752332" fill="#f5f0ff" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(212.14285714285714, 63.82181879695712, 157.57724554752332)">O</text></g><g><path d="M100,100 L38.27450961598535,177.40131676433492 A99,99 0 0 1 22.59868323566502,161.7254903840146 Z" fill="#33204f" stroke="#4a2f7a" stroke-width="1"></path><text x="51.91673887931475" y="148.08326112068522" fill="#f5f0ff" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(225.00000000000003, 51.91673887931475, 148.08326112068522)">Ö</text></g><g><path d="M100,100 L22.59868323566502,161.7254903840146 A99,99 0 0 1 10.804082077660496,142.95449017263823 Z" fill="#2c1750" stroke="#4a2f7a" stroke-width="1"></path><text x="42.42275445247667" y="136.17818120304287" fill="#f5f0ff" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(237.8571428571429, 42.42275445247667, 136.17818120304287)">P</text></g><g><path d="M100,100 L10.804082077660496,142.95449017263823 A99,99 0 0 1 3.4821366939994505,122.02957246167509 Z" fill="#33204f" stroke="#4a2f7a" stroke-width="1"></path><text x="35.81593353903099" y="122.45897621295134" fill="#f5f0ff" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(250.71428571428575, 35.81593353903099, 122.45897621295134)">R</text></g><g><path d="M100,100 L3.4821366939994505,122.02957246167509 A99,99 0 0 1 1,100.00000000000001 Z" fill="#2c1750" stroke="#4a2f7a" stroke-width="1"></path><text x="32.42756972725951" y="107.61358437502494" fill="#f5f0ff" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(263.57142857142856, 32.42756972725951, 107.61358437502494)">S</text></g><g><path d="M100,100 L1,100.00000000000001 A99,99 0 0 1 3.482136693999479,77.97042753832484 Z" fill="#33204f" stroke="#4a2f7a" stroke-width="1"></path><text x="32.42756972725951" y="92.38641562497507" fill="#f5f0ff" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(276.42857142857144, 32.42756972725951, 92.38641562497507)">Ş</text></g><g><path d="M100,100 L3.482136693999479,77.97042753832484 A99,99 0 0 1 10.80408207766051,57.045509827361755 Z" fill="#2c1750" stroke="#4a2f7a" stroke-width="1"></path><text x="35.81593353903101" y="77.54102378704864" fill="#f5f0ff" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(289.2857142857143, 35.81593353903101, 77.54102378704864)">T</text></g><g><path d="M100,100 L10.80408207766051,57.045509827361755 A99,99 0 0 1 22.598683235665035,38.274509615985394 Z" fill="#33204f" stroke="#4a2f7a" stroke-width="1"></path><text x="42.422754452476674" y="63.82181879695712" fill="#f5f0ff" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(302.1428571428571, 42.422754452476674, 63.82181879695712)">U</text></g><g><path d="M100,100 L22.598683235665035,38.274509615985394 A99,99 0 0 1 38.274509615985366,22.598683235665064 Z" fill="#2c1750" stroke="#4a2f7a" stroke-width="1"></path><text x="51.91673887931476" y="51.91673887931477" fill="#f5f0ff" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(315, 51.91673887931476, 51.91673887931477)">Ü</text></g><g><path d="M100,100 L38.274509615985366,22.598683235665064 A99,99 0 0 1 57.04550982736173,10.80408207766051 Z" fill="#33204f" stroke="#4a2f7a" stroke-width="1"></path><text x="63.8218187969571" y="42.42275445247668" fill="#f5f0ff" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(327.8571428571429, 63.8218187969571, 42.42275445247668)">V</text></g><g><path d="M100,100 L57.04550982736173,10.80408207766051 A99,99 0 0 1 77.97042753832494,3.4821366939994505 Z" fill="#2c1750" stroke="#4a2f7a" stroke-width="1"></path><text x="77.54102378704869" y="35.81593353903099" fill="#f5f0ff" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(340.7142857142858, 77.54102378704869, 35.81593353903099)">Y</text></g><g><path d="M100,100 L77.97042753832494,3.4821366939994505 A99,99 0 0 1 99.99999999999999,1 Z" fill="#33204f" stroke="#4a2f7a" stroke-width="1"></path><text x="92.38641562497511" y="32.427569727259495" fill="#f5f0ff" font-size="11" font-weight="700" text-anchor="middle" dominant-baseline="middle" transform="rotate(353.5714285714286, 92.38641562497511, 32.427569727259495)">Z</text></g><circle cx="100" cy="100" r="16" fill="#f2b705" stroke="#3a2265" stroke-width="3"></circle></svg></div></div></div><h1 class="text-2xl font-bold" style="font-family: Fredoka, sans-serif; color: rgb(245, 240, 255);">Kelime Türetmece</h1></div><div class="space-y-3"><input placeholder="Kullanıcı adı" class="w-full px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/40 outline-none focus:ring-2 focus:ring-yellow-500" value=""><input type="password" placeholder="Şifre" class="w-full px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/40 outline-none focus:ring-2 focus:ring-yellow-500" value=""><button class="w-full py-3 rounded-xl font-bold transition hover:opacity-90" style="background: rgb(242, 183, 5); color: rgb(27, 16, 48); font-family: Fredoka, sans-serif;">Giriş Yap</button><button class="w-full text-center text-sm text-white/60 hover:text-white/90 pt-1">Hesabın yok mu? Kaydol</button><div class="pt-2 mt-2 border-t border-white/10"><button class="w-full py-2.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition" style="background: rgba(255, 255, 255, 0.93); color: rgb(31, 31, 31); border: 1px solid rgba(255, 255, 255, 0.2);"><svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><g><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908C16.46 14.013 17.64 11.772 17.64 9.2z" fill="#4285F4"></path><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"></path><path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"></path><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"></path></g></svg>Google ile Giriş Yap</button><p class="text-red-400 text-xs mt-1.5 text-center">Google girişi başarısız oldu, tekrar dene.</p></div></div></div></div></div>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useCallback } = React;
 
+// ---------- Hafif ikon bileşenleri (lucide-react için doğrudan kullanılabilen yedekler, bu nedenle sıfır derleme adımıyla çalışır) ----------
+fonksiyon makeIcon(glyph) {
+  return function IconCmp({ size = 16, color, className = "", style = {} }) {
+    return <span className={className} style={{ fontSize: size, lineHeight: 1, display: "inline-block", color, ...style }}>{glyph}</span>;
+  };
+}
+const Globe = makeIcon("ğŸŒ ");
+const Kullanıcılar = makeIcon("ğŸ'¥");
+const Plus = makeIcon("âž•");
+const Bell = makeIcon("ğŸ""");
+const Trophy = makeIcon("ğŸ †");
+const Send = makeIcon("âž¤");
+const X = makeIcon("âœ•");
+const LogOut = makeIcon("â »");
+const Shield = makeIcon("ğŸ›¡ï¸ ");
+const ArrowLeft = makeIcon("â† ");
+const Play = makeIcon("â–¶");
+const Swords = makeIcon("âš”ï¸ ");
+const Crown = makeIcon("ğŸ''");
+const Medal = makeIcon("ğŸ¥‰");
+const Gem = makeIcon("ğŸ'Ž");
+const Star = makeIcon("â ");
+const Check = makeIcon("âœ“");
+const Clock = makeIcon("â ±");
 
+/* ---------------------------------------------------------
+   KELÄ°ME TÃœRETMECE
+   Depolama notu: "paylaşılan" yerine window.storage kullanılır.
+   "arka uç" (kullanıcılar / gruplar / oyunlar tümü paylaşıldı=true) yani bu
+   Bugün çalışıyor. Gerçek sonuçlar için aşağıdaki yük ve tasarruf yardımcılarını değiştirin.
+   Firestore daha sonra çağrı yapar; uygulamanın geri kalanının buna ihtiyacı yoktur.
+   değiştirmek.
+----------------------------------------------------------- */
 
-<div id="replit-dev-banner" style="opacity: 0; display: none;">
-    <div class="banner-text">
-      This is a temporary development preview, and these links are not for public use. <a href="https://docs.replit.com/category/replit-deployments?ref=replit-dev-banner" target="_blank" class="banner-link">Publish your app</a> for secure sharing or use an invite link.
+const ADMIN_NAME = "YaÄŸÄ±z";
+const ADMIN_PASS = "030714yagiz";
+// Yönetici düğmesini/yönetici girişini yalnızca bu Google hesabı açabilir.
+// Diğer herkes — hatta ADMIN_NAME/ADMIN_PASS'ı bir şekilde bilen biri bile —
+// Doğrulama işlemi yapılmadan yönetici paneline erişemez veya kullanamazsınız.
+// Tam olarak bu Google hesabıyla.
+const ADMIN_GOOGLE_EMAIL = "akca.yagiz2014@gmail.com";
+sabit WORD_TIME_SECONDS = 10;
+const ROUND_WORD_LIMIT = 25;
+sabit POINTS_PER_WORD = 10;
+const STREAK_BONUS = 20; // tur limitine kadar hĩ§ kaÃ§Ä±rmadan gidenin alacaÄ± ekstra puan
+
+sabit ALFABELER = {
+  tr: ["A","B","C","Ã‡","D","E","F","G","H","I","Ä°","J","K","L","M","N","O","Ã–","P","R","S","Åž","T","U","Ãœ","V","Y","Z"],
+  tr: ["A", "B", "C", "D", "E", "F", "G", "H", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "U", "V", "W", "X", "Y", "Z"],
+  de: ["A", "Ã", "B", "C", "D", "F", "G", "H", "J", "K", "L", "M", "N", "O", "Ã–", "P", "Q", "R", "S", "T", "Ãœ", "V", "W", "X", "Z"],
+};
+
+sabit T = {
+  tr: {
+    appName: "Kelime Türetmece", giriş: "Giriş Yap", kayıt ol: "Kaydol", kullanıcı adı: "Kullanıcı adı", şifre: "Şifre",
+    noAccount: "Hesabın yok mu? Kaydol", haveAccount: "Zaten hesabın var mÄ±? GiriŞ yap", falseLogin: "Kullanıcı adı veya Şifre hatalı",
+    userExists: "Bu kullanācādā zaten alānmāŸ", fillFields: "Lể¼tfen tể¼m alanāể",
+    mainMenu: "Ana Menüsü", createGroup: "Grup Olutur", myGroups: "Gruplarım", soloPlay: "Tek Başına Oyna",
+    liderlik tablosu: "Puan Sıralaması", bildirimler: "Bildirimler", admin: "Yönetici Paneli", çıkış: "Şağı Yap",
+    groupName: "Grup adı", create: "OluŞtur", cancel: "Vazgeç", noGroups: "HenÜZ bir grup yok",
+    joinRequests: "Katılma İşleri", üyeler: "Üye", writeMessage: "Bir mesaj yaz...", sendRequest: "İstek At",
+    gameInviteText: "Oyun daveti gnderdi. Katılmak için dokunmayın!", joinLobby: "Lobiye Katıl",
+    lobi: "Lobi", bekleyenOyuncular: "Oyuncular bekleniyor", ayrılLobi: "Lobiden Şükük", StartGame: "Oyunu Başlat",
+    PlayerInLobby: "Lobideki Oyuncular", spinWheel: "Çarkı Şevir", yourTurn: "Sıra gönder!",
+    writeWordStartingWith: "ile baŸŸlayan bir kelime yaz", timeLeft: "SÃ¼re", roundResults: "Tur SonuÄ±",
+    geri: "Geri", puan: "puan", noWord: "Kelime yazılışı", nextRround: "Sıradaki Turu Başlat",
+    dünyaLiderlik Tablosu: "Dünya Geneli Sāralama", grupLiderlik Tablosu: "Grup Sāralamasā", sıralama: "Sāra",
+    puan: "Puan", madalya: "Madalyalar", noBildirimler: "Bildirim yok", davet edildiYouToGroup: "seni gruba davet etti",
+    kabul et: "Kabil Et", reddet: "Reddet", adminPanelDesc: "Kullanıcı puanlarının düzenle", artır: "Artır", azalt: "Azalt",
+    tebrikler: "Tebrikler!", kazanılanMadalya: "madalyası kazandınz!", kapat: "Kapat", geçersizWord: "Bu kelime geçerli deşil, 0 puan",
+    soloAllCorrectMsg: "Tebrikler, hepsini yaptın mı +20 puan aldınz!",
+    groupAllCorrectMsg: "Tebrikler, hepsini yapacaktır ekstra 20 puanlık bir puan alacaktır!",
+    validWord: "Geçerli kelime!", kontrol ediliyor: "Kontrol ediliyor...", groupLimitReached: "En fazla 50 gruba katılabilirsin",
+    dailyGroupLimit: "Günde en fazla 3 grup kurabilirsin", closesInGame: "Oyun bitince kapanacak", groupGone: "Bu grup artÄ±k mevcut deÄŸil.",
+    closesIn: "kapanıyor", worldRank: "sırada", nextMadalya: "Sıradaki madalya",
+    lobiFull: "Lobi dolu (15 kişi)", davetÜye: "Üye Davet Et", davet et: "Davet Et", grupChat: "Grup Sohbeti",
+    submit: "Gönder", solo: "Tek Oyunculu", roundOf: "Kelime", of: "/", backToWheel: "Şarka Dön",
+    groupCallBtn: "Grup Şifreleme", searchUser: "sim ara...", noUserFound: "Kullanıcı bulunamadı",
+    ZatenMember: "Zaten Üye", davet edildi: "Davet edildi âœ“", kickMember: "Gruptan At", kickConfirm: "gruptan atılsın mÄ±?",
+    groupMembersTitle: "Grup Üyeleri",ownerTag: "Kurucu", watchMatch: "Maçınağa", inMatch: "Maçta",
+    spectating: "İzleniyor", spectateBack: "Yönetici Paneline Dönüş", notInMatch: "Şu an bir maşta deşil",
+    LeaveGroup: "Gruptan Şükür", deleteGroup: "Grubu Sil", LeaveGroupConfirm: "Bu grubun ağlamak istediğinden emin misin?",
+    deleteGroupConfirm: "Bu grup tamamen silinsin mi? Bu i̅Ÿlem geri alınamaz.", you: "Sen",
+    googleSignIn: "Google ile Giriş Yap", googleSigning: "Giriş yapıyorsunuz...",
+    googleSignedInMsg: "Google ile giriŞ yapildi âœ“", googleSignInHint: "HesabÄ±nÄ± doÄŸrulamak iÃ§in Google ile giriÅŸ yap",
+    googleAdminVerifiedMsg: "Google hesabÄŸrulandÄ±, admin giriÅŸine devam edebilirsin.",
+    googleSignInFailed: "Google giriŞi baŞarısız oldu, tekrar dene.",
+    googleAdminRequired: "Yönetici giriŞin Ã¶nce yetkilisi Google hesabÄ±yla giriÅŸ yapılmalı.",
+    copyWordTitle: "Oyun Bitti!",
+    copyWordMsg: "kelimesini bu turda zaten kullandın. Ayn kelime bir turda iki kez yazmadık.",
+    backToMenu: "Ana Menüye Dün",
+  },
+  en: {
+    uygulama adı: "Kelime Türetme", giriş: "Giriş Yap", kayıt: "Kayıt Ol", kullanıcı adı: "Kullanıcı Adı", şifre: "Şifre",
+    noAccount: "Hesabınız yok mu? Kayıt olun", haveAccount: "Zaten hesabınız var mı? Giriş yapın", wrongLogin: "Yanlış kullanıcı adı veya şifre",
+    userExists: "Kullanıcı adı zaten alınmış", fillFields: "Lütfen tüm alanları doldurun",
+    mainMenu: "Ana Menü", createGroup: "Grup Oluştur", myGroups: "Gruplarım", soloPlay: "Tek Başına Oyna",
+    Liderlik tablosu: "Liderlik tablosu", bildirimler: "Bildirimler", yönetici: "Yönetici Paneli", çıkış yap: "Çıkış Yap",
+    groupName: "Grup adı", create: "Oluştur", cancel: "İptal", noGroups: "Henüz grubunuz yok",
+    joinRequests: "Katılım İstekleri", members: "üyeler", writeMessage: "Mesaj yazın...", sendRequest: "Davet Gönder",
+    gameInviteText: "Oyun daveti gönderildi. Katılmak için dokunun!", joinLobby: "Lobiye Katıl",
+    lobi: "Lobi", bekleyen oyuncular: "Oyuncular bekleniyor", lobiden ayrıl: "Lobiden ayrıl", oyun başlat: "Oyunu başlat",
+    playersInLobby: "Lobideki oyuncular", spinWheel: "Çarkı çevir", yourTurn: "Sıra sende!",
+    writeWordStartingWith: "Şununla başlayan bir kelime yazın", timeLeft: "Süre", roundResults: "Tur Sonuçları",
+    geri: "Geri", puanlar: "puan", kelime yok: "Hiçbir kelime gönderilmedi", sonraki tur: "Sonraki tura başla",
+    worldLeaderboard: "Dünya Sıralaması", groupLeaderboard: "Grup Sıralaması", rank: "Sıralama",
+    skor: "Skor", madalyalar: "Madalyalar", bildirim yok: "Bildirim yok", sizi gruba davet etti: "Sizi bir gruba davet ettim",
+    accept: "Kabul Et", decline: "Reddet", adminPanelDesc: "Kullanıcı puanlarını ayarla", increase: "Artır", decrease: "Azalt",
+    tebrikler: "Tebrikler!", madalya kazandı: "Madalya kazandınız!", kapat: "Kapatıldı", geçersiz kelime: "Geçersiz kelime, 0 puan",
+    soloAllCorrectMsg: "Tebrikler, hepsini doğru cevapladığınız için +20 puan kazandınız!",
+    groupAllCorrectMsg: "Tebrikler, tüm soruları doğru cevaplayanlar arasında ekstra 20 puan paylaşılacak!",
+    validWord: "Geçerli kelime!", checking: "Kontrol ediliyor...", groupLimitReached: "En fazla 50 gruba katılabilirsiniz",
+    dailyGroupLimit: "Günde en fazla 3 grup oluşturabilirsiniz", closesInGame: "Oyun bittiğinde kapanacaktır", groupGone: "Bu grup artık mevcut değil.",
+    closesIn: "yaklaşıyor", worldRank: "sıralama", nextMedal: "Sonraki madalya",
+    lobbyFull: "Lobi dolu (15 oyuncu)", inviteMember: "Üye Davet Et", invite: "Davet Et", groupChat: "Grup Sohbeti",
+    submit: "Gönder", solo: "Solo", roundOf: "Kelime", of: "/", backToWheel: "Tekerleğe Geri Dön",
+    groupCallBtn: "Gruba Davet Et", searchUser: "İsim ara...", noUserFound: "Kullanıcı bulunamadı",
+    alreadyMember: "Zaten üyesin", invited: "Davet edildin", kickMember: "Gruptan çıkar", kickConfirm: "Gruptan çıkarılsın mı?",
+    groupMembersTitle: "Grup Üyeleri", ownerTag: "Sahip", watchMatch: "Maçı İzle", inMatch: "Maçta",
+    spectating: "İzliyorum", spectateBack: "Yönetici Paneline Geri Dön", notInMatch: "Şu anda bir maçta değilim",
+    leaveGroup: "Gruptan Ayrıl", deleteGroup: "Grubu Sil", leaveGroupConfirm: "Bu gruptan ayrılmak istediğinizden emin misiniz?",
+    deleteGroupConfirm: "Bu grubu kalıcı olarak silmek istiyor musunuz? Bu işlem geri alınamaz.", siz: "Siz",
+    googleSignIn: "Google ile oturum aç", googleSigning: "Oturum açılıyor...",
+    googleSignedInMsg: "Google ile oturum açıldı âœ“", googleSignInHint: "Hesabınızı doğrulamak için lütfen Google ile de oturum açın",
+    googleAdminVerifiedMsg: "Google hesabınız doğrulandı, yönetici girişiyle devam edebilirsiniz."
+    googleSignInFailed: "Google oturum açma işlemi başarısız oldu, lütfen tekrar deneyin."
+    googleAdminRequired: "Yönetici girişi yapmadan önce yetkilendirilmiş Google hesabınızla oturum açmalısınız."
+    duplicateWordTitle: "Oyun Bitti!",
+    duplicateWordMsg: "Bu kelimeyi bu turda zaten kullandınız. Aynı kelime bir turda iki kez yazılamaz."
+    backToMenu: "Ana Menüye Geri Dön",
+  },
+  de: {
+    appName: "Wortkette", giriş: "Anmelden", kayıt olun: "Kayıt Ol", kullanıcı adı: "Benutzername", şifre: "Şifre",
+    noAccount: "Kein Konto? Kayıt Ol", haveAccount: "Schon ein Konto? Anmelden", falseLogin: "Falscher Benutzername veya Passwort",
+    userExists: "Benutzername bereits vergeben", fillFields: "Bitte alle ausfüllen",
+    mainMenu: "HauptmenÜ", createGroup: "Gruppe erstellen", myGroups: "Meine Gruppen", soloPlay: "Alleine spielen",
+    liderlik tablosu: "Rangliste", bildirimler: "Benachrichtigungen", yönetici: "Admin-Bereich", çıkış: "Abmelden",
+    groupName: "Gruppenname", create: "Erstellen", cancel: "Abbrechen", noGroups: "Noch keine Gruppen",
+    joinRequests: "Beitrittsanfragen", üyeler: "Mitglieder", writeMessage: "Nachricht schreiben...", sendRequest: "Einladung senden",
+    gameInviteText: "hat eine Spieleinladung gesendet. Zum Beitreten tippen!", joinLobby: "Lobby beitreten",
+    lobi: "Lobi", beklemeOyuncular: "Warten auf Spieler", ayrılLobi: "Lobi verlassen", startGame: "Spiel starten",
+    PlayerInLobby: "Lobide Oynama", spinWheel: "Rad drehen", yourTurn: "Du bist dran!",
+    writeWordStartingWith: "schreibe ein Wort beginnend mit", timeLeft: "Zeit", roundResults: "Rundenergebnis",
+    geri: "ZurÃ¼ck", puanlar: "Pkt", noWord: "Kein Wort eingegeben", nextRound: "Nüchste Runde starten",
+    worldLeaderboard: "Weltweite Rangliste", groupLeaderboard: "Gruppenrangliste", sıralama: "Rang",
+    puan: "Punkte", madalyalar: "Medaillen", noBildirimler: "Keine Benachrichtigungen", YouToGroup'a davet edildi: "hat dich zu einer Gruppe eingeladen",
+    kabul et: "Annehmen", reddet: "Ablehnen", adminPanelDesc: "Punkte der Nutzer anpassen", artır: "ErhÃ¶hen", azalt: "Verringern",
+    tebrikler: "GlÃ¼ckwunsch!", kazanılanMadalya: "Medaille erhalten!", kapat: "SchlieÃŸen", geçersizWord: "UngÃ¼ltiges Wort, 0 Punkte",
+    soloAllCorrectMsg: "Glütensiz, tüm zenginliklerin için +20 puana sahipsin!",
+    groupAllCorrectMsg: "Grupta 20 puan daha var!",
+    validWord: "Gültiges Wort!", kontrol ediliyor: "Wird geprÃ¼ft...", groupLimitReached: "Maksimum 50 Gruppen mÃ¶glich",
+    dailyGroupLimit: "3 grupla etiket oluşturabilirsiniz", closesInGame: "Sonuçta bir grup var", groupGone: "Grup daha fazla var olmadı.",
+    closesIn: "schlieÃŸt in", worldRank: "Rang", nextMedal: "Nüchste Medaille",
+    lobiFull: "Lobi voll (15 Spieler)", davetMember: "Mitglied einladen", davet et: "Einladen", groupChat: "Gruppenchat",
+    gönder: "Senden", solo: "Solo", roundOf: "Wort", of: "/", backToWheel: "Zurück zum Rad",
+    groupCallBtn: "Grup oluşturuldu", searchUser: "Böyle bir ad...", noUserFound: "Kullanılan grup",
+    zatenMember: "Bereits Mitglied", davet edildi: "Eingeladen âœ“", kickMember: "Aus der Gruppe entfernen", kickConfirm: "aus der Gruppe entfernen?",
+    groupMembersTitle: "Gruppenmitglieder",ownerTag: "GrÃ¼nder", watchMatch: "Spiel ansehen", inMatch: "I'm Spiel",
+    spectating: "Zuschauen", specateBack: "ZurÃ¼ck zum Admin-Bereich", notInMatch: "Derzeit in keinem Spiel",
+    LeaveGroup: "Gruppe verlassen", deleteGroup: "Gruppe lÃ¶schen", LeaveGroupConfirm: "MÃ¶chtest du diese Gruppe wirklich verlassen?",
+    deleteGroupConfirm: "Diese Gruppe endgÃ¼ltig lÃ¶schen? Dies kann nicht rÃ¼ckgÃ¤ngig gemacht werden.", siz: "Du",
+    googleSignIn: "Google'a bağlanın", googleSigning: "Görüntülendi...",
+    googleSignedInMsg: "Google'la iletişime geçin âœ“", googleSignInHint: "Google'la en iyi şekilde iletişime geçin",
+    googleAdminVerifiedMsg: "Google-Konto doğrulaması, Yönetici Girişi doğrulamasını sağlar.",
+    googleSignInFailed: "Google-Anmeldung fehlgeschlagen, bitte erneut versuchen.",
+    googleAdminRequired: "Yönetici olarak Google-Konto'yu yetkilendirmeniz gerekir.",
+    copyWordTitle: "Oynayın!",
+    copyWordMsg: "Word'de Wort'un daha iyi olduğu ortaya çıktı. Wort'un bir Runde'da hiç bir şekilde kullanılmaması gerekiyor.",
+    backToMenu: "Zürück zum Hauptmenü",
+  },
+};
+
+const MedalBronze = makeIcon("ğŸ¥‰");
+const MedalSilver = makeIcon("ğŸ¥ˆ");
+const MedalGold = makeIcon("ğŸ¥‡");
+const MedalStart = makeIcon("ğŸ"°");
+const MedalUltra = makeIcon("ğŸŽ–ï¸ ");
+sabit MADALYA_KATMANLARI = [
+  { key: "start", threshold: 5000, label: { tr: "BaŸlangāā", en: "Starter", de: "Start" }, color: "#8fb3ff", icon: MedalStart },
+  { key: "bronze", threshold: 10000, label: { tr: "Bronz", en: "Bronze", de: "Bronze" }, color: "#c17a4a", icon: MedalBronze },
+  { key: "silver", threshold: 20000, label: { tr: "GümüŸ", en: "Silver", de: "Silber" }, color: "#b9c2cc", icon: MedalSilver },
+  { key: "gold", threshold: 35000, label: { tr: "Altın", en: "Gold", de: "Gold" }, color: "#f2b705", icon: MedalGold },
+  { key: "diamond", threshold: 60000, label: { tr: "Elmas", en: "Diamond", de: "Diamant" }, color: "#5fd1e0", icon: Gem },
+  { key: "en güçlü", eşik: 150000, label: { tr: "En İyi Oyuncu", en: "En İyi Oyuncu", de: "En İyi Spieler" }, color: "#ff5d8f", icon: Crown },
+  { key: "ultra", threshold: 1000000, label: { tr: "Ultra Süper Oyuncu", en: "Ultra Super Player", de: "Ultra-Superspieler" }, color: "#ff2e63", icon: MedalUltra },
+];
+
+fonksiyon madalyalar için puan(puan) {
+  MEDAL_TIERS.filter(m => score >= m.threshold).map(m => m.key) değerini döndürün.
+}
+
+// ---------- Depolama yardımcıları (Firebase Gerçek Zamanlı Veritabanı destekli paylaşılan durum) ----------
+async fonksiyon loadShared(anahtar, yedek) {
+  denemek {
+    const snap = await window.__fbdb.ref(key).get();
+    const val = snap.exists() ? snap.val() : null;
+    (val !== null && val !== undefined) ? val : yedek değer döndür;
+  } yakala (e) {
+    console.error("loadShared(" + key + ") başarısız oldu", e);
+    yedek seçeneği döndür;
+  }
+}
+asenkron fonksiyon saveShared(anahtar, değer) {
+  denemek {
+    await window.__fbdb.ref(key).set(value);
+  } yakala (e) {
+    console.error("saveShared(" + key + ") başarısız oldu", e);
+  }
+}
+// Canlı abonelik yardımcısı (sorgulama aralığını beklemek yerine anlık güncellemeler göndermek için kullanılır)
+fonksiyon subscribeShared(key, cb) {
+  const ref = window.__fbdb.ref(key);
+  const handler = (snap) => cb(snap.exists() ? snap.val() : {});
+  ref.on("value", handler);
+  return () => ref.off("value", handler);
+}
+
+// ---------- kelime kontrolü: Wiktionary'nin herkese açık gerçek sözlük araması,
+// Anahtar gerektirmeyen, CORS özellikli API (arka uç gerekmez).
+// Her zaman İngilizce Wiktionary'yi (açık ara en kapsamlı sürüm) sorgular ve
+// Sayfanın seçilen dil için bir bölüme sahip olup olmadığını kontrol eder —
+// Aksi takdirde, örneğin Türkçe bir kelime İngilizce oynatılırken yanlışlıkla geçerli sayılır.
+// Çünkü Wiktionary sayfaları birçok dildeki çevirileri listeliyor. ----------
+const WIKT_LANG_HEADER = { en: "İngilizce", tr: "Türkçe", de: "Almanca" };
+
+asenkron fonksiyon checkWordValid(kelime, dil, mustStartWith) {
+  sabit w = kelime.kırpma();
+  Eğer (w.length < 2) ise false döndür;
+  const locale = lang === "tr" ? "tr-TR" : undefined;
+  const wFirst = w[0].toLocaleUpperCase(locale);
+  const reqUpper = mustStartWith.toLocaleUpperCase(locale);
+  Eğer wFirst !== reqUpper ise false döndür; // yanlış başlangıç ​​harfi — ağa bağlanmaya gerek yok
+
+  const headerName = WIKT_LANG_HEADER[lang] || "English";
+  const headerRegex = new RegExp(`^==\\s*${headerName}\\s*==`, "m");
+  const candidates = [w.toLocaleLowerCase(locale), w]; // çoğu giriş küçük harfli; ayrıca yazıldığı gibi deneyin
+
+  (adayların sabit adayı için) {
+    denemek {
+      const url = `https://en.wiktionary.org/w/api.php?action=query&prop=revisions&titles=${encodeURIComponent(candidate)}&rvprop=content&rvslots=main&formatversion=2&format=json&origin=*`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const pages = (data && data.query && data.query.pages) || [];
+      (sabit sayfa sayısı için) {
+        Eğer sayfa eksikse devam et;
+        const rev = page.revisions && page.revisions[0];
+        const content = rev ? (rev.content || (rev.slots && rev.slots.main && rev.slots.main.content) || "") : "";
+        Eğer içerik && headerRegex.test(content) ise true döndür; // Onaylandı: Bu sayfada seçilen dil için özel bir bölüm var
+      }
+    } yakala (e) {
+      console.error("sözlük araması başarısız oldu", e);
+      // Ağda aksaklık: Bu adayda kesin başarısızlık kararı vermeyin, bir sonrakini deneyin / devam edin
+    }
+  }
+  false döndür;
+}
+
+fonksiyon sonharf(kelime, dil) {
+  sabit w = kelime.kırpma();
+  if (!w) return "";
+  // Türkçe noktalı/noktasız i harflerini, yalnızca son Unicode karakterini alarak doğru şekilde ele alın.
+  return w[w.length - 1].toLocaleUpperCase(lang === "tr" ? "tr-TR" : undefined);
+}
+fonksiyon ilkHarf(kelime, dil) {
+  sabit w = kelime.kırpma();
+  if (!w) return "";
+  return w[0].toLocaleUpperCase(lang === "tr" ? "tr-TR" : undefined);
+}
+// İki kelimeyi tam (büyük/küçük harf duyarsız) eşitlik açısından karşılaştırmak için kullanılan normalleştirilmiş biçim,
+// Bu nedenle "Kedi" ve "kedi" aynı tur içinde aynı kelime olarak sayılır.
+fonksiyon normalizeWord(kelime, dil) {
+  sabit w = (kelime || "").trim();
+  if (!w) return "";
+  return w.toLocaleLowerCase(lang === "tr" ? "tr-TR" : undefined);
+}
+
+fonksiyon uid() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
+
+fonksiyon formatKalan(ms) {
+  Eğer ms <= 0 ise "0:00" döndür;
+  const totalSec = Math.floor(ms / 1000);
+  sabit h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  sabit s = toplamSec % 60;
+  Eğer h > 0 ise, `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}` değerini döndür;
+  `${m}:${String(s).padStart(2, "0")}` döndür;
+}
+
+function WordFeedbackBadge({ geri bildirim, t }) {
+  Eğer geri bildirim yoksa, null döndür;
+  const ok = feedback.ok;
+  geri dönmek (
+    <div key={feedback.key} className="flex items-center justify-center">
+      <div className="flex items-center gap-2 px-5 py-2.5 rounded-2xl font-bold text-sm"
+        stil={{
+          arka plan: tamam mı? "rgba(51,214,176,0.16)" : "rgba(255,111,97,0.16)",
+          border: `2px solid ${ok ? "#33d6b0" : "#ff6f61"}`,
+          renk: tamam mı? "#33d6b0" : "#ff6f61",
+          animasyon: "wordPop 480ms cubic-bezier(.34,1.56,.64,1)",
+          boxShadow: ok ? "0 6px 22px rgba(51,214,176,0.35)" : "0 6px 22px rgba(255,111,97,0.3)",
+        }}>
+        {tamam mı? <Check size={16} /> : <X size={16} />}
+        <span>{t.geçerliKelime : t.geçersizKelime}</span>
+        <span style={{
+          dolgu: "2px 8px", kenar yarıçapı: 999, yazı boyutu: 11, yazı kalınlığı: 800,
+          arka plan: tamam mı? "rgba(51,214,176,0.28)" : "rgba(255,111,97,0.22)",
+          renk: tamam mı? "#33d6b0" : "#ff6f61",
+        }}>{ok ? `+${POINTS_PER_WORD}` : "0"} {t.points}</span>
+        {feedback.word && <span style={{ opacity: 0.75, fontWeight: 500 }}>"{feedback.word}</span>}
+      </div>
+      <style>{`
+        @keyframes wordPop {
+          0% { dönüşüm: ölçek(0.3); opaklık: 0; }
+          55% { dönüşüm: ölçek(1.15); opaklık: 1; }
+          %75 { dönüşüm: ölçek(0,96); }
+          100% { dönüşüm: ölçek(1); opaklık: 1; }
+        }
+        @keyframes inputShake {
+          0%, 100% { transform: translateX(0); }
+          20% { transform: translateX(-8px); }
+          40% { transform: translateX(7px); }
+          60% { transform: translateX(-5px); }
+          80% { transform: translateX(4px); }
+        }
+      `}</style>
     </div>
-    <button class="banner-close" aria-label="Close banner">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M5.293 5.293a1 1 0 0 1 1.414 0L12 10.586l5.293-5.293a1 1 0 1 1 1.414 1.414L13.414 12l5.293 5.293a1 1 0 0 1-1.414 1.414L12 13.414l-5.293 5.293a1 1 0 0 1-1.414-1.414L10.586 12 5.293 6.707a1 1 0 0 1 0-1.414z"></path>
-      </svg>
-    </button>
-  </div><div id="replit-pill-host"><template shadowmode="closed"><div id="replit-pill" data-state="brand"><div class="shimmer"></div><div class="badge-content"><svg width="9.33" height="14" viewBox="0 0 50 75" fill="none" class="replit-logo">
-        <path d="M25 19.995C25 20.0375 25 20.0575 25 20.085C25.015 21.34 25.5475 22.6275 26.425 23.525C26.445 23.545 26.4475 23.5475 26.45 23.55C26.485 23.585 26.5025 23.6025 26.54 23.6375C27.4225 24.485 28.6775 25.005 29.9025 25.03C29.9525 25.03 29.9975 25.03 30.0825 25.03H42C44.8 25.03 46.2 25.03 47.27 25.575C48.21 26.055 48.975 26.82 49.455 27.76C50 28.83 50 30.23 50 33.03V42.03C50 44.83 50 46.23 49.455 47.3C48.975 48.24 48.21 49.005 47.27 49.485C46.2 50.03 44.8 50.03 42 50.03H29.9275C28.6425 50.0325 27.3225 50.58 26.4125 51.485C26.4075 51.49 26.4775 51.42 26.45 51.4475C26.445 51.4525 26.4425 51.4525 26.4225 51.475C25.545 52.3725 25.0125 53.6575 24.9975 54.9125C24.9975 54.94 24.9975 54.9625 24.9975 55.0025V67.0575C24.9975 69.8575 24.9975 71.2575 24.4525 72.3275C23.9725 73.2675 23.2075 74.0325 22.2675 74.5125C21.1975 75.0575 19.7975 75.0575 16.9975 75.0575H7.9975C5.1975 75.0575 3.7975 75.0575 2.7275 74.5125C1.7875 74.0325 1.0225 73.2675 0.542498 72.3275C-0.00250244 71.2575 -0.00250244 69.8575 -0.00250244 67.0575V58.0575C-0.00250244 55.2575 -0.00250244 53.8575 0.542498 52.7875C1.0225 51.8475 1.7875 51.0825 2.7275 50.6025C3.7975 50.0575 5.1975 50.0575 7.9975 50.0575H19.7225C19.9 50.0575 19.9875 50.0575 20.08 50.055C21.2475 50.0125 22.4375 49.52 23.295 48.7225C23.3625 48.66 23.4125 48.61 23.5125 48.51C23.55 48.4725 23.5675 48.455 23.6025 48.42C24.455 47.5325 24.9725 46.2825 24.9975 45.0525C24.9975 45.0025 24.9975 44.96 24.9975 44.875V30.12C24.9975 30.0325 24.9975 29.99 24.9975 29.94C24.9725 28.71 24.455 27.46 23.6025 26.575C23.5675 26.54 23.55 26.52 23.5125 26.4825C23.475 26.445 23.4575 26.4275 23.42 26.3925C22.5325 25.54 21.2825 25.0225 20.0525 24.9975C20.0025 24.9975 19.96 24.9975 19.875 24.9975H7.9975C5.1975 24.9975 3.7975 24.9975 2.7275 24.4525C1.7875 23.9725 1.0225 23.2075 0.542498 22.2675C-0.00250244 21.1975 -0.00250244 19.7975 -0.00250244 16.9975V7.9975C-2.44146e-06 5.2 -2.44379e-06 3.8 0.544998 2.73C1.025 1.79 1.79 1.025 2.73 0.545C3.8 0 5.2 0 8 0H17C19.8 0 21.2 0 22.27 0.545C23.21 1.025 23.975 1.79 24.455 2.73C25 3.8 25 5.2 25 8V19.995Z" fill="currentColor"></path>
-      </svg><span class="flip ready" style="width: 89px;"><span class="row in" data-key="brand" aria-hidden="false" style="">Made with Replit</span><span class="row" data-key="cta" aria-hidden="true">Build for free</span></span></div><button class="close-button" aria-label="Close"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="close-icon" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M18 6 6 18"></path>
-        <path d="m6 6 12 12"></path>
-      </svg></button></div></template></div><iframe ng-non-bindable="" frameborder="0" hspace="0" marginheight="0" marginwidth="0" scrolling="no" tabindex="-1" vspace="0" width="100%" aria-hidden="true" id="I0_1784906890809" name="I0_1784906890809" src="cid:frame-4EE32F40E1DCAEF66E6D6AED4C47FDD3@mhtml.blink" style="position: absolute; top: -100px; width: 1px; height: 1px;"></iframe></body></html>
-------MultipartBoundary--lxu9pNUKZvL23nCRyILZLF1cYqjj5X8XQNuPG8tmqL----
-Content-Type: text/css
-Content-Transfer-Encoding: binary
-Content-Location: cid:css-25b71c07-a8b0-4699-8bfa-347c75ef219f@mhtml.blink
-
-@charset "utf-8";
-
-@keyframes float0 { 
-  0%, 100% { transform: translateY(0) rotate(var(--r,0deg)); }
-  50% { transform: translateY(-16px) rotate(var(--r,0deg)); }
+  );
 }
 
-@keyframes float1 { 
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(12px); }
+fonksiyon FullScreenFlash({ ok, onDone }) {
+  useEffect(() => {
+    sabit süre = tamam ? 1500 : 1000;
+    const timer = setTimeout(() => { onDone && onDone(); }, duration);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line
+  }, []);
+  sabit renk = tamam ? "#33d6b0" : "#ff6f61";
+  const animName = ok ? "flashGrowCorrect" : "flashGrowWrong";
+  const animDur = tamam mı? "1,5sn" : "1sn";
+  geri dönmek (
+    <div className="fixed inset-0 z-[9999] pointer-events-none" style={{ animation: `${animName} ${animDur} ease-in-out both` }}>
+      <div style={{ position: "absolute", inset: 0, background: color }} />
+      <style>{`
+        @keyframes flashGrowCorrect {
+          0% { clip-path: circle(0% at 50% 50%); opacity: 0; }
+          %18 { opaklık: 1; }
+          %50 { kırpma yolu: daire (%150, %50'de); opaklık: 1; }
+          78% { clip-path: circle(150% at 50% 50%); opacity: 1; }
+          100% { clip-path: circle(0% at 50% 50%); opacity: 0; }
+        }
+        @keyframes flashGrowWrong {
+          0% { clip-path: circle(0% at 50% 50%); opacity: 0; }
+          %22 { opaklık: 1; }
+          45% { clip-path: circle(150% at 50% 50%); opacity: 1; }
+          62% { clip-path: circle(150% at 50% 50%); opacity: 1; }
+          100% { clip-path: circle(0% at 50% 50%); opacity: 0; }
+        }
+      `}</style>
+    </div>
+  );
 }
 
-@keyframes float2 { 
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-9px); }
+fonksiyon GoneScreen({ bg, message, backLabel, onBack }) {
+  geri dönmek (
+    <div className="min-h-screen w-full flex flex-col items-center justify-center gap-4 p-6" style={{ fontFamily: "Inter, sans-serif" }}>
+      {bg}
+      <p className="text-white/60 text-center">{mesaj}</p>
+      <button onClick={onBack} className="px-6 py-3 rounded-full font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>{backLabel}</button>
+    </div>
+  );
 }
 
-@keyframes drift1 { 
-  0%, 100% { transform: translate(0px, 0px) scale(1); }
-  50% { transform: translate(30px, 20px) scale(1.08); }
+// =========================================================
+// TEKERLEK BİLEŞENİ
+// =========================================================
+fonksiyon Tekerlek({ lang, spinning, resultLetter, onSpinEnd, size = 260, excludeFirst }) {
+  const letters = ALPHABETS[lang].filter(l => (excludeFirst ? l !== excludeFirst : true));
+  const [rotation, setRotation] = useState(0);
+  const sliceAngle = 360 / letters.length;
+  const prevSpinning = useRef(false);
+
+  useEffect(() => {
+    eğer (dönüyorsa ve önceki dönme hareketinin geçerli olduğu yer değilse ve sonuç harfi ise) {
+      const idx = letters.indexOf(resultLetter);
+      const targetIdx = idx >= 0 ? idx : 0;
+      // Dilim merkezini üst işaretçiye (0 derece) getirmek için açı
+      const sliceCenter = targetIdx * sliceAngle + sliceAngle / 2;
+      sabit hedef = (360 - dilimmerkezi + 360) % 360;
+      setRotation(r => {
+        sabit currentMod = ((r % 360) + 360) % 360;
+        sabit delta = ((hedef - mevcutMod) + 360) % 360;
+        r + 360 * 6 + delta değerini döndür;
+      });
+    }
+    prevSpinning.current = spinning;
+  }, [dönme, sonuç harfi]); // eslint-satırı devre dışı bırak
+
+  geri dönmek (
+    <div className="relative select-none" style={{ width: size, height: size }}>
+      <div
+        sınıf adı="mutlak sol-1/2 -üst-3 z-20"
+        stil={{ transform: "translateX(-50%)", width: 0, height: 0, borderLeft: "12px solid transparent", borderRight: "12px solid transparent", borderTop: "20px solid #f2b705", filter: "drop-shadow(0 2px 3px rgba(0,0,0,.5))" }}
+      />
+      <div
+        sınıf adı="mutlak içe doğru yuvarlanmış-tam"
+        stil={{
+          dönüştürme: `döndürme(${döndürme}derece)`,
+          geçiş: dönme ? "transform 3.2s cubic-bezier(.17,.67,.14,1)" : "none",
+          boxShadow: "0 0 0 6px #3a2265, 0 0 0 10px #f2b70555, 0 20px 50px rgba(0,0,0,.55)",
+        }}
+        onTransitionEnd={() => { if (spinning) onSpinEnd && onSpinEnd(); }}
+      >
+        <svg viewBox="0 0 200 200" width="100%" height="100%">
+          <circle cx="100" cy="100" r="99" fill="#241542" />
+          {harfler.map((l, i) => {
+            sabit a0 = (i * sliceAngle - 90) * (Math.PI / 180);
+            sabit a1 = ((i + 1) * sliceAngle - 90) * (Math.PI / 180);
+            const x0 = 100 + 99 * Math.cos(a0), y0 = 100 + 99 * Math.sin(a0);
+            const x1 = 100 + 99 * Math.cos(a1), y1 = 100 + 99 * Math.sin(a1);
+            sabit büyük = dilim açısı > 180 ? 1 : 0;
+            sabit mid = (a0 + a1) / 2;
+            const lx = 100 + 68 * Math.cos(mid), ly = 100 + 68 * Math.sin(mid);
+            const fill = i % 2 === 0 ? "#2c1750" : "#33204f";
+            geri dönmek (
+              <g key={l}>
+                <path d={`M100,100 L${x0},${y0} A99,99 0 ${large} 1 ${x1},${y1} Z`} fill={fill} stroke="#4a2f7a" strokeWidth="1" />
+                <text x={lx} y={ly} fill="#f5f0ff" fontSize="11" fontWeight="700" textAnchor="middle" dominantBaseline="middle"
+                  transform={`rotate(${(mid * 180 / Math.PI) + 90}, ${lx}, ${ly})`}>{l}</text>
+              </g>
+            );
+          })}
+          <circle cx="100" cy="100" r="16" fill="#f2b705" stroke="#3a2265" strokeWidth="3" />
+        </svg>
+      </div>
+    </div>
+  );
 }
 
-@keyframes drift2 { 
-  0%, 100% { transform: translate(0px, 0px) scale(1); }
-  50% { transform: translate(-25px, 25px) scale(1.1); }
+// =========================================================
+// UYGULAMA
+// =========================================================
+fonksiyon App() {
+  const [lang, setLang] = useState("tr");
+  sabit t = T[lang];
+  const [screen, setScreen] = useState("auth"); // kimlik doğrulama, menü, gruplar, sohbet, lobi, oyun, tek oyunculu, liderlik tablosu, bildirimler, yönetici
+  const [authMode, setAuthMode] = useState("login");
+  const [authForm, setAuthForm] = useState({ username: "", password: "" });
+  const [authError, setAuthError] = useState("");
+  const [me, setMe] = useState(null); // {kullanıcı adı, yönetici mi, puan, madalyalar}
+  const [googleSignedIn, setGoogleSignedIn] = useState(false);
+  const [googleSignInEmail, setGoogleSignInEmail] = useState(null);
+  const [googleAdminVerified, setGoogleAdminVerified] = useState(false);
+  const [googleAdminEmail, setGoogleAdminEmail] = useState(null);
+  const [googleAdminBusy, setGoogleAdminBusy] = useState(false);
+  const [googleAdminError, setGoogleAdminError] = useState("");
+  const [users, setUsers] = useState({});
+  const [gruplar, setGroups] = useState({});
+  const [activeGroupId, setActiveGroupId] = useState(null);
+  const [activeGameId, setActiveGameId] = useState(null);
+  const [games, setGames] = useState({});
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
+  const [yeniGrupAdı, setYeniGrupAdı] = useState("");
+  const [showGroupInvite, setShowGroupInvite] = useState(false);
+  const [groupInviteSearch, setGroupInviteSearch] = useState("");
+  const [showMedalInfo, setShowMedalInfo] = useState(false);
+  const [adminSpectateGameId, setAdminSpectateGameId] = useState(null);
+  const [medalPopup, setMedalPopup] = useState(null);
+  const [tick, setTick] = useState(Date.now());
+  useEffect(() => {
+    const iv = setInterval(() => setTick(Date.now()), 1000);
+    return () => clearInterval(iv);
+  }, []);
+
+  // ---- Süresi dolmuş grup temizliği: Gruplar oluşturulduktan 1 saat sonra otomatik olarak silinir, aksi belirtilmedikçe.
+  // Bu dosyalarda aktif olarak bir tur oynanıyorsa, silme işlemi bekler.
+  // o tur "sonuçlar" aşamasına ulaşana kadar ----
+  fonksiyon cleanExpiredGroups(groupsObj, gamesObj) {
+    const now = Date.now();
+    GruplarDeğişti = false olsun;
+    const nextGroups = { ...groupsObj };
+    for (const [id, g] of Object.entries(groupsObj)) {
+      if (!g.expiresAt) continue; // Bu özellikten önce oluşturulan eski gruplar: asla otomatik olarak sona ermez
+      const activeGame = Object.values(gamesObj).find(gm2 => gm2.groupId === id && (gm2.status === "playing" || gm2.status === "spinning"));
+      if (now >= g.expiresAt) {
+        eğer (aktifOyun) {
+          Eğer (g.silinme bekliyorsa) { nextGroups[id] = { ...g, pendingDelete: true }; groupsChanged = true; }
+        } başka {
+          nextGroups[id]'yi sil;
+          GruplarDeğişti = doğru;
+        }
+      }
+    }
+    let gamesChanged = false;
+    const nextGames = { ...gamesObj };
+    for (const [gid, game] of Object.entries(gamesObj)) {
+      Eğer (!nextGroups[game.groupId]) bir sonraki oyunu grup kimliğinden sil; gamesChanged = true; }
+    }
+    return { groups: nextGroups, games: nextGames, groupsChanged, gamesChanged };
+  }
+
+  // ---- İlk yükleme (tek seferlik yenileme olarak da yeniden kullanılabilir, örneğin kimlik doğrulamasından hemen sonra) ----
+  const refreshAll = useCallback(async () => {
+    const [u, g0, gm0] = await Promise.all([
+      loadShared("users", {}),
+      loadShared("gruplar", {}),
+      loadShared("games", {}),
+    ]);
+    const { groups: g, games: gm, groupsChanged, gamesChanged } = cleanExpiredGroups(g0, gm0);
+    Eğer gruplar değiştiyse, saveShared("groups", g) fonksiyonunu çağırın.
+    Eğer oyunlar değiştiyse, saveShared("games", gm) fonksiyonunu çağırın.
+    Kullanıcıları ayarla(u); Grupları ayarla(g); Oyunları ayarla(gm);
+    { u, g, gm } döndür;
+  }, []);
+
+  useEffect(() => { refreshAll(); }, [refreshAll]);
+
+  // ---- canlı senkronizasyon: Firebase Gerçek Zamanlı Veritabanı değişiklikleri her yere gönderir
+  // Bağlantı anında kuruluyor, bu nedenle artık belirli aralıklarla sorgulama yapmaya gerek yok ----
+  useEffect(() => {
+    const unsubUsers = subscribeShared("users", setUsers);
+    const unsubGroups = subscribeShared("groups", setGroups);
+    const unsubGames = subscribeShared("games", setGames);
+    return () => { unsubUsers(); unsubGroups(); unsubGames(); };
+  }, []);
+
+  // ---- Süre sonu taraması: Grup süre sonu zaman bazlıdır (herhangi bir veri tarafından tetiklenmez).
+  // değişiklik), bu nedenle yine de kendi hafif periyodik kontrolüne ihtiyaç duyuyor ----
+  const groupsRef = useRef(groups);
+  const gamesRef = useRef(games);
+  useEffect(() => { groupsRef.current = groups; }, [groups]);
+  useEffect(() => { gamesRef.current = games; }, [games]);
+  useEffect(() => {
+    sabit iv = setInterval(async () => {
+      const { groups: g, games: gm, groupsChanged, gamesChanged } = cleanExpiredGroups(groupsRef.current, gamesRef.current);
+      Eğer gruplar değiştiyse, saveShared("groups", g) fonksiyonunu çağırın.
+      Eğer oyunlar değiştiyse, saveShared("games", gm) fonksiyonunu çağırın.
+    }, 5000);
+    return () => clearInterval(iv);
+  }, []);
+
+  // `me`'yi en son kullanıcılar veri tabanıyla senkronize tutun (puan güncellemeleri için başka yerlerde kullanılabilir).
+  useEffect(() => {
+    eğer (ben ve kullanıcılar[ben.kullanıcı adı]) {
+      const fresh = users[me.username];
+      const newMedals = medalsForScore(fresh.score);
+      if (newMedals.length > (me.medals || []).length) {
+        const justEarned = newMedals[newMedals.length - 1];
+        const tier = MEDAL_TIERS.find(m => m.key === justEarned);
+        setMedalPopup(tier);
+      }
+      setMe({ username: me.username, isAdmin: fresh.isAdmin, score: fresh.score, medals: newMedals });
+    }
+  }, [kullanıcılar]); // eslint-satırı devre dışı bırak
+
+  // ---------------- DOTH ----------------
+  // Google ile oturum açma, her üyeye ilk doğrulama adımı olarak sunulmaktadır.
+  // Kullanıcı adı/şifre girişinden tamamen ayrı (ve onun üzerinde)
+  // aşağıda — bu akışa dokunulmamış. Google ile oturum açma her zaman başarılı olur.
+  // ve oturum boyunca hatırlanır; tek istisna, yalnızca şu durumun geçerli olmasıdır:
+  // Tam ADMIN_GOOGLE_EMAIL hesabı ayrıca yönetici panelinin kilidini açar.
+  // Diğer herkes uygulamayı normal şekilde kullanmaya devam eder.
+  asenkron fonksiyon handleGoogleSignIn() {
+    setGoogleAdminError("");
+    setGoogleAdminBusy(true);
+    denemek {
+      const result = await window.__fbauth.signInWithPopup(window.__googleProvider);
+      const email = (result.user && result.user.email || "").toLowerCase();
+      setGoogleSignedIn(true);
+      setGoogleSignInEmail(email);
+      if (email === ADMIN_GOOGLE_EMAIL.toLowerCase()) {
+        setGoogleAdminVerified(true);
+        setGoogleAdminEmail(email);
+      } başka {
+        setGoogleAdminVerified(false);
+        setGoogleAdminEmail(null);
+      }
+    } yakala (e) {
+      console.error("Google oturum açma başarısız oldu", e);
+      setGoogleAdminError(t.googleSignInFailed);
+    }
+    setGoogleAdminBusy(false);
+  }
+
+  asenkron fonksiyon handleAuth() {
+    setAuthError("");
+    const uname = authForm.username.trim();
+    const pass = authForm.password;
+    Eğer uname yoksa veya pass değeri girilmemişse, t.fillFields değişkenine bir kimlik doğrulama hatası (setAuthError) ekleyin ve işlemi sonlandırın.
+    const { u } = await refreshAll();
+    if (authMode === "login") {
+      const isAdminCreds = uname === ADMIN_NAME && pass === ADMIN_PASS;
+      sabit rec = u[uname];
+      eğer (isAdminCreds) {
+        // Yalnızca yönetici kimlik bilgileri artık yeterli değil: Google kimliği de gerekiyor.
+        // Yukarıdaki kontrol bu oturum için zaten başarılı olmuş olmalıdır.
+        Eğer GoogleAdmin doğrulanmadıysa, t.googleAdminRequired'ı ayarlayarak işlemi durdurun.
+        const adminRec = rec || { password: ADMIN_PASS, score: 0, isAdmin: true };
+        adminRec.isAdmin = true;
+        const nu = { ...u, [uname]: adminRec };
+        wait saveShared("kullanıcılar", nu); setUsers(nu);
+        setMe({ username: uname, isAdmin: true, score: adminRec.score, medals: medalsForScore(adminRec.score) });
+        setScreen("menü"); return;
+      }
+      Eğer rec doğru değilse veya rec.password doğru değilse, t.wrongLogin için setAuthError hatası oluşturup işlemi durdurun.
+      setMe({ username: uname, isAdmin: !!rec.isAdmin, score: rec.score || 0, medals: medalsForScore(rec.score || 0) });
+      setScreen("menü");
+    } başka {
+      if (u[uname] || uname === ADMIN_NAME) { setAuthError(t.userExists); return; }
+      const rec = { password: pass, score: 0, isAdmin: false };
+      const nu = { ...u, [uname]: rec };
+      wait saveShared("kullanıcılar", nu); setUsers(nu);
+      setMe({ username: uname, isAdmin: false, score: 0, medals: [] });
+      setScreen("menü");
+    }
+  }
+
+  fonksiyon çıkış yap() {
+    setMe(null); setScreen("auth"); setAuthForm({ username: "", password: "" });
+    setGoogleSignedIn(false); setGoogleSignInEmail(null);
+    setGoogleAdminVerified(false); setGoogleAdminEmail(null); setGoogleAdminError("");
+    if (window.__fbauth.currentUser) window.__fbauth.signOut().catch(() => {});
+  }
+
+  asenkron fonksiyon adjustScore(kullanıcı adı, delta) {
+    const nu = { ...kullanıcılar, [kullanıcı adı]: { ...kullanıcılar[kullanıcı adı], puan: Math.max(0, (kullanıcılar[kullanıcı adı].puan || 0) + delta) } };
+    setUsers(nu); wait saveShared("kullanıcılar", nu);
+  }
+
+  asenkron fonksiyon addPoint(kullanıcı adı, delta) {
+    const cur = await loadShared("users", {});
+    const rec = cur[username] || { password: "", score: 0, isAdmin: false };
+    const nu = { ...cur, [username]: { ...rec, score: (rec.score || 0) + delta } };
+    wait saveShared("kullanıcılar", nu); setUsers(nu);
+  }
+
+  // ---------------- GRUPLAR ----------------
+  asenkron fonksiyon createGroup() {
+    if (!newGroupName.trim()) return;
+    const myGroupCount = Object.values(groups).filter(g => g.members.includes(me.username)).length;
+    Eğer grup sayımı 50'den büyük veya eşitse, "grup limitine ulaşıldı" uyarısını verip işlemi sonlandırın.
+
+    const today = new Date().toISOString().slice(0, 10);
+    const freshUsers = await loadShared("users", {});
+    const myRec = freshUsers[me.username] || { password: "", score: 0, isAdmin: false };
+    const countToday = myRec.groupsCreatedDate === today ? (myRec.groupsCreatedCount || 0) : 0;
+    Eğer (countToday >= 3) ise, t.dailyGroupLimit'e uyarı gönder ve işlemi sonlandır.
+
+    sabit id = uid();
+    const now = Date.now();
+    const g = { id, name: newGroupName.trim(), owner: me.username, members: [me.username], messages: [], createdAt: now, expiresAt: now + 2 * 60 * 60 * 1000, pendingDelete: false };
+    const ng = { ...gruplar, [id]: g };
+    wait saveShared("gruplar", ng); setGroups(ng);
+
+    const nu = { ...freshUsers, [me.username]: { ...myRec, groupsCreatedDate: today, groupsCreatedCount: countToday + 1 } };
+    wait saveShared("kullanıcılar", nu); setUsers(nu);
+
+    setNewGroupName(""); setShowCreateGroup(false);
+    setActiveGroupId(id); setScreen("chat");
+  }
+
+  asenkron fonksiyon inviteToGroup(grupKimliği, kullanıcı adı) {
+    sabit g = gruplar[grupId];
+    Eğer (!g veya g.members.includes(username)) geri dön;
+    const notifs = await loadShared("notifications", {});
+    const userNotifs = notifs[kullanıcı adı] || [];
+    userNotifs.push({ id: uid(), type: "groupInvite", from: me.username, groupId, groupName: g.name, ts: Date.now() });
+    const nn = { ...notifs, [kullanıcı adı]: userNotifs };
+    await saveShared("notifications", nn);
+    alert(`${username} — ${t.invite} âœ“`);
+  }
+
+  asenkron fonksiyon kickFromGroup(groupId, username) {
+    const g = await loadShared("groups", {});
+    sabit grp = g[grup kimliği];
+    Eğer (!grp || grp.owner !== me.username || username === grp.owner) ise, geri dön;
+    grp.üyeler = grp.üyeler.filtre(m => m !== kullanıcı adı);
+    await saveShared("groups", g); setGroups(g);
+  }
+
+  asenkron fonksiyon leaveGroupFn(groupId) {
+    const g = await loadShared("groups", {});
+    sabit grp = g[grup kimliği];
+    Eğer grup yoksa, aktif grup kimliğini ayarlayıp grupları ekrana yazdırarak işlemi sonlandırın.
+    if (grp.owner === me.username) { await deleteGroupFn(groupId); return; }
+    grp.members = grp.members.filter(m => m !== me.username);
+    await saveShared("groups", g); setGroups(g);
+    setActiveGroupId(null); setScreen("gruplar");
+  }
+
+  asenkron fonksiyon deleteGroupFn(groupId) {
+    const g = await loadShared("groups", {});
+    Eğer grup kimliği yoksa, aktif grup kimliğini boş bırak ve grupları ekranda göster. Ardından işlemi sonlandır.
+    g[groupId]'yi sil;
+    await saveShared("groups", g); setGroups(g);
+    const gm = await loadShared("games", {});
+    sabit ng = { ...gm };
+    let changed = false;
+    for (const [gid, game] of Object.entries(gm)) {
+      if (game.groupId === groupId) { delete ng[gid]; changed = true; }
+    }
+    if (değiştirildi) { wait saveShared("games", ng); setGames(ng); }
+    setActiveGroupId(null); setScreen("gruplar");
+  }
+
+  asenkron fonksiyon acceptGroupInvite(notif) {
+    const g = await loadShared("groups", {});
+    sabit grp = g[notif.groupId];
+    if (grp && !grp.members.includes(me.username)) {
+      grp.members.push(me.username);
+      await saveShared("groups", g); setGroups(g);
+    }
+    Bildirimi kaldır (notif.id);
+  }
+
+  asenkron fonksiyon removeNotification(id) {
+    const notifs = await loadShared("notifications", {});
+    const mine = (notifs[me.username] || []).filter(n => n.id !== id);
+    const nn = { ...notifs, [me.kullanıcıadı]: benim };
+    await saveShared("notifications", nn);
+    setMyNotifs(mine);
+  }
+
+  const [myNotifs, setMyNotifs] = useState([]);
+  useEffect(() => {
+    if (screen === "notifications" && me) {
+      loadShared("notifications", {}).then(n => setMyNotifs(n[me.username] || []));
+    }
+  }, [ekran, ben]);
+
+  // ---------------- SOHBET / OYUN DAVETİ ----------------
+  const [chatInput, setChatInput] = useState("");
+  asenkron fonksiyon sendMessage(groupId) {
+    Eğer chatInput'un ayarları düzgün değilse, geri dön.
+    const g = await loadShared("groups", {});
+    sabit grp = g[grup kimliği];
+    grp.messages.push({ id: uid(), from: me.username, type: "text", text: chatInput.trim(), ts: Date.now() });
+    await saveShared("groups", g); setGroups(g); setChatInput("");
+  }
+
+  asenkron fonksiyon sendGameInvite(groupId) {
+    const g = await loadShared("groups", {});
+    sabit grp = g[grup kimliği];
+    const gameId = uid();
+    grp.messages.push({ id: uid(), from: me.username, type: "invite", gameId, ts: Date.now() });
+    const gm = await loadShared("games", {});
+    gm[gameId] = {
+      id: gameId, groupId, host: me.username, lang, status: "lobby",
+      Üyeler: [ben.kullanıcıadı], maksimum üye sayısı: 15,
+      MevcutHarf: null, Dönüşİndeksi: 0, DönüşSayısı: 0,
+      wordChain: [], lastResults: [], spinToken: 0,
+    };
+    await Promise.all([saveShared("groups", g), saveShared("games", gm)]);
+    Grupları ayarla(g); Oyunları ayarla(gm);
+  }
+
+  asenkron fonksiyon joinLobby(gameId) {
+    const gm = await loadShared("games", {});
+    sabit oyun = gm[oyunId];
+    Eğer oyun yoksa veya oyun üyeleri arasında kullanıcı adı yoksa, oyun kimliğini aktif hale getirip lobi ekranını ayarlayarak oyunu sonlandırabiliriz.
+    Eğer oyunun üye sayısı maksimum üye sayısına eşit veya daha fazlaysa, "t.lobbyFull" uyarısı verip oyunu kapatabilirsiniz.
+    oyun.üyeler.it(ben.kullanıcıadı);
+    await saveShared("games", gm); setGames(gm);
+    setActiveGameId(gameId); setScreen("lobi");
+  }
+
+  asenkron fonksiyon leaveLobby(gameId) {
+    const gm = await loadShared("games", {});
+    sabit oyun = gm[oyunId];
+    eğer (oyun) {
+      oyun.üyeler = oyun.üyeler.filtre(m => m !== ben.kullanıcıadı);
+      await saveShared("games", gm); setGames(gm);
+    }
+    Ekranı ayarla("sohbet");
+  }
+
+  asenkron fonksiyon startSpin(gameId) {
+    const gm = await loadShared("games", {});
+    sabit oyun = gm[oyunId];
+    const letters = ALPHABETS[game.lang].filter(l => game.lang === "tr" ? l !== "Äž" : true);
+    const pick = letters[Math.floor(Math.random() * letters.length)];
+    oyun.durumu = "dönüyor";
+    oyun.mevcutHarf = seç;
+    oyun.döndürmejeti = (oyun.döndürmejeti || 0) + 1;
+    oyun.sıraindeks = 0;
+    oyun.kelimeZinciri = [];
+    oyun.tur sayısı = (oyun.tur sayısı || 0) + 1;
+    await saveShared("games", gm); setGames(gm);
+  }
+
+  asenkron fonksiyon finishSpin(gameId) {
+    const gm = await loadShared("games", {});
+    sabit oyun = gm[oyunId];
+    if (game.status === "spinning") {
+      oyun.durumu = "oynuyor";
+      await saveShared("games", gm); setGames(gm);
+    }
+  }
+
+  asenkron fonksiyon submitWord(gameId, word, isValid, timedOut) {
+    const gm = await loadShared("games", {});
+    sabit oyun = gm[oyunId];
+
+    eğer (zaman aşımı) {
+      // sÃ¼resi dolan oyuncusu serisi bozulur: sÄ±ra sÄ±radaki kiÅŸiye geÃ§er ve
+      // onun içinin başında yeni bir Şark Evirme turu başları
+      const letters = ALPHABETS[game.lang].filter(l => game.lang === "tr" ? l !== "Äž" : true);
+      const pick = letters[Math.floor(Math.random() * letters.length)];
+      oyun.sıraindeks = (oyun.sıraindeks + 1) % oyun.üye sayısı;
+      oyun.durumu = "dönüyor";
+      oyun.mevcutHarf = seç;
+      oyun.döndürmejeti = (oyun.döndürmejeti || 0) + 1;
+      oyun.kelimeZinciri = [];
+      oyun.tur sayısı = (oyun.tur sayısı || 0) + 1;
+      await saveShared("games", gm); setGames(gm);
+      geri dönmek;
+    }
+
+    sabit kırpılmış = kelime.kırpma();
+    const isDuplicate = trimmed && game.wordChain.some(
+      w => w.word && normalizeWord(w.word, game.lang) === normalizeWord(trimmed, game.lang)
+    );
+    eğer (aynı dosya ise) {
+      // aynı kelime bu turda daha sonra kullanalım: oyun herkes için burada bitiyor
+      oyun.kelimeZinciri.itme({ kullanıcıadı: ben.kullanıcıadı, kelime: kırpılmış, puanlar: 0 });
+      oyun.durumu = "oyun bitti";
+      oyun.oyunBitirmeSözü = kırpılmış;
+      oyun.oyunbitti = ben.kullanıcıadı;
+      await saveShared("games", gm); setGames(gm);
+      geri dönmek;
+    }
+
+    const points = isValid && trimmed ? POINTS_PER_WORD : 0;
+    oyun.kelimeZinciri.itme({ kullanıcıadı: ben.kullanıcıadı, kelime: kırpılmış, puanlar });
+    Eğer puan sayısı 0'dan büyükse, kullanıcı adınıza ve kelime başına puanlarınıza puan eklemek için bir bekleme işlemi gerçekleştirin.
+    if (game.wordChain.length >= ROUND_WORD_LIMIT) {
+      oyun.durum = "sonuçlar";
+      oyun.sonuçlar = oyun.kelimezinciri;
+      const allCorrect = game.wordChain.every(w => w.points > 0);
+      eğer (hepsi doğruysa) {
+        // hiÃ§ kaÃ§Ä±lÄ±lÄ±lÄ±r tur limitine ulaÅŸÄ±ldÄ±: bonus tÃ¼m grup paylaÅŸtÄ±rÄ±lÄ±r,
+        // kişisel olarak kazanan kelime puanları olduğu gibi kalÄ±r
+        const share = Math.round(STREAK_BONUS / game.members.length);
+        for (sabit m of game.members) {
+          await addPoint(m, share);
+        }
+      }
+    } başka {
+      oyun.turnIndex = (oyun.turnIndex + 1) % oyun.members.length; // Lobi üyeleri arasında döngüyü sürdürün
+    }
+    await saveShared("games", gm); setGames(gm);
+  }
+
+  eşzamansız işlev backToWheelScreen(gameId) {
+    const gm = await loadShared("games", {});
+    sabit oyun = gm[oyunId];
+    oyun.durumu = "lobi";
+    await saveShared("games", gm); setGames(gm);
+  }
+
+  // ---------------- OLUŞTURMA YARDIMCILARI ----------------
+  sabit bg = (
+    <div className="fixed inset-0 -z-10 overflow-hidden" style={{ background: "radial-gradient(ellipse at 25% 15%, #2d1755 0%, #1c0f38 45%, #0f0a1e 100%)" }}>
+      {/* Derinlik katmak için yumuşak, parıldayan renk lekeleri */}
+      <div className="absolute rounded-full" style={{ width: 460, height: 460, left: "-8%", top: "-10%", background: "#f2b705", opacity: 0.16, filter: "blur(110px)", animation: "drift1 22s ease-in-out infinite" }} />
+      <div className="absolute rounded-full" style={{ width: 420, height: 420, right: "-10%", top: "20%", background: "#33d6b0", opacity: 0.14, filter: "blur(110px)", animation: "drift2 26s ease-in-out infinite" }} />
+      <div className="absolute rounded-full" style={{ width: 380, height: 380, left: "10%", bottom: "-14%", background: "#ff6f61", opacity: 0.12, filter: "blur(110px)", animation: "drift3 19s ease-in-out infinite" }} />
+
+      {/* doku için soluk ızgara */}
+      <div className="absolute inset-0 opacity-[0.05]" style={{
+        backgroundImage: "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
+        Arka plan boyutu: "52px 52px"
+      }} />
+
+      {/* Arka plana gizlenmiş, dağınık scrabble tarzı harf karoları */}
+      {[
+        { kanal: "K", nokta: 1 }, { kanal: "E", nokta: 1 }, { kanal: "L", nokta: 2 }, { kanal: "Ä°", nokta: 3 },
+        { ch: "M", pt: 2 }, { ch: "E", pt: 1 }, { ch: "T", pt: 1 }, { ch: "Ãœ", pt: 3 },
+      ].map((tile, i) => (
+        <div key={i} className="absolute flex items-center justify-center select-none" style={{
+          sol: `${(i * 29 + 6) % 92}%`, üst: `${(i * 41 + 10) % 88}%`,
+          Genişlik: 44, Yükseklik: 44, Kenar Yarıçapı: 8,
+          arka plan: "rgba(245,240,255,0.045)", kenarlık: "1px düz rgba(245,240,255,0.08)",
+          kutuGölgesi: "0 6px 16px rgba(0,0,0,0.25)",
+          transform: `rotate(${(i % 2 ? -1 : 1) * (8 + i * 5)}deg)`,
+          animasyon: `float${i % 3} ${9 + i}s ease-in-out infinite`,
+        }}>
+          <span style={{ fontFamily: "Fredoka, sans-serif", fontWeight: 700, fontSize: 20, color: "rgba(245,240,255,0.16)" }}>{tile.ch}</span>
+          <span style={{ position: "absolute", right: 4, bottom: 2, fontSize: 8, fontWeight: 700, color: "rgba(245,240,255,0.12)" }}>{tile.pt}</span>
+        </div>
+      ))}
+
+      {/* ince vinyet */}
+      <div className="absolute inset-0" style={{ boxShadow: "inset 0 0 180px rgba(0,0,0,0.55)" }} />
+
+      <style>{`
+        @keyframes float0 { 0%,100%{transform:translateY(0) rotate(var(--r,0deg))} 50%{transform:translateY(-16px) rotate(var(--r,0deg))} }
+        @keyframes float1 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(12px)} }
+        @keyframes float2 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-9px)} }
+        @keyframes drift1 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(30px,20px) scale(1.08)} }
+        @keyframes drift2 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-25px,25px) scale(1.1)} }
+        @keyframes drift3 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(20px,-20px) scale(1.06)} }
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Inter:wght@400;500;600;700&display=swap');
+      `}</style>
+    </div>
+  );
+
+  sabit TopLangSwitch = (
+    <div className="flex gap-1 bg-black/20 rounded-full p-1">
+      {["tr", "tr", "de"].map(l => (
+        <button key={l} onClick={() => setLang(l)}
+          className="px-3 py-1 rounded-full text-xs font-semibold transition"
+          stil={{ arka plan: lang === l ? "#f2b705" : "şeffaf", renk: lang === l ? "#1b1030" : "#f5f0ff" }}>
+          {l.toUpperCase()}
+        </button>
+      ))}
+    </div>
+  );
+
+  fonksiyon Başlık(başlık, geri dön) {
+    geri dönmek (
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2">
+          {showBack && (
+            <button onClick={() => setScreen("menu")} className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white">
+              <ArrowLeft size={18} />
+            </button>
+          )}
+          <h1 className="font-bold text-lg" style={{ fontFamily: "Fredoka, sans-serif", color: "#f5f0ff" }}>{başlık}</h1>
+        </div>
+        {TopLangSwitch}
+      </div>
+    );
+  }
+
+  // ---------------- DOĞRULAMA EKRANI ----------------
+  if (screen === "auth" || !me) {
+    geri dönmek (
+      <div className="min-h-screen w-full flex items-center justify-center p-6" style={{ fontFamily: "Inter, sans-serif" }}>
+        {bg}
+        <div className="absolute top-4 right-4">{TopLangSwitch}</div>
+        <div className="w-full max-w-sm rounded-3xl p-7" style={{ background: "rgba(36,21,66,0.85)", backdropFilter: "blur(12px)", boxShadow: "0 20px 60px rgba(0,0,0,.5)", border: "1px solid rgba(255,255,255,0.08)" }}>
+          <div className="text-center mb-6">
+            <div className="mx-auto mb-3 flex items-center justify-center" style={{ filter: "drop-shadow(0 8px 20px rgba(242,183,5,0.25))" }}>
+              <Wheel lang={lang} spinning={false} resultLetter={null} size={84} excludeFirst={lang === "tr" ? "Äž" : null} />
+            </div>
+            <h1 className="text-2xl font-bold" style={{ fontFamily: "Fredoka, sans-serif", color: "#f5f0ff" }}>{t.appName}</h1>
+          </div>
+          <div className="space-y-3">
+            <input value={authForm.username} onChange={e => setAuthForm(f => ({ ...f, username: e.target.value }))}
+              placeholder={t.username} className="w-full px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/40 outline-none focus:ring-2 focus:ring-yellow-500" />
+            <input value={authForm.password} onChange={e => setAuthForm(f => ({ ...f, password: e.target.value }))} type="password"
+              yer tutucu={t.password} sınıf adı="w-full px-4 py-3 rounded-xl bg-white/10 text-white yer tutucu-white/40 outline-none focus:ring-2 focus:ring-yellow-500"
+              onKeyDown={e => e.key === "Enter" && handleAuth()} />
+            {authError && <p className="text-red-400 text-sm">{authError}</p>}
+            <button onClick={handleAuth} className="w-full py-3 rounded-xl font-bold transition hover:opacity-90"
+              stil={{ arka plan: "#f2b705", renk: "#1b1030", yazı tipi ailesi: "Fredoka, sans-serif" }}>
+              {authMode === "login" ? t.login : t.register}
+            </button>
+            <button onClick={() => { setAuthMode(m => m === "login" ? "register" : "login"); setAuthError(""); }}
+              className="w-full text-center text-sm text-white/60 hover:text-white/90 pt-1">
+              {authMode === "login" ? t.noAccount : t.haveAccount}
+            </button>
+
+            <div className="pt-2 mt-2 border-t border-white/10">
+              <button onClick={handleGoogleSignIn} disabled={googleAdminBusy}
+                className="w-full py-2.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition"
+                stil={googleSignedIn}
+                  ? { background: "rgba(34,197,94,0.15)", color: "#86efac", border: "1px solid rgba(34,197,94,0.35)" }
+                  : { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                <span style={{ fontSize: 14 }}>{googleSignedIn ? "âœ"" : "ğŸ”μ"</span>
+                {googleSignedIn ? (googleAdminVerified ? t.googleAdminVerifiedMsg : t.googleSignedInMsg) : (googleAdminBusy ? t.googleSigning : t.googleSignIn)}
+              </button>
+              <p className="text-white/30 text-[11px] mt-1.5 text-center">{t.googleSignInHint}</p>
+              {googleAdminError && <p className="text-red-400 text-xs mt-1.5 text-center">{googleAdminError}</p>}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const myGroups = Object.values(groups).filter(g => g.members.includes(me.username));
+  const sortedUsersForRank = Object.entries(users).sort((a, b) => (b[1].score || 0) - (a[1].score || 0));
+  const myRank = sortedUsersForRank.findIndex(([name]) => name === me.username) + 1;
+  const nextTier = MEDAL_TIERS.find(mt => me.score < mt.threshold);
+  const prevThreshold = nextTier ? (MEDAL_TIERS[MEDAL_TIERS.indexOf(nextTier) - 1]?.threshold || 0) : MEDAL_TIERS[MEDAL_TIERS.length - 1].threshold;
+  const progressPct = nextTier ? Math.min(100, Math.max(0, ((me.score - prevThreshold) / (nextTier.threshold - prevThreshold)) * 100)) : 100;
+
+  // ---------------- ANA MENÜ ----------------
+  if (screen === "menu") {
+    geri dönmek (
+      <div className="min-h-screen w-full p-5" style={{ fontFamily: "Inter, sans-serif" }}>
+        {bg}
+        <div className="flex items-center justify-between mb-6">
+          <button onClick={() => setShowCreateGroup(true)} className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-white text-sm font-semibold hover:bg-white/20">
+            <Plus size={16} /> {t.createGroup}
+          </button>
+          {TopLangSwitch}
+        </div>
+
+        <div className="max-w-md mx-auto mb-7 rounded-3xl p-5" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02))", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(10px)", boxShadow: "0 20px 40px rgba(0,0,0,0.35)" }}>
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 relative" style={{ background: "linear-gradient(135deg,#f2b705,#ff8a3d)", boxShadow: "0 8px 22px rgba(242,183,5,0.35)" }}>
+              <span className="text-2xl font-black" style={{ fontFamily: "Fredoka, sans-serif", color: "#1b1030" }}>
+                {me.username.slice(0, 1).toLocaleUpperCase(lang === "tr" ? "tr-TR" : undefined)}
+              </span>
+              {ben.yöneticiyim && (
+                <div className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full flex items-center justify-center" style={{ background: "#2c1750", border: "2px solid #1b1030" }}>
+                  <Shield size={11} color="#c9a8ff" />
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-bold text-lg truncate" style={{ fontFamily: "Fredoka, sans-serif" }}>{me.username}</p>
+              <div className="flex items-center gap-3 mt-1 flex-wrap">
+                <span className="flex items-center gap-1 text-yellow-400 font-bold text-sm"><Trophy size={13} />{me.score}</span>
+                {myRank > 0 && <span className="text-white/35 text-xs font-semibold">#{myRank} {t.worldRank}</span>}
+              </div>
+            </div>
+          </div>
+
+          <div onClick={() => setShowMedalInfo(true)} className="cursor-pointer">
+            {me.medals.length > 0 && (
+              <div className="flex items-center gap-2 mt-4 flex-wrap">
+                {me.medals.map(mk => {
+                  const tier = MEDAL_TIERS.find(x => x.key === mk); const Icon = tier.icon;
+                  geri dönmek (
+                    <div key={mk} className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: `${tier.color}22`, border: `1px solid ${tier.color}55` }}>
+                      <Icon size={16} color={tier.color} />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {sonrakiKademe && (
+              <div className="mt-4">
+                <div className="flex justify-between text-[10px] text-white/40 mb-1.5 font-semibold">
+                  <span>{t.nextMedal}: {nextTier.label[lang]}</span>
+                  <span>{me.score}/{nextTier.threshold}</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+                  <div className="h-full rounded-full transition-all" style={{ width: `${progressPct}%`, background: nextTier.color }} />
+              </div>
+            </div>
+          )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
+          <button onClick={() => setScreen("groups")} className="col-span-2 flex items-center justify-center gap-2 py-5 rounded-2xl font-bold text-lg" style={{ background: "linear-gradient(135deg,#f2b705,#ff8a3d)", color: "#1b1030", fontFamily: "Fredoka, sans-serif" }}>
+            <Kullanıcılar size={22} /> {t.myGroups} ({myGroups.length})
+          </button>
+          <button onClick={() => setScreen("solo")} className="flex flex-col items-center justify-center gap-2 py-6 rounded-2xl bg-white/10 text-white font-semibold hover:bg-white/20">
+            <Play size={26} /> {t.soloPlay}
+          </button>
+          <button onClick={() => setScreen("leaderboard")} className="flex flex-col items-center justify-center gap-2 py-6 rounded-2xl bg-white/10 text-white font-semibold hover:bg-white/20">
+            <Kupa boyutu={26} /> {t.liderboard}
+          </button>
+          {me.isAdmin && googleAdminVerified && (
+            <button onClick={() => setScreen("admin")} className="col-span-2 flex items-center justify-center gap-2 py-4 rounded-2xl bg-purple-900/50 border border-purple-400/30 text-purple-200 font-semibold hover:bg-purple-900/70">
+              <Shield size={20} /> {t.admin}
+            </button>
+          )}
+        </div>
+
+        <div className="fixed bottom-6 left-0 right-0 flex justify-center gap-3">
+          <button onClick={() => setScreen("notifications")} className="flex items-center gap-2 px-5 py-3 rounded-full bg-black/40 backdrop-blur text-white font-semibold border border-white/10">
+            <Bell size={18} /> {t.notifications}
+          </button>
+          <button onClick={logout} className="flex items-center gap-2 px-5 py-3 rounded-full bg-black/40 backdrop-blur text-white/70 font-semibold border border-white/10">
+            <Çıkış boyutu={18} />
+          </button>
+        </div>
+
+        {showCreateGroup && (
+          <Modal onClose={() => setShowCreateGroup(false)}>
+            <h3 className="text-white font-bold mb-3" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.createGroup}</h3>
+            <input value={newGroupName} onChange={e => setNewGroupName(e.target.value)} placeholder={t.groupName}
+              className="w-full px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/40 outline-none mb-3" />
+            <div className="flex gap-2">
+              <button onClick={() => setShowCreateGroup(false)} className="flex-1 py-2.5 rounded-xl bg-white/10 text-white">{t.cancel}</button>
+              <button onClick={createGroup} className="flex-1 py-2.5 rounded-xl font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>{t.create}</button>
+            </div>
+          </Modal>
+        )}
+        {medalPopup && <MedalPopup tier={medalPopup} t={t} onClose={() => setMedalPopup(null)} />}
+        {showMedalInfo && (
+          <Modal onClose={() => setShowMedalInfo(false)}>
+            <h3 className="text-white font-bold mb-1" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.medals}</h3>
+            <p className="text-white/40 text-xs mb-4">{t.score}: <span className="text-yellow-400 font-bold">{me.score}</span></p>
+            <div className="space-y-2">
+              {MEDAL_TIERS.map(tier => {
+                const Icon = tier.icon;
+                const earned = me.score >= tier.threshold;
+                geri dönmek (
+                  <div key={tier.key} className="flex items-center justify-between px-3 py-2.5 rounded-xl"
+                    style={{ background: earned ? `${tier.color}1a` : "rgba(255,255,255,0.05)", border: `1px solid ${earned ? tier.color + "66" : "rgba(255,255,255,0.08)"}` }}>
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: `${tier.color}22` }}>
+                        <Icon size={16} color={tier.color} />
+                      </div>
+                      <span className={`font-semibold text-sm ${earned ? "text-white" : "text-white/50"}`}>{tier.label[lang]}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold" style={{ color: earned ? tier.color : "rgba(255,255,255,0.4)" }}>{tier.threshold.toLocaleString(lang === "tr" ? "tr-TR" : undefined)}</span>
+                      {kazanılan && <Check size={14} color={tier.color} />}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <button onClick={() => setShowMedalInfo(false)} className="w-full mt-4 py-2.5 rounded-xl bg-white/10 text-white">{t.close}</button>
+          </Modal>
+        )}
+      </div>
+    );
+  }
+
+  // ---------------- GRUPLAR LİSTESİ ----------------
+  if (screen === "groups") {
+    geri dönmek (
+      <div className="min-h-screen w-full p-5" style={{ fontFamily: "Inter, sans-serif" }}>
+        {bg}
+        {Başlık(t.myGroups)}
+        <button onClick={() => setShowCreateGroup(true)} className="mb-4 flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-white text-sm font-semibold hover:bg-white/20">
+          <Plus size={16} /> {t.createGroup}
+        </button>
+        {myGroups.length === 0 && <p className="text-white/50 text-center mt-10">{t.noGroups}</p>}
+        <div className="space-y-2 max-w-md mx-auto">
+          {myGroups.map(g => {
+            const remaining = g.expiresAt ? g.expiresAt - tick : null;
+            geri dönmek (
+              <button key={g.id} onClick={() => { setActiveGroupId(g.id); setScreen("chat"); }}
+                className="w-full flex items-center justify-between px-4 py-4 rounded-2xl bg-white/10 hover:bg-white/20 text-left">
+                <div>
+                  <p className="text-white font-semibold">{g.name}</p>
+                  <p className="text-white/50 text-xs">{g.members.length} {t.members}</p>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <Swords size={18} className="text-white/40" />
+                  {kalan != null && (
+                    <span className="flex items-center gap-1 text-[10px] font-semibold" style={{ color: remaining <= 0 ? "#ff8a8a" : remaining < 5 * 60 * 1000 ? "#ffb84d" : "rgba(255,255,255,0.35)" }}>
+                      <Clock size={9} /> {remaining > 0 ? formatRemaining(remaining) : g.pendingDelete ? t.closesInGame : "0:00"}
+                    </span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        <button onClick={() => setScreen("menu")} className="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-6 py-3 rounded-full bg-black/40 backdrop-blur text-white font-semibold border border-white/10">
+          <ArrowLeft size={16} /> {t.back}
+        </button>
+        {showCreateGroup && (
+          <Modal onClose={() => setShowCreateGroup(false)}>
+            <h3 className="text-white font-bold mb-3">{t.createGroup}</h3>
+            <input value={newGroupName} onChange={e => setNewGroupName(e.target.value)} placeholder={t.groupName}
+              className="w-full px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/40 outline-none mb-3" />
+            <div className="flex gap-2">
+              <button onClick={() => setShowCreateGroup(false)} className="flex-1 py-2.5 rounde d-xl bg-white/10 text-white">{t.cancel}</button>
+              <button onClick={createGroup} className="flex-1 py-2.5 rounded-xl font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>{t.create}</button>
+            </div>
+          </Modal>
+        )}
+      </div>
+    );
+  }
+
+  // ---------------- SOHBET ----------------
+  if (screen === "chat" && activeGroupId) {
+    sabit grp = gruplar[aktifgrup kimliği];
+    eğer (!grp) {
+      return <GoneScreen bg={bg} message={t.groupGone} backLabel={t.back} onBack={() => setScreen("groups")} />;
+    }
+    const remaining = grp.expiresAt ? grp.expiresAt - tick : null;
+    const isOwner = grp.owner === me.username;
+    const filteredUsers = Object.keys(users).filter(u => u !== me.username && u.toLocaleLowerCase(lang === "tr" ? "tr-TR" : undefined).includes(groupInviteSearch.trim().toLocaleLowerCase(lang === "tr" ? "tr-TR" : undefined)));
+    geri dönmek (
+      <div className="min-h-screen w-full p-5 flex flex-col" style={{ fontFamily: "Inter, sans-serif" }}>
+        {bg}
+        {isOwner ? (
+          <div className="max-w-md w-full mx-auto mb-2 flex justify-center gap-2">
+            <button onClick={() => { setGroupInviteSearch(""); setShowGroupInvite(true); }}
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold" style={{ background: "#2c1750", border: "1px solid rgba(255,255,255,0.15)", color: "#f5f0ff" }}>
+              <Kullanıcılar size={14} /> {t.groupCallBtn}
+            </button>
+            <button onClick={() => { if (window.confirm(t.deleteGroupConfirm)) deleteGroupFn(activeGroupId); }}
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold bg-red-500/80 text-white">
+              <X size={14} /> {t.deleteGroup}
+            </button>
+          </div>
+        ) : (
+          <div className="max-w-md w-full mx-auto mb-2 flex justify-center">
+            <button onClick={() => { if (window.confirm(t.leaveGroupConfirm)) leaveGroupFn(activeGroupId); }}
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold bg-red-500/80 text-white">
+              <LogOut size={14} /> {t.leaveGroup}
+            </button>
+          </div>
+        )}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <button onClick={() => setScreen("groups")} className="p-2 rounded-full bg-white/10 text-white"><ArrowLeft size={18} /></button>
+            <div>
+              <p className="text-white font-bold">{grp.name}</p>
+              <p className="text-white/40 text-xs">{grp.members.length} {t.members}</p>
+            </div>
+          </div>
+          <div className="flex flex-col items-end gap-1">
+            <button onClick={() => sendGameInvite(activeGroupId)} className="flex items-center gap-1 px-3 py-2 rounded-full text-xs font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>
+              <Swords size={14} /> {t.sendRequest}
+            </button>
+            {kalan != null && (
+              <span className="flex items-center gap-1 text-[10px] font-semibold" style={{ color: remaining <= 0 ? "#ff8a8a" : remaining < 5 * 60 * 1000 ? "#ffb84d" : "rgba(255,255,255,0.4)" }}>
+                <Clock size={10} /> {remaining > 0 ? formatRemaining(remaining) : grp.pendingDelete ? t.closesInGame : "0:00"}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="max-w-md w-full mx-auto flex flex-wrap gap-1.5 mb-3">
+          {grp.members.map(m => (
+            <span key={m} className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white/10 text-white">
+              {m === grp.owner && <Crown size={10} color="#f2b705" />} {m}
+              {isOwner && m !== grp.owner && (
+                <button onClick={() => { if (window.confirm(`${m} ${t.kickConfirm}`)) kickFromGroup(activeGroupId, m); }}
+                  className="ml-0.5 w-4 h-4 rounded-full flex items-center justify-center bg-red-500/70 hover:bg-red-500 text-white" title={t.kickMember}>
+                  <X size={9} />
+                </button>
+              )}
+            </span>
+          ))}
+        </div>
+
+        <div className="flex-1 space-y-2 overflow-y-auto mb-3 max-w-md w-full mx-auto" style={{ maxHeight: "60vh" }}>
+          {grp.messages.map(m => (
+            <div key={m.id} className={`max-w-[80%] ${m.from === me.username ? "ml-auto" : ""}`}>
+              {m.type === "text" ? (
+                <div className={`px-4 py-2 rounded-2xl text-sm ${m.from === me.username ? "bg-yellow-500 text-[#1b1030]" : "bg-white/10 text-white"}`}>
+                  <p className="text-[10px] opacity-60 font-semibold">{m.from === me.username ? t.you : m.from}</p>
+                  {m.text}
+                </div>
+              ) : (
+                <button onClick={() => joinLobby(m.gameId)} className="w-full px-4 py-3 rounded-2xl text-left border-2 border-dashed border-yellow-400/60 bg-yellow-400/10 hover:bg-yellow-400/20">
+                  <p className="text-yellow-300 text-xs font-bold flex items-center gap-1"><Swords size={14} /> {m.from} {t.gameInviteText}</p>
+                </button>
+              )}
+            </div>
+          ))}
+          {grp.messages.length === 0 && <p className="text-white/40 text-center text-sm mt-8">â€¦</p>}
+        </div>
+
+        <div className="max-w-md w-full mx-auto flex gap-2">
+          <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMessage(activeGroupId)}
+            placeholder={t.writeMessage} className="flex-1 px-4 py-3 rounded-full bg-white/10 text-white placeholder-white/40 outline-none" />
+          <button onClick={() => sendMessage(activeGroupId)} className="p-3 rounded-full" style={{ background: "#f2b705" }}><Send size={18} color="#1b1030" /></button>
+        </div>
+
+        {showGroupInvite && isOwner && (
+          <Modal onClose={() => setShowGroupInvite(false)}>
+            <h3 className="text-white font-bold mb-3" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.groupCallBtn}</h3>
+            <input value={groupInviteSearch} onChange={e => setGroupInviteSearch(e.target.value)} placeholder={t.searchUser}
+              className="w-full px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/40 outline-none mb-3" autoFocus />
+            <div className="space-y-1.5 overflow-y-auto" style={{ maxHeight: "50vh" }}>
+              {filteredUsers.length === 0 && <p className="text-white/40 text-sm text-center py-4">{t.noUserFound}</p>}
+              {filtrelenmişKullanıcılar.harita(u => {
+                const already = grp.members.includes(u);
+                geri dönmek (
+                  <div key={u} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-white/10">
+                    <span className="text-white text-sm font-semibold">{u}</span>
+                    <button disabled={already} onClick={() => inviteToGroup(activeGroupId, u)}
+                      className="px-3 py-1.5 rounded-full text-xs font-bold disabled:opacity-40"
+                      stil={{ arka plan: zaten ? "rgba(255,255,255,0.1)" : "#f2b705", renk: zaten ? "#fff" : "#1b1030" }}>
+                      {Zaten mi? t.ZatenÜye : t.DavetEdildi}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            <button onClick={() => setShowGroupInvite(false)} className="w-full mt-3 py-2.5 rounded-xl bg-white/10 text-white">{t.close}</button>
+          </Modal>
+        )}
+      </div>
+    );
+  }
+
+  // ---------------- LOBİ ----------------
+  if (screen === "lobby" && activeGameId) {
+    sabit oyun = oyunlar[aktifOyunKimliği];
+    eğer (!oyun) {
+      return <GoneScreen bg={bg} message={t.groupGone} backLabel={t.back} onBack={() => setScreen("groups")} />;
+    }
+    if (game.status !== "lobby") {
+      return <GroupGameView game={game} me={me} t={t} onSpinEnd={() => finishSpin(activeGameId)}
+        onSubmitWord={(w, ok, timedOut) => submitWord(activeGameId, w, ok, timedOut)}
+        onNextRound={() => backToWheelScreen(activeGameId)}
+        onExitToChat={() => setScreen("chat")} onGameOver={() => setScreen("menu")} lang={game.lang} />;
+    }
+    const isHost = game.host === me.username;
+    const canLeave = game.members.length > 1;
+    geri dönmek (
+      <div className="min-h-screen w-full p-5 flex flex-col items-center" style={{ fontFamily: "Inter, sans-serif" }}>
+        {bg}
+        {canLeave && (
+          <button onClick={() => leaveLobby(activeGameId)} className="absolute top-5 left-1/2 -translate-x-1/2 flex items-center gap-1 px-4 py-2 rounded-full bg-red-500/80 text-white text-xs font-bold">
+            <X size={14} /> {t.leaveLobby}
+          </button>
+        )}
+        <div className="mt-16 text-center mb-6">
+          <h2 className="text-xl font-bold text-white" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.lobi}</h2>
+          <p className="text-white/50 text-sm">{game.members.length}/{game.maxMembers} Â· {t.waitingPlayers}</p>
+        </div>
+        <div className="flex flex-wrap gap-2 justify-center max-w-md mb-8">
+          {game.members.map(m => (
+            <div key={m} className="px-3 py-2 rounded-full bg-white/10 text-white text-sm flex items-center gap-1">
+              {m === game.host && <Crown size={12} color="#f2b705" />} {m}
+            </div>
+          ))}
+        </div>
+        {isHost && (
+          <button onClick={() => startSpin(activeGameId)} className="px-8 py-4 rounded-full font-bold text-lg flex items-center gap-2" style={{ background: "#f2b705", color: "#1b1030", fontFamily: "Fredoka, sans-serif" }}>
+            <Play size={20} /> {t.startGame}
+          </button>
+        )}
+        {!isHost && <p className="text-white/40 text-sm">{t.waitingPlayers}...</p>}
+      </div>
+    );
+  }
+
+  // ---------------- YALNIZ ----------------
+  if (screen === "solo") {
+    return <SoloGameView t={t} lang={lang} me={me} onAddPoints={(d) => addPoints(me.username, d)} onExit={() => setScreen("menu")} />;
+  }
+
+  // ---------------- LİDERLİK TABLOSU ----------------
+  if (screen === "leaderboard") {
+    const sorted = Object.entries(users).sort((a, b) => (b[1].score || 0) - (a[1].score || 0));
+    geri dönmek (
+      <div className="min-h-screen w-full p-5" style={{ fontFamily: "Inter, sans-serif" }}>
+        {bg}
+        {Başlık(t.dünyaLiderlikSırası, true)}
+        <div className="max-w-md mx-auto space-y-2">
+          {sorted.map(([name, rec], i) => {
+            const mkeys = medalsForScore(rec.score || 0);
+            geri dönmek (
+              <div key={name} className="flex items-center justify-between px-4 py-3 rounded-2xl bg-white/10">
+                <div className="flex items-center gap-3">
+                  <span className="w-6 text-center font-bold" style={{ color: i === 0 ? "#f2b705" : i === 1 ? "#c9c9d6" : i === 2 ? "#c17a4a" : "#ffffff80" }}>{i + 1}</span>
+                  <span className="text-white font-semibold">{name}</span>
+                  {mkeys.map(mk => { const tier = MEDAL_TIERS.find(x => x.key === mk); const Icon = tier.icon; return <Icon key={mk} size={14} color={tier.color} />; })}
+                </div>
+                <span className="text-yellow-400 font-bold">{rec.score || 0}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // ---------------- BİLDİRİMLER ----------------
+  eğer (ekran === "bildirimler") {
+    geri dönmek (
+      <div className="min-h-screen w-full p-5" style={{ fontFamily: "Inter, sans-serif" }}>
+        {bg}
+        {Başlık(t.bildirimler, true)}
+        <div className="max-w-md mx-auto space-y-2">
+          {myNotifs.length === 0 && <p className="text-white/40 text-center mt-10">{t.noNotifications}</p>}
+          {myNotifs.map(n => (
+            <div key={n.id} className="px-4 py-3 rounded-2xl bg-white/10">
+              <p className="text-white text-sm mb-2"><b>{n.from}</b> {t.invitedYouToGroup}: <b>{n.groupName}</b></p>
+              <div className="flex gap-2">
+                <button onClick={() => acceptGroupInvite(n)} className="flex-1 py-1.5 rounded-full text-xs font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>{t.accept}</button>
+                <button onClick={() => removeNotification(n.id)} className="flex-1 py-1.5 rounded-full text-xs font-bold bg-white/10 text-white">{t.decline}</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // ---------------- YÖNETİCİ ----------------
+  if (screen === "admin" && me.isAdmin && googleAdminVerified) {
+    geri dönmek (
+      <div className="min-h-screen w-full p-5" style={{ fontFamily: "Inter, sans-serif" }}>
+        {bg}
+        {Başlık(t.admin, true)}
+        <p className="text-white/50 text-sm mb-4 max-w-md mx-auto">{t.adminPanelDesc}</p>
+        <div className="max-w-md mx-auto space-y-2">
+          {Object.entries(users).map(([name, rec]) => {
+            const liveGame = Object.values(games).find(gm2 => (gm2.status === "playing" || gm2.status === "spinning") && gm2.members.includes(name));
+            geri dönmek (
+              <div key={name} className="flex items-center justify-between px-4 py-3 rounded-2xl bg-white/10">
+                <div>
+                  <p className="text-white font-semibold">{name} {rec.isAdmin && <Shield size={12} className="inline text-purple-300 ml-1" />}</p>
+                  <p className="text-yellow-400 text-sm font-bold">{rec.score || 0}</p>
+                </div>
+                <div className="flex gap-1 items-center">
+                  <button onClick={() => adjustScore(name, -100)} className="px-3 py-1.5 rounded-full bg-red-500/70 text-white text-xs font-bold">-100</button>
+                  <button onClick={() => adjustScore(name, 100)} className="px-3 py-1.5 rounded-full bg-green-500/70 text-white text-xs font-bold">+100</button>
+                  {canlıOyun && (
+                    <button onClick={() => { setAdminSpectateGameId(liveGame.id); setScreen("adminSpectate"); }}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-bold">
+                      <Play size={11} /> {t.watchMatch}
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // ---------------- YÖNETİCİ İZLEYİCİ ----------------
+  if (screen === "adminSpectate" && me.isAdmin && googleAdminVerified) {
+    const game = games[adminSpectateGameId];
+    eğer (!oyun) {
+      return <GoneScreen bg={bg} message={t.groupGone} backLabel={t.back} onBack={() => setScreen("admin")} />;
+    }
+    return <GroupGameView game={game} me={me} t={t} lang={game.lang} isSpectator
+      onSpinEnd={() => finishSpin(adminSpectateGameId)}
+      onSubmitWord={() => {}}
+      onNextRound={() => setScreen("admin")}
+      onExitToChat={() => setScreen("admin")} onGameOver={() => setScreen("admin")} />;
+  }
+
+  null döndür;
 }
 
-@keyframes drift3 { 
-  0%, 100% { transform: translate(0px, 0px) scale(1); }
-  50% { transform: translate(20px, -20px) scale(1.06); }
+// =========================================================
+// GRUP OYUNU GÖRÜNÜMÜ (lobi turu için çark + aktarma zinciri)
+// =========================================================
+fonksiyon GrupOyunGörüntüleme({ oyun, ben, t, onSpinEnd, onSubmitWord, onNextRound, onExitToChat, onGameOver, lang, isSpectator }) {
+  const [wordInput, setWordInput] = useState("");
+  const [timeLeft, setTimeLeft] = useState(WORD_TIME_SECONDS);
+  const [checking, setChecking] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+  const [shake, setShake] = useState(false);
+  const [flash, setFlash] = useState(null);
+  const feedbackKeyRef = useRef(0);
+  const timerRef = useRef(null);
+  const feedbackTimeoutRef = useRef(null);
+  const currentPlayer = game.members[game.turnIndex];
+  const isMyTurn = !isSpectator && currentPlayer === me.username && game.status === "playing";
+  const requiredLetter = game.wordChain.length === 0 ? game.currentLetter : lastLetter(game.wordChain[game.wordChain.length - 1].word, lang);
+
+  useEffect(() => {
+    Sıra bende değilse geri dön;
+    setTimeLeft(WORD_TIME_SECONDS);
+    clearInterval(timerRef.current);
+    zamanlayıcıRef.current = setInterval(() => {
+      setTimeLeft(tl => {
+        Eğer tl 1'den küçük veya eşitse, zamanlayıcı referansının mevcut değerini temizleyip, işlemi doğru şekilde gerçekleştirip, 0 değerini döndürün.
+        tl - 1'i döndür;
+      });
+    }, 1000);
+    return () => clearInterval(timerRef.current);
+  }, [isMyTurn, game.turnIndex]); // eslint-disable-line
+
+  useEffect(() => () => clearTimeout(feedbackTimeoutRef.current), []);
+
+  fonksiyon showFeedback(ok, word) {
+    clearTimeout(feedbackTimeoutRef.current);
+    setFeedback({ ok, word, key: ++feedbackKeyRef.current });
+    if (!ok) { setShake(true); setTimeout(() => setShake(false), 420); }
+    feedbackTimeoutRef.current = setTimeout(() => setFeedback(null), 1600);
+  }
+
+  asenkron fonksiyon handleSubmit(zaman aşımı) {
+    clearInterval(timerRef.current);
+    const w = timedOut ? "" : wordInput.trim();
+    setWordInput("");
+    Eğer "w" yoksa, "showFeedback(false), setFlash({ ok: false, key: ++feedbackKeyRef.current }), onSubmitWord("", false, timedOut); return; }
+    setChecking(true);
+    const ok = await checkWordValid(w, lang, requiredLetter);
+    setChecking(false);
+    showFeedback(ok, w);
+    setFlash({ ok, key: ++feedbackKeyRef.current });
+    onSubmitWord(w, ok, false);
+  }
+
+  geri dönmek (
+    <div className="min-h-screen w-full p-5 flex flex-col items-center" style={{ fontFamily: "Inter, sans-serif" }}>
+      <div className="fixed inset-0 -z-10" style={{ background: "radial-gradient(ellipse at 25% 15%, #2d1755 0%, #1c0f38 45%, #0f0a1e 100%)" }} />
+      {flash && <FullScreenFlash key={flash.key} ok={flash.ok} onDone={() => setFlash(null)} />}
+      <button onClick={onExitToChat} className="absolute top-5 left-5 p-2 rounded-full bg-white/10 text-white"><ArrowLeft size={18} /></button>
+      {isSpectator && (
+        <span className="absolute top-5 right-5 flex items-center gap-1 px-3 py-2 rounded-full bg-purple-600/70 text-white text-xs font-bold">
+          <Shield size={12} /> {t.spectating}
+        </span>
+      )}
+      <p className="text-white/40 text-xs mt-14 mb-2">{t.roundOf} {game.roundNumber} Â· {game.wordChain.length}{t.of}{ROUND_WORD_LIMIT}</p>
+
+      {(game.status === "spinning" || (game.status === "playing" && game.wordChain.length === 0)) && (
+        <div className="flex flex-col items-center mt-4">
+          <Wheel lang={lang} spinning={game.status === "spinning"} resultLetter={game.currentLetter} onSpinEnd={onSpinEnd} excludeFirst={lang === "tr" ? "Äž" : null} />
+          {game.status === "playing" && <p className="text-3xl font-black text-yellow-400 mt-4">{game.currentLetter}</p>}
+        </div>
+      )}
+
+      {game.status === "oynuyor" && (
+        <div className="w-full max-w-sm mt-6">
+          <div className="flex flex-wrap gap-2 justify-center mb-6">
+            {game.members.map((m, i) => (
+              <span key={m} className={`px-3 py-1.5 rounded-full text-xs font-semibold ${i === game.turnIndex ? "bg-yellow-400 text-[#1b1030]" : "bg-white/10 text-white/60"}`}>{m}</span>
+            ))}
+          </div>
+          {game.wordChain.length > 0 && (
+            <div className="text-center mb-4 text-white/70 text-sm">
+              {game.wordChain[game.wordChain.length - 1].username}: <b className="text-white">{game.wordChain[game.wordChain.length - 1].word || "â€”}</b>
+            </div>
+          )}
+          <div className="text-center mb-3">
+            <p className="text-white/50 text-sm">{isMyTurn ? t.yourTurn : `${currentPlayer}...`}</p>
+            <p className="text-white text-lg"><b className="text-yellow-400 text-2xl">{requiredLetter}</b> {t.writeWordStartingWith}</p>
+          </div>
+          <div className="mb-3 min-h-[44px] flex items-center justify-center">
+            <WordFeedbackBadge feedback={feedback} t={t} />
+          </div>
+          {isMyTurn && (
+            <>
+              <div className="flex items-center justify-center gap-1 text-white/60 text-sm mb-2"><Clock size={14} /> {timeLeft}s</div>
+              <div className="flex gap-2">
+                <input autoFocus value={wordInput} onChange={e => setWordInput(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSubmit(false)}
+                  devre dışı={kontrol ediliyor} sınıf adı="flex-1 px-4 py-3 rounded-full bg-white/10 text-white outline-none border-2 border-yellow-400/40"
+                  style={{ animation: shake ? "inputShake 420ms ease" : "none" }} />
+                <button onClick={() => handleSubmit(false)} disabled={checking} className="px-5 py-3 rounded-full font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>
+                  {checking ? t.checking : t.submit}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {game.status === "results" && (
+        <div className="w-full max-w-sm mt-6">
+          <h3 className="text-white font-bold text-center mb-1" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.roundResults}</h3>
+          <p className="text-white/40 text-xs text-center mb-4">{game.lastResults.length} {t.roundOf.toLowerCase()}</p>
+
+          {game.lastResults.length > 0 && game.lastResults.every(r => r.points > 0) && (
+            <div className="mb-4 px-4 py-3 rounded-2xl text-center font-bold text-sm"
+              style={{ background: "#f2b70522", border: "1px solid #f2b70566", color: "#f2b705" }}>
+              ğŸŽ‰ {t.groupAllCorrectMsg}
+            </div>
+          )}
+
+          {/* Bu tur için oyuncu başına toplamlar */}
+          <div className="flex flex-wrap gap-2 justify-center mb-4">
+            {game.members.map(m => {
+              const total = game.lastResults.filter(r => r.username === m).reduce((s, r) => s + r.points, 0);
+              geri dönmek (
+                <span key={m} className="px-3 py-1.5 rounded-full text-xs font-bold bg-white/10 text-white">
+                  {m}: <span className="text-yellow-400">{toplam}</span>
+                </span>
+              );
+            })}
+          </div>
+
+          <div className="space-y-2 mb-6 overflow-y-auto pr-1" style={{ maxHeight: "42vh" }}>
+            {game.lastResults.map((r, i) => (
+              <div key={i} className="flex items-center justify-between px-4 py-3 rounded-2xl bg-white/10">
+                <span className="text-white">{r.username}: <b>{r.word || t.noWord}</b></span>
+                <span className={`font-bold ${r.points > 0 ? "text-green-400" : "text-red-400"}`}>+{r.points} {t.points}</span>
+              </div>
+            ))}
+          </div>
+          <button onClick={isSpectator ? onExitToChat : onNextRound} className="w-full py-3 rounded-full font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>{isSpectator ? t.spectateBack : t.back}</button>
+        </div>
+      )}
+
+      {game.status === "gameover" && (
+        <div className="w-full max-w-sm mt-16 text-center">
+          <div className="rounded-3xl p-7" style={{ background: "linear-gradient(160deg,#2c1750,#1b1030)", border: "2px solid #ff6f61" }}>
+            <X size={40} color="#ff6f61" className="mx-auto mb-3" />
+            <h2 className="text-xl font-bold text-white mb-2" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.duplicateWordTitle}</h2>
+            <p className="text-white/80 mb-1">
+              <b>{game.gameOverBy}</b>{lang === "en" ? " — " : ": "}<b className="text-yellow-400">"{game.gameOverWord}</b>
+            </p>
+            <p className="text-white/70 text-sm mb-5">{t.duplicateWordMsg}</p>
+            <button onClick={isSpectator ? onExitToChat : onGameOver} className="w-full py-2.5 rounded-full font-bold" style={{ background: "#ff6f61", color: "#1b1030" }}>
+              {isSpectator ? t.spectateBack : t.backToMenu}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
-------MultipartBoundary--lxu9pNUKZvL23nCRyILZLF1cYqjj5X8XQNuPG8tmqL----
-Content-Type: text/css
-Content-Transfer-Encoding: binary
-Content-Location: cid:css-3ca3a177-e674-4336-bfcc-9196ca9d91df@mhtml.blink
 
-@charset "utf-8";
-
-*, ::before, ::after { --tw-border-spacing-x: 0; --tw-border-spacing-y: 0; --tw-translate-x: 0; --tw-translate-y: 0; --tw-rotate: 0; --tw-skew-x: 0; --tw-skew-y: 0; --tw-scale-x: 1; --tw-scale-y: 1; --tw-pan-x: ; --tw-pan-y: ; --tw-pinch-zoom: ; --tw-scroll-snap-strictness: proximity; --tw-gradient-from-position: ; --tw-gradient-via-position: ; --tw-gradient-to-position: ; --tw-ordinal: ; --tw-slashed-zero: ; --tw-numeric-figure: ; --tw-numeric-spacing: ; --tw-numeric-fraction: ; --tw-ring-inset: ; --tw-ring-offset-width: 0px; --tw-ring-offset-color: #fff; --tw-ring-color: rgb(59 130 246 / 0.5); --tw-ring-offset-shadow: 0 0 #0000; --tw-ring-shadow: 0 0 #0000; --tw-shadow: 0 0 #0000; --tw-shadow-colored: 0 0 #0000; --tw-blur: ; --tw-brightness: ; --tw-contrast: ; --tw-grayscale: ; --tw-hue-rotate: ; --tw-invert: ; --tw-saturate: ; --tw-sepia: ; --tw-drop-shadow: ; --tw-backdrop-blur: ; --tw-backdrop-brightness: ; --tw-backdrop-contrast: ; --tw-backdrop-grayscale: ; --tw-backdrop-hue-rotate: ; --tw-backdrop-invert: ; --tw-backdrop-opacity: ; --tw-backdrop-saturate: ; --tw-backdrop-sepia: ; --tw-contain-size: ; --tw-contain-layout: ; --tw-contain-paint: ; --tw-contain-style: ; }
-
-::backdrop { --tw-border-spacing-x: 0; --tw-border-spacing-y: 0; --tw-translate-x: 0; --tw-translate-y: 0; --tw-rotate: 0; --tw-skew-x: 0; --tw-skew-y: 0; --tw-scale-x: 1; --tw-scale-y: 1; --tw-pan-x: ; --tw-pan-y: ; --tw-pinch-zoom: ; --tw-scroll-snap-strictness: proximity; --tw-gradient-from-position: ; --tw-gradient-via-position: ; --tw-gradient-to-position: ; --tw-ordinal: ; --tw-slashed-zero: ; --tw-numeric-figure: ; --tw-numeric-spacing: ; --tw-numeric-fraction: ; --tw-ring-inset: ; --tw-ring-offset-width: 0px; --tw-ring-offset-color: #fff; --tw-ring-color: rgb(59 130 246 / 0.5); --tw-ring-offset-shadow: 0 0 #0000; --tw-ring-shadow: 0 0 #0000; --tw-shadow: 0 0 #0000; --tw-shadow-colored: 0 0 #0000; --tw-blur: ; --tw-brightness: ; --tw-contrast: ; --tw-grayscale: ; --tw-hue-rotate: ; --tw-invert: ; --tw-saturate: ; --tw-sepia: ; --tw-drop-shadow: ; --tw-backdrop-blur: ; --tw-backdrop-brightness: ; --tw-backdrop-contrast: ; --tw-backdrop-grayscale: ; --tw-backdrop-hue-rotate: ; --tw-backdrop-invert: ; --tw-backdrop-opacity: ; --tw-backdrop-saturate: ; --tw-backdrop-sepia: ; --tw-contain-size: ; --tw-contain-layout: ; --tw-contain-paint: ; --tw-contain-style: ; }
-
-*, ::after, ::before { box-sizing: border-box; border-width: 0px; border-style: solid; border-color: rgb(229, 231, 235); }
-
-::after, ::before { --tw-content: ''; }
-
-:host, html { line-height: 1.5; text-size-adjust: 100%; tab-size: 4; font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; font-feature-settings: normal; font-variation-settings: normal; -webkit-tap-highlight-color: transparent; }
-
-body { margin: 0px; line-height: inherit; }
-
-hr { height: 0px; color: inherit; border-top-width: 1px; }
-
-abbr:where([title]) { text-decoration: underline dotted; }
-
-h1, h2, h3, h4, h5, h6 { font-size: inherit; font-weight: inherit; }
-
-a { color: inherit; text-decoration: inherit; }
-
-b, strong { font-weight: bolder; }
-
-code, kbd, pre, samp { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-feature-settings: normal; font-variation-settings: normal; font-size: 1em; }
-
-small { font-size: 80%; }
-
-sub, sup { font-size: 75%; line-height: 0; position: relative; vertical-align: baseline; }
-
-sub { bottom: -0.25em; }
-
-sup { top: -0.5em; }
-
-table { text-indent: 0px; border-color: inherit; border-collapse: collapse; }
-
-button, input, optgroup, select, textarea { font-family: inherit; font-feature-settings: inherit; font-variation-settings: inherit; font-size: 100%; font-weight: inherit; line-height: inherit; letter-spacing: inherit; color: inherit; margin: 0px; padding: 0px; }
-
-button, select { text-transform: none; }
-
-button, input:where([type="button"]), input:where([type="reset"]), input:where([type="submit"]) { appearance: button; background-color: transparent; background-image: none; }
-
-progress { vertical-align: baseline; }
-
-::-webkit-inner-spin-button, ::-webkit-outer-spin-button { height: auto; }
-
-[type="search"] { appearance: textfield; outline-offset: -2px; }
-
-::-webkit-search-decoration { appearance: none; }
-
-::-webkit-file-upload-button { appearance: button; font: inherit; }
-
-summary { display: list-item; }
-
-blockquote, dd, dl, figure, h1, h2, h3, h4, h5, h6, hr, p, pre { margin: 0px; }
-
-fieldset { margin: 0px; padding: 0px; }
-
-legend { padding: 0px; }
-
-menu, ol, ul { list-style: none; margin: 0px; padding: 0px; }
-
-dialog { padding: 0px; }
-
-textarea { resize: vertical; }
-
-input::placeholder, textarea::placeholder { opacity: 1; color: rgb(156, 163, 175); }
-
-[role="button"], button { cursor: pointer; }
-
-:disabled { cursor: default; }
-
-audio, canvas, embed, iframe, img, object, svg, video { display: block; vertical-align: middle; }
-
-img, video { max-width: 100%; height: auto; }
-
-[hidden]:where(:not([hidden="until-found"])) { display: none; }
-
-.fixed { position: fixed; }
-
-.absolute { position: absolute; }
-
-.relative { position: relative; }
-
-.inset-0 { inset: 0px; }
-
-.-top-3 { top: -0.75rem; }
-
-.left-1\/2 { left: 50%; }
-
-.right-4 { right: 1rem; }
-
-.top-4 { top: 1rem; }
-
-.-z-10 { z-index: -10; }
-
-.z-20 { z-index: 20; }
-
-.mx-auto { margin-left: auto; margin-right: auto; }
-
-.mb-3 { margin-bottom: 0.75rem; }
-
-.mb-6 { margin-bottom: 1.5rem; }
-
-.mt-2 { margin-top: 0.5rem; }
-
-.mt-1\.5 { margin-top: 0.375rem; }
-
-.flex { display: flex; }
-
-.min-h-screen { min-height: 100vh; }
-
-.w-full { width: 100%; }
-
-.max-w-sm { max-width: 24rem; }
-
-.select-none { user-select: none; }
-
-.items-center { align-items: center; }
-
-.justify-center { justify-content: center; }
-
-.gap-1 { gap: 0.25rem; }
-
-.gap-2 { gap: 0.5rem; }
-
-.space-y-3 > :not([hidden]) ~ :not([hidden]) { --tw-space-y-reverse: 0; margin-top: calc(0.75rem * calc(1 - var(--tw-space-y-reverse))); margin-bottom: calc(0.75rem * var(--tw-space-y-reverse)); }
-
-.overflow-hidden { overflow: hidden; }
-
-.rounded-3xl { border-radius: 1.5rem; }
-
-.rounded-full { border-radius: 9999px; }
-
-.rounded-xl { border-radius: 0.75rem; }
-
-.border-t { border-top-width: 1px; }
-
-.border-white\/10 { border-color: rgba(255, 255, 255, 0.1); }
-
-.bg-black\/20 { background-color: rgba(0, 0, 0, 0.2); }
-
-.bg-white\/10 { background-color: rgba(255, 255, 255, 0.1); }
-
-.p-1 { padding: 0.25rem; }
-
-.p-6 { padding: 1.5rem; }
-
-.p-7 { padding: 1.75rem; }
-
-.px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
-
-.px-4 { padding-left: 1rem; padding-right: 1rem; }
-
-.py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
-
-.py-2\.5 { padding-top: 0.625rem; padding-bottom: 0.625rem; }
-
-.py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
-
-.pt-1 { padding-top: 0.25rem; }
-
-.pt-2 { padding-top: 0.5rem; }
-
-.text-center { text-align: center; }
-
-.text-2xl { font-size: 1.5rem; line-height: 2rem; }
-
-.text-sm { font-size: 0.875rem; line-height: 1.25rem; }
-
-.text-xs { font-size: 0.75rem; line-height: 1rem; }
-
-.font-bold { font-weight: 700; }
-
-.font-semibold { font-weight: 600; }
-
-.text-white { --tw-text-opacity: 1; color: rgb(255 255 255 / var(--tw-text-opacity, 1)); }
-
-.text-white\/60 { color: rgba(255, 255, 255, 0.6); }
-
-.text-red-400 { --tw-text-opacity: 1; color: rgb(248 113 113 / var(--tw-text-opacity, 1)); }
-
-.placeholder-white\/40::placeholder { color: rgba(255, 255, 255, 0.4); }
-
-.opacity-\[0\.05\] { opacity: 0.05; }
-
-.outline-none { outline: transparent solid 2px; outline-offset: 2px; }
-
-.transition { transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter, -webkit-text-decoration-color, -webkit-backdrop-filter; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
-
-.hover\:text-white\/90:hover { color: rgba(255, 255, 255, 0.9); }
-
-.hover\:opacity-90:hover { opacity: 0.9; }
-
-.focus\:ring-2:focus { --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color); --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color); box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000); }
-
-.focus\:ring-yellow-500:focus { --tw-ring-opacity: 1; --tw-ring-color: rgb(234 179 8 / var(--tw-ring-opacity, 1)); }
-------MultipartBoundary--lxu9pNUKZvL23nCRyILZLF1cYqjj5X8XQNuPG8tmqL----
-Content-Type: text/css
-Content-Transfer-Encoding: binary
-Content-Location: cid:css-f919c198-1b65-4518-a260-328136c3cc6f@mhtml.blink
-
-@charset "utf-8";
-
-#replit-dev-banner { position: fixed; top: 0px; left: 0px; right: 0px; z-index: 9999; display: flex; align-items: center; padding: 8px 16px; background-color: rgb(0, 65, 130); color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif; font-size: 14px; box-shadow: rgba(0, 0, 0, 0.15) 0px 2px 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); transition: opacity 0.2s ease-in-out; }
-
-.banner-text { flex-grow: 1; }
-
-.banner-link { color: white; font-weight: 500; text-decoration: underline; }
-
-.banner-link:hover { text-decoration: none; }
-
-.banner-close { flex-shrink: 0; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-width: medium; border-style: none; border-color: currentcolor; border-image: none; background: transparent; cursor: pointer; padding: 0px; color: rgba(255, 255, 255, 0.7); margin-left: 12px; transition: transform 0.1s ease-in-out, color 0.1s ease-in-out; }
-
-.banner-close:hover { transform: scale(1.05); color: white; }
-
-@media (max-width: 600px) {
-  #replit-dev-banner { padding: 8px; font-size: 12px; }
-  .banner-close { width: 24px; height: 24px; margin-left: 8px; }
+// =========================================================
+// TEK OYUNCULU GÖRÜNÜM
+// =========================================================
+fonksiyon SoloGameView({ t, lang, me, onAddPoints, onExit }) {
+  const [status, setStatus] = useStatus("wheel"); // tekerlek, dönme, oynama
+  const [letter, setLetter] = useState(null);
+  const [zincir, setChain] = useState([]);
+  const [wordInput, setWordInput] = useState("");
+  const [checking, setChecking] = useState(false);
+  const [feedback, setFeedback] = useState(null);
+  const [shake, setShake] = useState(false);
+  const [flash, setFlash] = useState(null);
+  const [allCorrectMsg, setAllCorrectMsg] = useState(false);
+  const [gameOverWord, setGameOverWord] = useState(null);
+  const feedbackKeyRef = useRef(0);
+  const [timeLeft, setTimeLeft] = useState(WORD_TIME_SECONDS);
+  const timerRef = useRef(null);
+  const required = chain.length === 0 ? letter : lastLetter(chain[chain.length - 1].word, lang);
+
+  useEffect(() => {
+    Eğer durum "oynuyor" değilse, geri dön;
+    setTimeLeft(WORD_TIME_SECONDS);
+    clearInterval(timerRef.current);
+    zamanlayıcıRef.current = setInterval(() => {
+      setTimeLeft(tl => {
+        Eğer tl değeri 1'den küçük veya eşitse, zamanlayıcı referansının geçerli olduğu aralığı temizle ve işlemi başlat (true) olarak gönder; 0 döndür.
+        tl - 1'i döndür;
+      });
+    }, 1000);
+    return () => clearInterval(timerRef.current);
+  }, [status, chain.length]); // eslint-disable-line
+
+  fonksiyon spin() {
+    const letters = ALPHABETS[lang].filter(l => lang === "tr" ? l !== "Äž" : true);
+    const pick = letters[Math.floor(Math.random() * letters.length)];
+    setLetter(pick);
+    setChain([]);
+    setFeedback(null);
+    setStatus("spinning");
+  }
+
+  fonksiyon flashFeedback(ok, word) {
+    setFeedback({ ok, word, key: ++feedbackKeyRef.current });
+    if (!ok) { setShake(true); setTimeout(() => setShake(false), 420); }
+  }
+
+  asenkron fonksiyon submit(zaman aşımı) {
+    clearInterval(timerRef.current);
+    const w = timedOut ? "" : wordInput.trim();
+    setWordInput("");
+
+    eğer (zaman aşımı) {
+      // sure yetiŞmedi: seri burada bozulur, en baŞtan Ã§evirmeye dÃ¶n
+      flaşGeriBildirim(yanlış, "");
+      setFlash({ ok: false, key: ++feedbackKeyRef.current });
+      setTimeout(() => { setStatus("wheel"); setChain([]); }, 1200);
+      geri dönmek;
+    }
+
+    eğer (!w) {
+      flashFeedback(false, ""); setFlash({ ok: false, key: ++feedbackKeyRef.current });
+      const newChain = [...chain, { word: "", points: 0 }]; setChain(newChain);
+      if (newChain.length >= ROUND_WORD_LIMIT) setTimeout(() => { setStatus("wheel"); setChain([]); }, 1200);
+      geri dönmek;
+    }
+
+    const isDuplicate = chain.some(c => c.word && normalizeWord(c.word, lang) === normalizeWord(w, lang));
+    eğer (aynı dosya ise) {
+      // aynı kelime bu turda daha iyi kullanalım: oyun burada bit
+      flaşGeriBildirim(yanlış, w);
+      setFlash({ ok: false, key: ++feedbackKeyRef.current });
+      OyunBitirmeKelimesini ayarla(w);
+      geri dönmek;
+    }
+
+    setChecking(true);
+    const ok = await checkWordValid(w, lang, required);
+    setChecking(false);
+    Eğer (tamamsa) onAddPoints(POINTS_PER_WORD) işlemini bekleyin;
+    flaşGeriBildirim(tamam, w);
+    setFlash({ ok, key: ++feedbackKeyRef.current });
+    const newChain = [...chain, { word: w, points: ok ? POINTS_PER_WORD : 0 }];
+    setChain(newChain);
+    if (newChain.length >= ROUND_WORD_LIMIT) {
+      const allCorrect = newChain.every(c => c.points > 0);
+      eğer (hepsi doğruysa) {
+        await onAddPoint(STREAK_BONUS);
+        setAllCorrectMsg(true);
+        setTimeout(() => { setStatus("wheel"); setChain([]); setAllCorrectMsg(false); }, 2200);
+      } başka {
+        setTimeout(() => { setStatus("wheel"); setChain([]); }, 1200);
+      }
+    }
+  }
+
+  geri dönmek (
+    <div className="min-h-screen w-full p-5 flex flex-col items-center" style={{ fontFamily: "Inter, sans-serif" }}>
+      <div className="fixed inset-0 -z-10" style={{ background: "radial-gradient(ellipse at 25% 15%, #2d1755 0%, #1c0f38 45%, #0f0a1e 100%)" }} />
+      {flash && <FullScreenFlash key={flash.key} ok={flash.ok} onDone={() => setFlash(null)} />}
+      <button onClick={onExit} className="absolute top-5 left-5 p-2 rounded-full bg-white/10 text-white"><ArrowLeft size={18} /></button>
+      {allCorrectMsg && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl text-center font-bold text-sm shadow-lg"
+          stil={{ arka plan: "#f2b705", renk: "#1b1030", maksimum genişlik: "88vw" }}>
+          ğŸŽ‰ {t.soloAllCorrectMsg}
+        </div>
+      )}
+      <p className="text-white/40 text-xs mt-14 mb-2">{t.solo} Â· {t.roundOf} {chain.length}{t.of}{ROUND_WORD_LIMIT}</p>
+
+      {gameOverWord && (
+        <div className="w-full max-w-sm mt-16 text-center">
+          <div className="rounded-3xl p-7" style={{ background: "linear-gradient(160deg,#2c1750,#1b1030)", border: "2px solid #ff6f61" }}>
+            <X size={40} color="#ff6f61" className="mx-auto mb-3" />
+            <h2 className="text-xl font-bold text-white mb-2" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.duplicateWordTitle}</h2>
+            <p className="text-white/80 mb-1"><b className="text-yellow-400">"{gameOverWord}"</b></p>
+            <p className="text-white/70 text-sm mb-5">{t.duplicateWordMsg}</p>
+            <button onClick={onExit} className="w-full py-2.5 rounded-full font-bold" style={{ background: "#ff6f61", color: "#1b1030" }}>
+              {t.backToMenu}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {!gameOverWord && status !== "playing" && (
+        <div className="flex flex-col items-center mt-4">
+          <Wheel lang={lang} spinning={status === "spinning"} resultLetter={letter} excludeFirst={lang === "tr" ? "Äž" : null}
+            onSpinEnd={() => setStatus("oynuyor")} />
+          {durum === "tekerlek" && (
+            <button onClick={spin} className="mt-8 px-8 py-4 rounded-full font-bold text-lg flex items-center gap-2" style={{ background: "#f2b705", color: "#1b1030", fontFamily: "Fredoka, sans-serif" }}>
+              <Play size={20} /> {t.spinWheel}
+            </button>
+          )}
+        </div>
+      )}
+
+      {!gameOverWord && status === "oynuyor" && (
+        <div className="w-full max-w-sm mt-6">
+          <div className="text-center mb-4">
+            <p className="text-white text-lg"><b className="text-yellow-400 text-2xl">{required}</b> {t.writeWordStartingWith}</p>
+          </div>
+          <div className="flex items-center justify-center gap-1 text-sm mb-2" style={{ color: timeLeft <= 5 ? "#ff6f61" : "rgba(255,255,255,0.6)" }}>
+            <Saat boyutu={14} /> {Kalan süre}s
+          </div>
+          <div className="flex gap-2 mb-4">
+            <input autoFocus value={wordInput} onChange={e => setWordInput(e.target.value)} onKeyDown={e => e.key === "Enter" && submit(false)}
+              devre dışı={kontrol ediliyor} sınıf adı="flex-1 px-4 py-3 rounded-full bg-white/10 text-white outline-none border-2 border-yellow-400/40"
+              style={{ animation: shake ? "inputShake 420ms ease" : "none" }} />
+            <button onClick={() => submit(false)} disabled={checking} className="px-5 py-3 rounded-full font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>
+              {checking ? t.checking : t.submit}
+            </button>
+          </div>
+          <div className="mb-2 min-h-[44px] flex items-center justify-center">
+            <WordFeedbackBadge feedback={feedback} t={t} />
+          </div>
+          <div className="mt-4 flex flex-wrap gap-1 justify-center">
+            {zincir.dilim(-10).map((c, i) => (
+              <span key={i} className={`px-2 py-1 rounded-full text-xs ${c.points > 0 ? "bg-green-500/20 text-green-300" : "bg-red-500/20 text-red-300"}`}>{c.word || "â€”"}</span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
-------MultipartBoundary--lxu9pNUKZvL23nCRyILZLF1cYqjj5X8XQNuPG8tmqL----
-Content-Type: text/css
-Content-Transfer-Encoding: binary
-Content-Location: cid:css-d7fceded-7800-4f0f-abc7-2c259f5c18c2@mhtml.blink
 
-@charset "utf-8";
+// =========================================================
+// KÜÇÜK PAYLAŞIMLI ARAYÜZ
+// =========================================================
+fonksiyon Modal({ çocuklar, onClose }) {
+  geri dönmek (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6" onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} className="w-full max-w-sm rounded-2xl p-5" style={{ background: "#241542", border: "1px solid rgba(255,255,255,0.1)" }}>
+        {çocuklar}
+      </div>
+    </div>
+  );
+}
 
-html, body { margin: 0px; padding: 0px; background: rgb(15, 10, 30); }
-------MultipartBoundary--lxu9pNUKZvL23nCRyILZLF1cYqjj5X8XQNuPG8tmqL----
-Content-Type: text/html
-Content-ID: <frame-4EE32F40E1DCAEF66E6D6AED4C47FDD3@mhtml.blink>
-Content-Transfer-Encoding: binary
-Content-Location: https://kelime-oyunu-6d187.firebaseapp.com/__/auth/iframe?apiKey=AIzaSyBcV5ATZ6-aPWegXF6z5zp5TkA0iw4x9hA&appName=%5BDEFAULT%5D&v=10.13.2&eid=p&usegapi=1&jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.tr.H_vb18XcEaQ.O%2Fd%3D1%2Frs%3DAHpOoo8nGKdEotDHmG_-YO9JgaB3irp6fw%2Fm%3D__features__#id=I0_1784906890809&_gfid=I0_1784906890809&parent=https%3A%2F%2Fa96aa6b9-352f-4b39-9cd8-3af79baa0d00-00-27lwwf1f5hcil.pike.replit.dev&pfname=&rpctoken=56206278
+fonksiyon MedalPopup({ tier, t, onClose }) {
+  const Icon = tier.icon;
+  geri dönmek (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
+      <div className="w-full max-w-xs rounded-3xl p-7 text-center" style={{ background: "linear-gradient(160deg,#2c1750,#1b1030)", border: `2px solid ${tier.color}` }}>
+        <Icon size={56} color={tier.color} className="mx-auto mb-3" />
+        <h2 className="text-xl font-bold text-white mb-1" style={{ fontFamily: "Fredoka, sans-serif" }}>{tebrikler}</h2>
+        <p className="text-white/80 mb-5">{tier.label[Object.keys(T).find(k => T[k] === t) || "tr"]} {t.earnedMedal}</p>
+        <button onClick={onClose} className="w-full py-2.5 rounded-full font-bold" style={{ background: tier.color, color: "#1b1030" }}>{t.close}</button>
+      </div>
+    </div>
+  );
+}
 
-<!DOCTYPE html><html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-
-
-</head>
-<body marginwidth="0" marginheight="0">
-
-
-</body></html>
-------MultipartBoundary--lxu9pNUKZvL23nCRyILZLF1cYqjj5X8XQNuPG8tmqL------
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+</body>
+</html>
