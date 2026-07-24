@@ -695,6 +695,11 @@ function App() {
     setUsers(nu); await saveShared("users", nu);
   }
 
+  async function setScore(username, newScore) {
+    const nu = { ...users, [username]: { ...users[username], score: Math.max(0, newScore) } };
+    setUsers(nu); await saveShared("users", nu);
+  }
+
   async function addPoints(username, delta) {
     const cur = await loadShared("users", {});
     const rec = cur[username] || { password: "", score: 0, isAdmin: false };
@@ -1482,11 +1487,12 @@ function App() {
                 </div>
                 <div className="flex gap-1 items-center">
                   <input type="number" value={pointInputs[name] || ""} onChange={e => setPointInputs(p => ({ ...p, [name]: e.target.value }))}
-                    placeholder="0" className="w-20 px-2 py-1.5 rounded-full bg-white/10 text-white text-xs text-center outline-none border border-white/20" />
+                    placeholder={String(rec.score || 0)} className="w-20 px-2 py-1.5 rounded-full bg-white/10 text-white text-xs text-center outline-none border border-white/20" />
                   <button onClick={() => {
-                      const delta = parseInt(pointInputs[name], 10);
-                      if (!delta) return;
-                      adjustScore(name, delta);
+                      if (pointInputs[name] === undefined || pointInputs[name] === "") return;
+                      const newScore = parseInt(pointInputs[name], 10);
+                      if (isNaN(newScore)) return;
+                      setScore(name, newScore);
                       setPointInputs(p => ({ ...p, [name]: "" }));
                     }}
                     className="px-3 py-1.5 rounded-full bg-green-500/70 text-white text-xs font-bold">{t.increase}</button>
