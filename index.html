@@ -243,46 +243,11 @@ function medalsForScore(score) {
 }
 
 // ---------- storage helpers (Firebase Realtime Database-backed shared state) ----------
-// IMPORTANT: Firebase Realtime Database silently drops keys whose value is an
-// empty array/object (set([]) behaves like removing that key). That means a
-// freshly created group's "messages: []" or a freshly created game's
-// "wordChain: []" / "lastResults: []" can come back from the database as
-// `undefined` the moment they're empty. Any code that then does
-// `grp.messages.map(...)` or `.push(...)` throws, and since there's no error
-// boundary around the app, React unmounts and the screen goes blank/black.
-// Fix: normalize known array fields back to [] right where data enters the
-// app (here), so every screen and helper downstream can always rely on them
-// being real arrays.
-function normalizeRecord(key, obj) {
-  if (key === "groups") {
-    const out = {};
-    for (const [id, g] of Object.entries(obj || {})) {
-      out[id] = { ...g, members: g.members || [], messages: g.messages || [] };
-    }
-    return out;
-  }
-  if (key === "games") {
-    const out = {};
-    for (const [id, gm] of Object.entries(obj || {})) {
-      out[id] = { ...gm, members: gm.members || [], wordChain: gm.wordChain || [], lastResults: gm.lastResults || [] };
-    }
-    return out;
-  }
-  if (key === "notifications") {
-    const out = {};
-    for (const [uname, arr] of Object.entries(obj || {})) {
-      out[uname] = arr || [];
-    }
-    return out;
-  }
-  return obj;
-}
 async function loadShared(key, fallback) {
   try {
     const snap = await window.__fbdb.ref(key).get();
     const val = snap.exists() ? snap.val() : null;
-    const result = (val !== null && val !== undefined) ? val : fallback;
-    return normalizeRecord(key, result);
+    return (val !== null && val !== undefined) ? val : fallback;
   } catch (e) {
     console.error("loadShared(" + key + ") failed", e);
     return fallback;
@@ -298,7 +263,7 @@ async function saveShared(key, value) {
 // live subscription helper (used to push instant updates instead of waiting for the poll interval)
 function subscribeShared(key, cb) {
   const ref = window.__fbdb.ref(key);
-  const handler = (snap) => cb(normalizeRecord(key, snap.exists() ? snap.val() : {}));
+  const handler = (snap) => cb(snap.exists() ? snap.val() : {});
   ref.on("value", handler);
   return () => ref.off("value", handler);
 }
@@ -550,8 +515,8 @@ function App() {
   const [groupInviteSearch, setGroupInviteSearch] = useState("");
   const [showMedalInfo, setShowMedalInfo] = useState(false);
   const [adminSpectateGameId, setAdminSpectateGameId] = useState(null);
-  const [adminAmounts, setAdminAmounts] = useState({}); // username -> custom puan miktarÄ± (admin panelinde girilen)
   const [medalPopup, setMedalPopup] = useState(null);
+  const [pointInputs, setPointInputs] = useState({}); // admin panel: username -> typed point amount
   const [tick, setTick] = useState(Date.now());
   useEffect(() => {
     const iv = setInterval(() => setTick(Date.now()), 1000);
@@ -639,6 +604,31 @@ function App() {
     }
   }, [users]); // eslint-disable-line
 
+  // ---- device auto-login: once a user has logged in successfully on this
+  // device/browser, remember them here so this device is "recognized" and
+  // never has to see the Google step or the username/password form again ----
+  useEffect(() => {
+    const saved = localStorage.getItem("kt_device_login");
+    if (!saved) return;
+    (async () => {
+      try {
+        const { username: savedUsername, password: savedPassword, isAdmin: savedIsAdmin } = JSON.parse(saved);
+        const u = await loadShared("users", {});
+        const rec = u[savedUsername];
+        if (rec && rec.password === savedPassword) {
+          setGoogleAdminVerified(true);
+          setGoogleAdminEmail(savedIsAdmin ? ADMIN_GOOGLE_EMAIL.toLowerCase() : null);
+          setMe({ username: savedUsername, isAdmin: rec.isAdmin, score: rec.score || 0, medals: medalsForScore(rec.score || 0) });
+          setScreen("menu");
+        } else {
+          localStorage.removeItem("kt_device_login");
+        }
+      } catch (e) {
+        localStorage.removeItem("kt_device_login");
+      }
+    })();
+  }, []);
+
   // ---------------- AUTH ----------------
   // Google sign-in is now a mandatory first security step for EVERY user,
   // not just the admin. Anyone can sign in with any Google account here â€”
@@ -680,6 +670,7 @@ function App() {
       const nu = { ...u, [uname]: { ...rec, isAdmin: isAdminGoogle } };
       await saveShared("users", nu); setUsers(nu);
       setMe({ username: uname, isAdmin: isAdminGoogle, score: rec.score || 0, medals: medalsForScore(rec.score || 0) });
+      localStorage.setItem("kt_device_login", JSON.stringify({ username: uname, password: pass, isAdmin: isAdminGoogle }));
       setScreen("menu");
     } else {
       if (u[uname]) { setAuthError(t.userExists); return; }
@@ -687,6 +678,7 @@ function App() {
       const nu = { ...u, [uname]: rec };
       await saveShared("users", nu); setUsers(nu);
       setMe({ username: uname, isAdmin: isAdminGoogle, score: 0, medals: [] });
+      localStorage.setItem("kt_device_login", JSON.stringify({ username: uname, password: pass, isAdmin: isAdminGoogle }));
       setScreen("menu");
     }
   }
@@ -694,11 +686,11 @@ function App() {
   function logout() {
     setMe(null); setScreen("auth"); setAuthForm({ username: "", password: "" });
     setGoogleAdminVerified(false); setGoogleAdminEmail(null); setGoogleAdminError("");
+    localStorage.removeItem("kt_device_login");
     if (window.__fbauth.currentUser) window.__fbauth.signOut().catch(() => {});
   }
 
   async function adjustScore(username, delta) {
-    if (!delta) return;
     const nu = { ...users, [username]: { ...users[username], score: Math.max(0, (users[username].score || 0) + delta) } };
     setUsers(nu); await saveShared("users", nu);
   }
@@ -810,6 +802,7 @@ function App() {
     if (!chatInput.trim()) return;
     const g = await loadShared("groups", {});
     const grp = g[groupId];
+    if (!grp.messages) grp.messages = []; // Firebase drops empty arrays on save, so this can come back missing
     grp.messages.push({ id: uid(), from: me.username, type: "text", text: chatInput.trim(), ts: Date.now() });
     await saveShared("groups", g); setGroups(g); setChatInput("");
   }
@@ -817,6 +810,7 @@ function App() {
   async function sendGameInvite(groupId) {
     const g = await loadShared("groups", {});
     const grp = g[groupId];
+    if (!grp.messages) grp.messages = []; // Firebase drops empty arrays on save, so this can come back missing
     const gameId = uid();
     grp.messages.push({ id: uid(), from: me.username, type: "invite", gameId, ts: Date.now() });
     const gm = await loadShared("games", {});
@@ -1158,7 +1152,7 @@ function App() {
             <Bell size={18} /> {t.notifications}
           </button>
           <button onClick={logout} className="flex items-center gap-2 px-5 py-3 rounded-full bg-black/40 backdrop-blur text-white/70 font-semibold border border-white/10">
-            <LogOut size={18} />
+            <LogOut size={18} /> {t.logout}
           </button>
         </div>
 
@@ -1322,7 +1316,7 @@ function App() {
         </div>
 
         <div className="flex-1 space-y-2 overflow-y-auto mb-3 max-w-md w-full mx-auto" style={{ maxHeight: "60vh" }}>
-          {grp.messages.map(m => (
+          {(grp.messages || []).map(m => (
             <div key={m.id} className={`max-w-[80%] ${m.from === me.username ? "ml-auto" : ""}`}>
               {m.type === "text" ? (
                 <div className={`px-4 py-2 rounded-2xl text-sm ${m.from === me.username ? "bg-yellow-500 text-[#1b1030]" : "bg-white/10 text-white"}`}>
@@ -1336,7 +1330,7 @@ function App() {
               )}
             </div>
           ))}
-          {grp.messages.length === 0 && <p className="text-white/40 text-center text-sm mt-8">â€¦</p>}
+          {(grp.messages || []).length === 0 && <p className="text-white/40 text-center text-sm mt-8">â€¦</p>}
         </div>
 
         <div className="max-w-md w-full mx-auto flex gap-2">
@@ -1486,11 +1480,15 @@ function App() {
                   <p className="text-yellow-400 text-sm font-bold">{rec.score || 0}</p>
                 </div>
                 <div className="flex gap-1 items-center">
-                  <input type="number" value={adminAmounts[name] ?? ""} placeholder="100"
-                    onChange={e => setAdminAmounts(a => ({ ...a, [name]: e.target.value }))}
-                    className="w-16 px-2 py-1.5 rounded-full bg-white/10 text-white text-xs text-center outline-none border border-white/20" />
-                  <button onClick={() => adjustScore(name, -(Number(adminAmounts[name]) || 100))} className="px-3 py-1.5 rounded-full bg-red-500/70 text-white text-xs font-bold">{t.decrease}</button>
-                  <button onClick={() => adjustScore(name, Number(adminAmounts[name]) || 100)} className="px-3 py-1.5 rounded-full bg-green-500/70 text-white text-xs font-bold">{t.increase}</button>
+                  <input type="number" value={pointInputs[name] || ""} onChange={e => setPointInputs(p => ({ ...p, [name]: e.target.value }))}
+                    placeholder="0" className="w-20 px-2 py-1.5 rounded-full bg-white/10 text-white text-xs text-center outline-none border border-white/20" />
+                  <button onClick={() => {
+                      const delta = parseInt(pointInputs[name], 10);
+                      if (!delta) return;
+                      adjustScore(name, delta);
+                      setPointInputs(p => ({ ...p, [name]: "" }));
+                    }}
+                    className="px-3 py-1.5 rounded-full bg-green-500/70 text-white text-xs font-bold">{t.increase}</button>
                   {liveGame && (
                     <button onClick={() => { setAdminSpectateGameId(liveGame.id); setScreen("adminSpectate"); }}
                       className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-bold">
