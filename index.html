@@ -854,6 +854,8 @@ function App() {
   async function sendGameInvite(groupId) {
     const g = await loadShared("groups", {});
     const grp = g[groupId];
+    if (!grp) { alert(t.groupGone); return; }
+    if (!Array.isArray(grp.messages)) grp.messages = [];
     const gameId = uid();
     grp.messages.push({ id: uid(), from: me.username, type: "invite", gameId, ts: Date.now() });
     const gm = await loadShared("games", {});
