@@ -99,7 +99,7 @@ const T = {
     mainMenu: "Ana Menü", createGroup: "Grup Oluştur", myGroups: "Gruplarım", soloPlay: "Tek Başına Oyna",
     leaderboard: "Puan Sıralaması", notifications: "Bildirimler", admin: "Admin Paneli", logout: "Çıkış Yap",
     groupName: "Grup adı", create: "Oluştur", cancel: "Vazgeç", noGroups: "Henüz bir grubun yok",
-    joinRequests: "Katılma İstekleri", members: "üye", writeMessage: "Bir mesaj yaz...", sendRequest: "İstek At",
+    joinRequests: "Katılma İstekleri", members: "üye", writeMessage: "Bir mesaj yaz...", sendRequest: "Oyuna Başla",
     gameInviteText: "Oyun daveti gönderdi. Katılmak için dokun!", joinLobby: "Lobiye Katıl",
     lobby: "Lobi", waitingPlayers: "Oyuncular bekleniyor", leaveLobby: "Lobiden Çık", startGame: "Oyunu Başlat",
     playersInLobby: "Lobideki Oyuncular", spinWheel: "Çarkı Çevir", yourTurn: "Sıra sende!",
@@ -142,7 +142,7 @@ const T = {
     mainMenu: "Main Menu", createGroup: "Create Group", myGroups: "My Groups", soloPlay: "Play Solo",
     leaderboard: "Leaderboard", notifications: "Notifications", admin: "Admin Panel", logout: "Log Out",
     groupName: "Group name", create: "Create", cancel: "Cancel", noGroups: "You have no groups yet",
-    joinRequests: "Join Requests", members: "members", writeMessage: "Write a message...", sendRequest: "Send Invite",
+    joinRequests: "Join Requests", members: "members", writeMessage: "Write a message...", sendRequest: "Start Game",
     gameInviteText: "sent a game invite. Tap to join!", joinLobby: "Join Lobby",
     lobby: "Lobby", waitingPlayers: "Waiting for players", leaveLobby: "Leave Lobby", startGame: "Start Game",
     playersInLobby: "Players in Lobby", spinWheel: "Spin the Wheel", yourTurn: "Your turn!",
@@ -185,7 +185,7 @@ const T = {
     mainMenu: "Hauptmenü", createGroup: "Gruppe erstellen", myGroups: "Meine Gruppen", soloPlay: "Alleine spielen",
     leaderboard: "Rangliste", notifications: "Benachrichtigungen", admin: "Admin-Bereich", logout: "Abmelden",
     groupName: "Gruppenname", create: "Erstellen", cancel: "Abbrechen", noGroups: "Noch keine Gruppen",
-    joinRequests: "Beitrittsanfragen", members: "Mitglieder", writeMessage: "Nachricht schreiben...", sendRequest: "Einladung senden",
+    joinRequests: "Beitrittsanfragen", members: "Mitglieder", writeMessage: "Nachricht schreiben...", sendRequest: "Spiel starten",
     gameInviteText: "hat eine Spieleinladung gesendet. Zum Beitreten tippen!", joinLobby: "Lobby beitreten",
     lobby: "Lobby", waitingPlayers: "Warten auf Spieler", leaveLobby: "Lobby verlassen", startGame: "Spiel starten",
     playersInLobby: "Spieler in der Lobby", spinWheel: "Rad drehen", yourTurn: "Du bist dran!",
@@ -413,6 +413,17 @@ function FullScreenFlash({ ok, onDone }) {
   );
 }
 
+function OnlineDot({ online }) {
+  if (!online) return null;
+  return (
+    <span
+      className="inline-block w-2 h-2 rounded-full align-middle"
+      style={{ background: "#33d67a", boxShadow: "0 0 4px #33d67a" }}
+      title="Çevrimiçi"
+    />
+  );
+}
+
 function GoneScreen({ bg, message, backLabel, onBack }) {
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center gap-4 p-6" style={{ fontFamily: "Inter, sans-serif" }}>
@@ -600,8 +611,31 @@ function App() {
     const unsubUsers = subscribeShared("users", setUsers);
     const unsubGroups = subscribeShared("groups", setGroups);
     const unsubGames = subscribeShared("games", setGames);
-    return () => { unsubUsers(); unsubGroups(); unsubGames(); };
+    const unsubPresence = subscribeShared("presence", setOnlineUsers);
+    return () => { unsubUsers(); unsubGroups(); unsubGames(); unsubPresence(); };
   }, []);
+
+  // ---- online presence: while logged in, mark this username as online in
+  // Firebase and automatically clear it the moment the connection drops
+  // (tab closed, network lost, etc.) so the green dot stays accurate ----
+  const [onlineUsers, setOnlineUsers] = useState({});
+  useEffect(() => {
+    if (!me) return;
+    const presenceRef = window.__fbdb.ref("presence/" + me.username);
+    const connectedRef = window.__fbdb.ref(".info/connected");
+    const handler = (snap) => {
+      if (snap.val() === true) {
+        presenceRef.onDisconnect().remove();
+        presenceRef.set(true);
+      }
+    };
+    connectedRef.on("value", handler);
+    return () => {
+      connectedRef.off("value", handler);
+      presenceRef.remove();
+    };
+  }, [me && me.username]); // eslint-disable-line
+  const isOnline = useCallback((username) => !!onlineUsers[username], [onlineUsers]);
 
   // ---- expiry sweep: group expiry is time-based (not triggered by any data
   // change), so it still needs its own lightweight periodic check ----
@@ -789,6 +823,7 @@ function App() {
       await saveShared("groups", g); setGroups(g);
     }
     await removeNotification(notif.id);
+    if (grp) { setActiveGroupId(notif.groupId); setScreen("chat"); }
   }
 
   async function removeNotification(id) {
@@ -830,6 +865,7 @@ function App() {
     };
     await Promise.all([saveShared("groups", g), saveShared("games", gm)]);
     setGroups(g); setGames(gm);
+    setActiveGameId(gameId); setScreen("lobby");
   }
 
   async function joinLobby(gameId) {
@@ -866,9 +902,14 @@ function App() {
     await saveShared("games", gm); setGames(gm);
   }
 
-  async function finishSpin(gameId) {
+  async function finishSpin(gameId, expectedToken) {
     const gm = await loadShared("games", {});
     const game = gm[gameId];
+    if (!game) return;
+    // guard: ignore a stale onSpinEnd firing from an old animation that
+    // finishes late (e.g. a laggy client) after the round has already
+    // moved on to a newer spin
+    if (expectedToken !== undefined && game.spinToken !== expectedToken) return;
     if (game.status === "spinning") {
       game.status = "playing";
       await saveShared("games", gm); setGames(gm);
@@ -1320,7 +1361,7 @@ function App() {
         <div className="max-w-md w-full mx-auto flex flex-wrap gap-1.5 mb-3">
           {(grp.members || []).map(m => (
             <span key={m} className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white/10 text-white">
-              {m === grp.owner && <Crown size={10} color="#f2b705" />} {m}
+              {m === grp.owner && <Crown size={10} color="#f2b705" />} {m} <OnlineDot online={isOnline(m)} />
               {isOwner && m !== grp.owner && (
                 <button onClick={() => { if (window.confirm(`${m} ${t.kickConfirm}`)) kickFromGroup(activeGroupId, m); }}
                   className="ml-0.5 w-4 h-4 rounded-full flex items-center justify-center bg-red-500/70 hover:bg-red-500 text-white" title={t.kickMember}>
@@ -1336,12 +1377,12 @@ function App() {
             <div key={m.id} className={`max-w-[80%] ${m.from === me.username ? "ml-auto" : ""}`}>
               {m.type === "text" ? (
                 <div className={`px-4 py-2 rounded-2xl text-sm ${m.from === me.username ? "bg-yellow-500 text-[#1b1030]" : "bg-white/10 text-white"}`}>
-                  <p className="text-[10px] opacity-60 font-semibold">{m.from === me.username ? t.you : m.from}</p>
+                  <p className="text-[10px] opacity-60 font-semibold flex items-center gap-1">{m.from === me.username ? t.you : m.from} <OnlineDot online={isOnline(m.from)} /></p>
                   {m.text}
                 </div>
               ) : (
                 <button onClick={() => joinLobby(m.gameId)} className="w-full px-4 py-3 rounded-2xl text-left border-2 border-dashed border-yellow-400/60 bg-yellow-400/10 hover:bg-yellow-400/20">
-                  <p className="text-yellow-300 text-xs font-bold flex items-center gap-1"><Swords size={14} /> {m.from} {t.gameInviteText}</p>
+                  <p className="text-yellow-300 text-xs font-bold flex items-center gap-1"><Swords size={14} /> {m.from} <OnlineDot online={isOnline(m.from)} /> {t.gameInviteText}</p>
                 </button>
               )}
             </div>
@@ -1366,7 +1407,7 @@ function App() {
                 const already = grp.members.includes(u);
                 return (
                   <div key={u} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-white/10">
-                    <span className="text-white text-sm font-semibold">{u}</span>
+                    <span className="text-white text-sm font-semibold flex items-center gap-1.5">{u} <OnlineDot online={isOnline(u)} /></span>
                     <button disabled={already} onClick={() => inviteToGroup(activeGroupId, u)}
                       className="px-3 py-1.5 rounded-full text-xs font-bold disabled:opacity-40"
                       style={{ background: already ? "rgba(255,255,255,0.1)" : "#f2b705", color: already ? "#fff" : "#1b1030" }}>
@@ -1390,10 +1431,10 @@ function App() {
       return <GoneScreen bg={bg} message={t.groupGone} backLabel={t.back} onBack={() => setScreen("groups")} />;
     }
     if (game.status !== "lobby") {
-      return <GroupGameView game={game} me={me} t={t} onSpinEnd={() => finishSpin(activeGameId)}
+      return <GroupGameView game={game} me={me} t={t} onSpinEnd={(token) => finishSpin(activeGameId, token)}
         onSubmitWord={(w, ok, timedOut) => submitWord(activeGameId, w, ok, timedOut)}
         onNextRound={() => backToWheelScreen(activeGameId)}
-        onExitToChat={() => setScreen("chat")} onGameOver={() => setScreen("menu")} lang={game.lang} />;
+        onExitToChat={() => setScreen("chat")} onGameOver={() => setScreen("menu")} lang={game.lang} onlineUsers={onlineUsers} />;
     }
     const isHost = game.host === me.username;
     const canLeave = game.members.length > 1;
@@ -1412,7 +1453,7 @@ function App() {
         <div className="flex flex-wrap gap-2 justify-center max-w-md mb-8">
           {game.members.map(m => (
             <div key={m} className="px-3 py-2 rounded-full bg-white/10 text-white text-sm flex items-center gap-1">
-              {m === game.host && <Crown size={12} color="#f2b705" />} {m}
+              {m === game.host && <Crown size={12} color="#f2b705" />} {m} <OnlineDot online={isOnline(m)} />
             </div>
           ))}
         </div>
@@ -1445,7 +1486,7 @@ function App() {
               <div key={name} className="flex items-center justify-between px-4 py-3 rounded-2xl bg-white/10">
                 <div className="flex items-center gap-3">
                   <span className="w-6 text-center font-bold" style={{ color: i === 0 ? "#f2b705" : i === 1 ? "#c9c9d6" : i === 2 ? "#c17a4a" : "#ffffff80" }}>{i + 1}</span>
-                  <span className="text-white font-semibold">{name}</span>
+                  <span className="text-white font-semibold flex items-center gap-1.5">{name} <OnlineDot online={isOnline(name)} /></span>
                   {mkeys.map(mk => { const tier = MEDAL_TIERS.find(x => x.key === mk); const Icon = tier.icon; return <Icon key={mk} size={14} color={tier.color} />; })}
                 </div>
                 <span className="text-yellow-400 font-bold">{rec.score || 0}</span>
@@ -1467,7 +1508,7 @@ function App() {
           {myNotifs.length === 0 && <p className="text-white/40 text-center mt-10">{t.noNotifications}</p>}
           {myNotifs.map(n => (
             <div key={n.id} className="px-4 py-3 rounded-2xl bg-white/10">
-              <p className="text-white text-sm mb-2"><b>{n.from}</b> {t.invitedYouToGroup}: <b>{n.groupName}</b></p>
+              <p className="text-white text-sm mb-2 flex items-center gap-1.5 flex-wrap"><b className="flex items-center gap-1">{n.from} <OnlineDot online={isOnline(n.from)} /></b> {t.invitedYouToGroup}: <b>{n.groupName}</b></p>
               <div className="flex gap-2">
                 <button onClick={() => acceptGroupInvite(n)} className="flex-1 py-1.5 rounded-full text-xs font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>{t.accept}</button>
                 <button onClick={() => removeNotification(n.id)} className="flex-1 py-1.5 rounded-full text-xs font-bold bg-white/10 text-white">{t.decline}</button>
@@ -1492,7 +1533,7 @@ function App() {
             return (
               <div key={name} className="flex items-center justify-between px-4 py-3 rounded-2xl bg-white/10">
                 <div>
-                  <p className="text-white font-semibold">{name} {rec.isAdmin && <Shield size={12} className="inline text-purple-300 ml-1" />}</p>
+                  <p className="text-white font-semibold flex items-center gap-1.5">{name} <OnlineDot online={isOnline(name)} /> {rec.isAdmin && <Shield size={12} className="inline text-purple-300 ml-1" />}</p>
                   <p className="text-yellow-400 text-sm font-bold">{rec.score || 0}</p>
                 </div>
                 <div className="flex gap-1 items-center">
@@ -1541,10 +1582,10 @@ function App() {
       return <GoneScreen bg={bg} message={t.groupGone} backLabel={t.back} onBack={() => setScreen("admin")} />;
     }
     return <GroupGameView game={game} me={me} t={t} lang={game.lang} isSpectator
-      onSpinEnd={() => finishSpin(adminSpectateGameId)}
+      onSpinEnd={(token) => finishSpin(adminSpectateGameId, token)}
       onSubmitWord={() => {}}
       onNextRound={() => setScreen("admin")}
-      onExitToChat={() => setScreen("admin")} onGameOver={() => setScreen("admin")} />;
+      onExitToChat={() => setScreen("admin")} onGameOver={() => setScreen("admin")} onlineUsers={onlineUsers} />;
   }
 
   return null;
@@ -1553,7 +1594,7 @@ function App() {
 // =========================================================
 // GROUP GAME VIEW (wheel + relay chain for a lobby's round)
 // =========================================================
-function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onExitToChat, onGameOver, lang, isSpectator }) {
+function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onExitToChat, onGameOver, lang, isSpectator, onlineUsers = {} }) {
   const [wordInput, setWordInput] = useState("");
   const [timeLeft, setTimeLeft] = useState(WORD_TIME_SECONDS);
   const [checking, setChecking] = useState(false);
@@ -1616,7 +1657,7 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
 
       {(game.status === "spinning" || (game.status === "playing" && game.wordChain.length === 0)) && (
         <div className="flex flex-col items-center mt-4">
-          <Wheel lang={lang} spinning={game.status === "spinning"} resultLetter={game.currentLetter} onSpinEnd={onSpinEnd} excludeFirst={lang === "tr" ? "Ğ" : null} />
+          <Wheel lang={lang} spinning={game.status === "spinning"} resultLetter={game.currentLetter} onSpinEnd={() => onSpinEnd(game.spinToken)} excludeFirst={lang === "tr" ? "Ğ" : null} />
           {game.status === "playing" && <p className="text-3xl font-black text-yellow-400 mt-4">{game.currentLetter}</p>}
         </div>
       )}
@@ -1625,7 +1666,7 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
         <div className="w-full max-w-sm mt-6">
           <div className="flex flex-wrap gap-2 justify-center mb-6">
             {game.members.map((m, i) => (
-              <span key={m} className={`px-3 py-1.5 rounded-full text-xs font-semibold ${i === game.turnIndex ? "bg-yellow-400 text-[#1b1030]" : "bg-white/10 text-white/60"}`}>{m}</span>
+              <span key={m} className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1 ${i === game.turnIndex ? "bg-yellow-400 text-[#1b1030]" : "bg-white/10 text-white/60"}`}>{m} <OnlineDot online={!!onlineUsers[m]} /></span>
             ))}
           </div>
           {game.wordChain.length > 0 && (
@@ -1683,8 +1724,8 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
             {game.members.map(m => {
               const total = game.lastResults.filter(r => r.username === m).reduce((s, r) => s + r.points, 0);
               return (
-                <span key={m} className="px-3 py-1.5 rounded-full text-xs font-bold bg-white/10 text-white">
-                  {m}: <span className="text-yellow-400">{total}</span>
+                <span key={m} className="px-3 py-1.5 rounded-full text-xs font-bold bg-white/10 text-white flex items-center gap-1">
+                  {m}: <span className="text-yellow-400">{total}</span> <OnlineDot online={!!onlineUsers[m]} />
                 </span>
               );
             })}
