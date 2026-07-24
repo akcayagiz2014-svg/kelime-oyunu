@@ -11,6 +11,7 @@
 <!-- Firebase (compat build so it works as plain <script> tags, no bundler needed) -->
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyBcV5ATZ6-aPWegXF6z5zp5TkA0iw4x9hA",
@@ -23,6 +24,8 @@
   };
   firebase.initializeApp(firebaseConfig);
   window.__fbdb = firebase.database();
+  window.__fbauth = firebase.auth();
+  window.__googleProvider = new firebase.auth.GoogleAuthProvider();
 </script>
 <style>
   html, body { margin:0; padding:0; background:#0f0a1e; }
@@ -69,6 +72,11 @@ const Clock = makeIcon("⏱");
 
 const ADMIN_NAME = "Yağız";
 const ADMIN_PASS = "030714yagiz";
+// Only this Google account can ever unlock the admin button / admin login.
+// Everyone else — even someone who somehow knows ADMIN_NAME/ADMIN_PASS —
+// will not see or be able to use the admin panel without first verifying
+// with this exact Google account.
+const ADMIN_GOOGLE_EMAIL = "akca.yagiz2014@gmail.com";
 const WORD_TIME_SECONDS = 10;
 const ROUND_WORD_LIMIT = 25;
 const POINTS_PER_WORD = 10;
@@ -111,6 +119,14 @@ const T = {
     spectating: "İzleniyor", spectateBack: "Admin Paneline Dön", notInMatch: "Şu an bir maçta değil",
     leaveGroup: "Gruptan Çık", deleteGroup: "Grubu Sil", leaveGroupConfirm: "Bu gruptan çıkmak istediğine emin misin?",
     deleteGroupConfirm: "Bu grup tamamen silinsin mi? Bu işlem geri alınamaz.", you: "Sen",
+    googleAdminVerify: "Yönetici: Google ile Doğrula", googleAdminVerifying: "Doğrulanıyor...",
+    googleAdminVerifiedMsg: "Google hesabı doğrulandı, admin girişine devam edebilirsin.",
+    googleAdminWrongAccount: "Bu Google hesabı yönetici için yetkili değil.",
+    googleAdminFailed: "Google doğrulaması başarısız oldu, tekrar dene.",
+    googleAdminRequired: "Admin girişi için önce Google ile doğrulama yapmalısın.",
+    duplicateWordTitle: "Oyun Bitti!",
+    duplicateWordMsg: "kelimesini bu turda zaten kullandın. Aynı kelime bir turda iki kez yazılamaz.",
+    backToMenu: "Ana Menüye Dön",
   },
   en: {
     appName: "Word Derivation", login: "Log In", register: "Sign Up", username: "Username", password: "Password",
@@ -142,6 +158,14 @@ const T = {
     spectating: "Spectating", spectateBack: "Back to Admin Panel", notInMatch: "Not currently in a match",
     leaveGroup: "Leave Group", deleteGroup: "Delete Group", leaveGroupConfirm: "Are you sure you want to leave this group?",
     deleteGroupConfirm: "Delete this group permanently? This cannot be undone.", you: "You",
+    googleAdminVerify: "Admin: Verify with Google", googleAdminVerifying: "Verifying...",
+    googleAdminVerifiedMsg: "Google account verified, you can continue with admin login.",
+    googleAdminWrongAccount: "This Google account is not authorized for admin.",
+    googleAdminFailed: "Google verification failed, please try again.",
+    googleAdminRequired: "You must verify with Google first before admin login.",
+    duplicateWordTitle: "Game Over!",
+    duplicateWordMsg: "You already used the word in this round. The same word can't be written twice in one round.",
+    backToMenu: "Back to Main Menu",
   },
   de: {
     appName: "Wortkette", login: "Anmelden", register: "Registrieren", username: "Benutzername", password: "Passwort",
@@ -173,6 +197,14 @@ const T = {
     spectating: "Zuschauen", spectateBack: "Zurück zum Admin-Bereich", notInMatch: "Derzeit in keinem Spiel",
     leaveGroup: "Gruppe verlassen", deleteGroup: "Gruppe löschen", leaveGroupConfirm: "Möchtest du diese Gruppe wirklich verlassen?",
     deleteGroupConfirm: "Diese Gruppe endgültig löschen? Dies kann nicht rückgängig gemacht werden.", you: "Du",
+    googleAdminVerify: "Admin: Mit Google verifizieren", googleAdminVerifying: "Wird überprüft...",
+    googleAdminVerifiedMsg: "Google-Konto verifiziert, du kannst mit dem Admin-Login fortfahren.",
+    googleAdminWrongAccount: "Dieses Google-Konto ist nicht für den Admin-Zugriff autorisiert.",
+    googleAdminFailed: "Google-Verifizierung fehlgeschlagen, bitte erneut versuchen.",
+    googleAdminRequired: "Du musst dich zuerst mit Google verifizieren, bevor du dich als Admin anmeldest.",
+    duplicateWordTitle: "Spiel vorbei!",
+    duplicateWordMsg: "Du hast dieses Wort in dieser Runde bereits verwendet. Dasselbe Wort kann in einer Runde nicht zweimal geschrieben werden.",
+    backToMenu: "Zurück zum Hauptmenü",
   },
 };
 
@@ -271,6 +303,13 @@ function firstLetter(word, lang) {
   const w = word.trim();
   if (!w) return "";
   return w[0].toLocaleUpperCase(lang === "tr" ? "tr-TR" : undefined);
+}
+// normalized form used to compare two words for exact (case-insensitive) equality,
+// so "Kedi" and "kedi" count as the same word within a round.
+function normalizeWord(word, lang) {
+  const w = (word || "").trim();
+  if (!w) return "";
+  return w.toLocaleLowerCase(lang === "tr" ? "tr-TR" : undefined);
 }
 
 function uid() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
@@ -446,6 +485,10 @@ function App() {
   const [authForm, setAuthForm] = useState({ username: "", password: "" });
   const [authError, setAuthError] = useState("");
   const [me, setMe] = useState(null); // {username, isAdmin, score, medals}
+  const [googleAdminVerified, setGoogleAdminVerified] = useState(false);
+  const [googleAdminEmail, setGoogleAdminEmail] = useState(null);
+  const [googleAdminBusy, setGoogleAdminBusy] = useState(false);
+  const [googleAdminError, setGoogleAdminError] = useState("");
   const [users, setUsers] = useState({});
   const [groups, setGroups] = useState({});
   const [activeGroupId, setActiveGroupId] = useState(null);
@@ -546,6 +589,34 @@ function App() {
   }, [users]); // eslint-disable-line
 
   // ---------------- AUTH ----------------
+  // Google verification gate for the admin account. This is independent of
+  // the normal username/password login above: only signing in with the
+  // exact ADMIN_GOOGLE_EMAIL account unlocks admin, regardless of whether
+  // someone else knows ADMIN_NAME/ADMIN_PASS.
+  async function handleGoogleAdminVerify() {
+    setGoogleAdminError("");
+    setGoogleAdminBusy(true);
+    try {
+      const result = await window.__fbauth.signInWithPopup(window.__googleProvider);
+      const email = (result.user && result.user.email || "").toLowerCase();
+      if (email === ADMIN_GOOGLE_EMAIL.toLowerCase()) {
+        setGoogleAdminVerified(true);
+        setGoogleAdminEmail(email);
+      } else {
+        // Wrong Google account: sign it back out immediately so no stray
+        // session is left behind, and never grant admin visibility.
+        await window.__fbauth.signOut();
+        setGoogleAdminVerified(false);
+        setGoogleAdminEmail(null);
+        setGoogleAdminError(t.googleAdminWrongAccount);
+      }
+    } catch (e) {
+      console.error("Google admin verify failed", e);
+      setGoogleAdminError(t.googleAdminFailed);
+    }
+    setGoogleAdminBusy(false);
+  }
+
   async function handleAuth() {
     setAuthError("");
     const uname = authForm.username.trim();
@@ -553,9 +624,12 @@ function App() {
     if (!uname || !pass) { setAuthError(t.fillFields); return; }
     const { u } = await refreshAll();
     if (authMode === "login") {
-      const isAdminLogin = uname === ADMIN_NAME && pass === ADMIN_PASS;
+      const isAdminCreds = uname === ADMIN_NAME && pass === ADMIN_PASS;
       const rec = u[uname];
-      if (isAdminLogin) {
+      if (isAdminCreds) {
+        // Admin credentials alone are no longer enough: the Google identity
+        // check above must have already succeeded for this session.
+        if (!googleAdminVerified) { setAuthError(t.googleAdminRequired); return; }
         const adminRec = rec || { password: ADMIN_PASS, score: 0, isAdmin: true };
         adminRec.isAdmin = true;
         const nu = { ...u, [uname]: adminRec };
@@ -576,7 +650,11 @@ function App() {
     }
   }
 
-  function logout() { setMe(null); setScreen("auth"); setAuthForm({ username: "", password: "" }); }
+  function logout() {
+    setMe(null); setScreen("auth"); setAuthForm({ username: "", password: "" });
+    setGoogleAdminVerified(false); setGoogleAdminEmail(null); setGoogleAdminError("");
+    if (window.__fbauth.currentUser) window.__fbauth.signOut().catch(() => {});
+  }
 
   async function adjustScore(username, delta) {
     const nu = { ...users, [username]: { ...users[username], score: Math.max(0, (users[username].score || 0) + delta) } };
@@ -772,8 +850,22 @@ function App() {
       return;
     }
 
-    const points = isValid && word.trim() ? POINTS_PER_WORD : 0;
-    game.wordChain.push({ username: me.username, word: word.trim(), points });
+    const trimmed = word.trim();
+    const isDuplicate = trimmed && game.wordChain.some(
+      w => w.word && normalizeWord(w.word, game.lang) === normalizeWord(trimmed, game.lang)
+    );
+    if (isDuplicate) {
+      // aynı kelime bu turda daha önce kullanılmış: oyun herkes için burada biter
+      game.wordChain.push({ username: me.username, word: trimmed, points: 0 });
+      game.status = "gameover";
+      game.gameOverWord = trimmed;
+      game.gameOverBy = me.username;
+      await saveShared("games", gm); setGames(gm);
+      return;
+    }
+
+    const points = isValid && trimmed ? POINTS_PER_WORD : 0;
+    game.wordChain.push({ username: me.username, word: trimmed, points });
     if (points > 0) await addPoints(me.username, POINTS_PER_WORD);
     if (game.wordChain.length >= ROUND_WORD_LIMIT) {
       game.status = "results";
@@ -903,6 +995,20 @@ function App() {
               className="w-full text-center text-sm text-white/60 hover:text-white/90 pt-1">
               {authMode === "login" ? t.noAccount : t.haveAccount}
             </button>
+
+            {authMode === "login" && (
+              <div className="pt-2 mt-2 border-t border-white/10">
+                <button onClick={handleGoogleAdminVerify} disabled={googleAdminBusy || googleAdminVerified}
+                  className="w-full py-2.5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition"
+                  style={googleAdminVerified
+                    ? { background: "rgba(34,197,94,0.15)", color: "#86efac", border: "1px solid rgba(34,197,94,0.35)" }
+                    : { background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                  <span style={{ fontSize: 14 }}>🔐</span>
+                  {googleAdminVerified ? t.googleAdminVerifiedMsg : (googleAdminBusy ? t.googleAdminVerifying : t.googleAdminVerify)}
+                </button>
+                {googleAdminError && <p className="text-red-400 text-xs mt-1.5 text-center">{googleAdminError}</p>}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -987,7 +1093,7 @@ function App() {
           <button onClick={() => setScreen("leaderboard")} className="flex flex-col items-center justify-center gap-2 py-6 rounded-2xl bg-white/10 text-white font-semibold hover:bg-white/20">
             <Trophy size={26} /> {t.leaderboard}
           </button>
-          {me.isAdmin && (
+          {me.isAdmin && googleAdminVerified && (
             <button onClick={() => setScreen("admin")} className="col-span-2 flex items-center justify-center gap-2 py-4 rounded-2xl bg-purple-900/50 border border-purple-400/30 text-purple-200 font-semibold hover:bg-purple-900/70">
               <Shield size={20} /> {t.admin}
             </button>
@@ -1224,7 +1330,7 @@ function App() {
       return <GroupGameView game={game} me={me} t={t} onSpinEnd={() => finishSpin(activeGameId)}
         onSubmitWord={(w, ok, timedOut) => submitWord(activeGameId, w, ok, timedOut)}
         onNextRound={() => backToWheelScreen(activeGameId)}
-        onExitToChat={() => setScreen("chat")} lang={game.lang} />;
+        onExitToChat={() => setScreen("chat")} onGameOver={() => setScreen("menu")} lang={game.lang} />;
     }
     const isHost = game.host === me.username;
     const canLeave = game.members.length > 1;
@@ -1311,7 +1417,7 @@ function App() {
   }
 
   // ---------------- ADMIN ----------------
-  if (screen === "admin" && me.isAdmin) {
+  if (screen === "admin" && me.isAdmin && googleAdminVerified) {
     return (
       <div className="min-h-screen w-full p-5" style={{ fontFamily: "Inter, sans-serif" }}>
         {bg}
@@ -1345,7 +1451,7 @@ function App() {
   }
 
   // ---------------- ADMIN SPECTATE ----------------
-  if (screen === "adminSpectate" && me.isAdmin) {
+  if (screen === "adminSpectate" && me.isAdmin && googleAdminVerified) {
     const game = games[adminSpectateGameId];
     if (!game) {
       return <GoneScreen bg={bg} message={t.groupGone} backLabel={t.back} onBack={() => setScreen("admin")} />;
@@ -1354,7 +1460,7 @@ function App() {
       onSpinEnd={() => finishSpin(adminSpectateGameId)}
       onSubmitWord={() => {}}
       onNextRound={() => setScreen("admin")}
-      onExitToChat={() => setScreen("admin")} />;
+      onExitToChat={() => setScreen("admin")} onGameOver={() => setScreen("admin")} />;
   }
 
   return null;
@@ -1363,7 +1469,7 @@ function App() {
 // =========================================================
 // GROUP GAME VIEW (wheel + relay chain for a lobby's round)
 // =========================================================
-function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onExitToChat, lang, isSpectator }) {
+function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onExitToChat, onGameOver, lang, isSpectator }) {
   const [wordInput, setWordInput] = useState("");
   const [timeLeft, setTimeLeft] = useState(WORD_TIME_SECONDS);
   const [checking, setChecking] = useState(false);
@@ -1501,6 +1607,22 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
           <button onClick={isSpectator ? onExitToChat : onNextRound} className="w-full py-3 rounded-full font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>{isSpectator ? t.spectateBack : t.back}</button>
         </div>
       )}
+
+      {game.status === "gameover" && (
+        <div className="w-full max-w-sm mt-16 text-center">
+          <div className="rounded-3xl p-7" style={{ background: "linear-gradient(160deg,#2c1750,#1b1030)", border: "2px solid #ff6f61" }}>
+            <X size={40} color="#ff6f61" className="mx-auto mb-3" />
+            <h2 className="text-xl font-bold text-white mb-2" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.duplicateWordTitle}</h2>
+            <p className="text-white/80 mb-1">
+              <b>{game.gameOverBy}</b>{lang === "en" ? " — " : ": "}<b className="text-yellow-400">"{game.gameOverWord}"</b>
+            </p>
+            <p className="text-white/70 text-sm mb-5">{t.duplicateWordMsg}</p>
+            <button onClick={isSpectator ? onExitToChat : onGameOver} className="w-full py-2.5 rounded-full font-bold" style={{ background: "#ff6f61", color: "#1b1030" }}>
+              {isSpectator ? t.spectateBack : t.backToMenu}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1518,6 +1640,7 @@ function SoloGameView({ t, lang, me, onAddPoints, onExit }) {
   const [shake, setShake] = useState(false);
   const [flash, setFlash] = useState(null);
   const [allCorrectMsg, setAllCorrectMsg] = useState(false);
+  const [gameOverWord, setGameOverWord] = useState(null);
   const feedbackKeyRef = useRef(0);
   const [timeLeft, setTimeLeft] = useState(WORD_TIME_SECONDS);
   const timerRef = useRef(null);
@@ -1570,6 +1693,15 @@ function SoloGameView({ t, lang, me, onAddPoints, onExit }) {
       return;
     }
 
+    const isDuplicate = chain.some(c => c.word && normalizeWord(c.word, lang) === normalizeWord(w, lang));
+    if (isDuplicate) {
+      // aynı kelime bu turda daha önce kullanılmış: oyun burada biter
+      flashFeedback(false, w);
+      setFlash({ ok: false, key: ++feedbackKeyRef.current });
+      setGameOverWord(w);
+      return;
+    }
+
     setChecking(true);
     const ok = await checkWordValid(w, lang, required);
     setChecking(false);
@@ -1603,7 +1735,21 @@ function SoloGameView({ t, lang, me, onAddPoints, onExit }) {
       )}
       <p className="text-white/40 text-xs mt-14 mb-2">{t.solo} · {t.roundOf} {chain.length}{t.of}{ROUND_WORD_LIMIT}</p>
 
-      {status !== "playing" && (
+      {gameOverWord && (
+        <div className="w-full max-w-sm mt-16 text-center">
+          <div className="rounded-3xl p-7" style={{ background: "linear-gradient(160deg,#2c1750,#1b1030)", border: "2px solid #ff6f61" }}>
+            <X size={40} color="#ff6f61" className="mx-auto mb-3" />
+            <h2 className="text-xl font-bold text-white mb-2" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.duplicateWordTitle}</h2>
+            <p className="text-white/80 mb-1"><b className="text-yellow-400">"{gameOverWord}"</b></p>
+            <p className="text-white/70 text-sm mb-5">{t.duplicateWordMsg}</p>
+            <button onClick={onExit} className="w-full py-2.5 rounded-full font-bold" style={{ background: "#ff6f61", color: "#1b1030" }}>
+              {t.backToMenu}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {!gameOverWord && status !== "playing" && (
         <div className="flex flex-col items-center mt-4">
           <Wheel lang={lang} spinning={status === "spinning"} resultLetter={letter} excludeFirst={lang === "tr" ? "Ğ" : null}
             onSpinEnd={() => setStatus("playing")} />
@@ -1615,7 +1761,7 @@ function SoloGameView({ t, lang, me, onAddPoints, onExit }) {
         </div>
       )}
 
-      {status === "playing" && (
+      {!gameOverWord && status === "playing" && (
         <div className="w-full max-w-sm mt-6">
           <div className="text-center mb-4">
             <p className="text-white text-lg"><b className="text-yellow-400 text-2xl">{required}</b> {t.writeWordStartingWith}</p>
