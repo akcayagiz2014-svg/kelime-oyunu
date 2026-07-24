@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Kelime Türetmece</title>
+<title>Kelime TÃ¼retmece</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
@@ -42,98 +42,98 @@ function makeIcon(glyph) {
     return <span className={className} style={{ fontSize: size, lineHeight: 1, display: "inline-block", color, ...style }}>{glyph}</span>;
   };
 }
-const Globe = makeIcon("🌐");
-const Users = makeIcon("👥");
-const Plus = makeIcon("➕");
-const Bell = makeIcon("🔔");
-const Trophy = makeIcon("🏆");
-const Send = makeIcon("➤");
-const X = makeIcon("✕");
-const LogOut = makeIcon("⏻");
-const Shield = makeIcon("🛡️");
-const ArrowLeft = makeIcon("←");
-const Play = makeIcon("▶");
-const Swords = makeIcon("⚔️");
-const Crown = makeIcon("👑");
-const Medal = makeIcon("🥉");
-const Gem = makeIcon("💎");
-const Star = makeIcon("⭐");
-const Check = makeIcon("✓");
-const Clock = makeIcon("⏱");
+const Globe = makeIcon("ğŸŒ");
+const Users = makeIcon("ğŸ‘¥");
+const Plus = makeIcon("â•");
+const Bell = makeIcon("ğŸ””");
+const Trophy = makeIcon("ğŸ†");
+const Send = makeIcon("â¤");
+const X = makeIcon("âœ•");
+const LogOut = makeIcon("â»");
+const Shield = makeIcon("ğŸ›¡ï¸");
+const ArrowLeft = makeIcon("â†");
+const Play = makeIcon("â–¶");
+const Swords = makeIcon("âš”ï¸");
+const Crown = makeIcon("ğŸ‘‘");
+const Medal = makeIcon("ğŸ¥‰");
+const Gem = makeIcon("ğŸ’");
+const Star = makeIcon("â­");
+const Check = makeIcon("âœ“");
+const Clock = makeIcon("â±");
 
 /* ---------------------------------------------------------
-   KELİME TÜRETMECE
+   KELÄ°ME TÃœRETMECE
    Storage note: uses window.storage as a stand-in "shared
    backend" (users / groups / games all shared=true) so this
    works today. Swap the load and save helpers below for real
-   Firestore calls later — the rest of the app doesn't need
+   Firestore calls later â€” the rest of the app doesn't need
    to change.
 --------------------------------------------------------- */
 
 // Legacy constants, no longer used to gate admin access (kept only for reference).
-const ADMIN_NAME = "Yağız";
+const ADMIN_NAME = "YaÄŸÄ±z";
 const ADMIN_PASS = "030714yagiz";
 // Every user must sign in with Google first (mandatory security step), then
 // continues with the normal username (rumuz) + password login/register.
 // Only when the Google account used is EXACTLY this address does that
-// account get the admin panel button — no matter which username/password
+// account get the admin panel button â€” no matter which username/password
 // was used afterwards. Anyone signing in with a different Google account
 // never sees or can reach the admin panel.
 const ADMIN_GOOGLE_EMAIL = "akca.yagiz2014@gmail.com";
 const WORD_TIME_SECONDS = 10;
 const ROUND_WORD_LIMIT = 25;
 const POINTS_PER_WORD = 10;
-const STREAK_BONUS = 20; // tur limitine kadar hiç kaçırmadan gidenin alacağı ekstra puan
+const STREAK_BONUS = 20; // tur limitine kadar hiÃ§ kaÃ§Ä±rmadan gidenin alacaÄŸÄ± ekstra puan
 
 const ALPHABETS = {
-  tr: ["A","B","C","Ç","D","E","F","G","H","I","İ","J","K","L","M","N","O","Ö","P","R","S","Ş","T","U","Ü","V","Y","Z"],
+  tr: ["A","B","C","Ã‡","D","E","F","G","H","I","Ä°","J","K","L","M","N","O","Ã–","P","R","S","Å","T","U","Ãœ","V","Y","Z"],
   en: ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"],
-  de: ["A","Ä","B","C","D","E","F","G","H","I","J","K","L","M","N","O","Ö","P","Q","R","S","T","U","Ü","V","W","X","Y","Z"],
+  de: ["A","Ã„","B","C","D","E","F","G","H","I","J","K","L","M","N","O","Ã–","P","Q","R","S","T","U","Ãœ","V","W","X","Y","Z"],
 };
 
 const T = {
   tr: {
-    appName: "Kelime Türetmece", login: "Giriş Yap", register: "Kaydol", username: "Kullanıcı adı", password: "Şifre",
-    noAccount: "Hesabın yok mu? Kaydol", haveAccount: "Zaten hesabın var mı? Giriş yap", wrongLogin: "Kullanıcı adı veya şifre hatalı",
-    userExists: "Bu kullanıcı adı zaten alınmış", fillFields: "Lütfen tüm alanları doldur",
-    mainMenu: "Ana Menü", createGroup: "Grup Oluştur", myGroups: "Gruplarım", soloPlay: "Tek Başına Oyna",
-    leaderboard: "Puan Sıralaması", notifications: "Bildirimler", admin: "Admin Paneli", logout: "Çıkış Yap",
-    groupName: "Grup adı", create: "Oluştur", cancel: "Vazgeç", noGroups: "Henüz bir grubun yok",
-    joinRequests: "Katılma İstekleri", members: "üye", writeMessage: "Bir mesaj yaz...", sendRequest: "İstek At",
-    gameInviteText: "Oyun daveti gönderdi. Katılmak için dokun!", joinLobby: "Lobiye Katıl",
-    lobby: "Lobi", waitingPlayers: "Oyuncular bekleniyor", leaveLobby: "Lobiden Çık", startGame: "Oyunu Başlat",
-    playersInLobby: "Lobideki Oyuncular", spinWheel: "Çarkı Çevir", yourTurn: "Sıra sende!",
-    writeWordStartingWith: "ile başlayan bir kelime yaz", timeLeft: "Süre", roundResults: "Tur Sonuçları",
-    back: "Geri", points: "puan", noWord: "Kelime yazılmadı", nextRound: "Sıradaki Turu Başlat",
-    worldLeaderboard: "Dünya Geneli Sıralama", groupLeaderboard: "Grup Sıralaması", rank: "Sıra",
+    appName: "Kelime TÃ¼retmece", login: "GiriÅŸ Yap", register: "Kaydol", username: "KullanÄ±cÄ± adÄ±", password: "Åifre",
+    noAccount: "HesabÄ±n yok mu? Kaydol", haveAccount: "Zaten hesabÄ±n var mÄ±? GiriÅŸ yap", wrongLogin: "KullanÄ±cÄ± adÄ± veya ÅŸifre hatalÄ±",
+    userExists: "Bu kullanÄ±cÄ± adÄ± zaten alÄ±nmÄ±ÅŸ", fillFields: "LÃ¼tfen tÃ¼m alanlarÄ± doldur",
+    mainMenu: "Ana MenÃ¼", createGroup: "Grup OluÅŸtur", myGroups: "GruplarÄ±m", soloPlay: "Tek BaÅŸÄ±na Oyna",
+    leaderboard: "Puan SÄ±ralamasÄ±", notifications: "Bildirimler", admin: "Admin Paneli", logout: "Ã‡Ä±kÄ±ÅŸ Yap",
+    groupName: "Grup adÄ±", create: "OluÅŸtur", cancel: "VazgeÃ§", noGroups: "HenÃ¼z bir grubun yok",
+    joinRequests: "KatÄ±lma Ä°stekleri", members: "Ã¼ye", writeMessage: "Bir mesaj yaz...", sendRequest: "Ä°stek At",
+    gameInviteText: "Oyun daveti gÃ¶nderdi. KatÄ±lmak iÃ§in dokun!", joinLobby: "Lobiye KatÄ±l",
+    lobby: "Lobi", waitingPlayers: "Oyuncular bekleniyor", leaveLobby: "Lobiden Ã‡Ä±k", startGame: "Oyunu BaÅŸlat",
+    playersInLobby: "Lobideki Oyuncular", spinWheel: "Ã‡arkÄ± Ã‡evir", yourTurn: "SÄ±ra sende!",
+    writeWordStartingWith: "ile baÅŸlayan bir kelime yaz", timeLeft: "SÃ¼re", roundResults: "Tur SonuÃ§larÄ±",
+    back: "Geri", points: "puan", noWord: "Kelime yazÄ±lmadÄ±", nextRound: "SÄ±radaki Turu BaÅŸlat",
+    worldLeaderboard: "DÃ¼nya Geneli SÄ±ralama", groupLeaderboard: "Grup SÄ±ralamasÄ±", rank: "SÄ±ra",
     score: "Puan", medals: "Madalyalar", noNotifications: "Bildirim yok", invitedYouToGroup: "seni gruba davet etti",
-    accept: "Kabul Et", decline: "Reddet", adminPanelDesc: "Kullanıcı puanlarını düzenle", increase: "Artır", decrease: "Azalt",
-    congrats: "Tebrikler!", earnedMedal: "madalyası kazandınız!", close: "Kapat", invalidWord: "Bu kelime geçerli değil, 0 puan",
-    soloAllCorrectMsg: "Tebrikler, hepsini doğru yaptığınız için +20 puan aldınız!",
-    groupAllCorrectMsg: "Tebrikler, hepsini doğru yaptığınız için extra 20 puan bölüştürülecektir!",
-    validWord: "Geçerli kelime!", checking: "Kontrol ediliyor...", groupLimitReached: "En fazla 50 gruba katılabilirsin",
-    dailyGroupLimit: "Günde en fazla 3 grup kurabilirsin", closesInGame: "Oyun bitince kapanacak", groupGone: "Bu grup artık mevcut değil.",
-    closesIn: "kapanıyor", worldRank: "sırada", nextMedal: "Sıradaki madalya",
-    lobbyFull: "Lobi dolu (15 kişi)", inviteMember: "Üye Davet Et", invite: "Davet Et", groupChat: "Grup Sohbeti",
-    submit: "Gönder", solo: "Tek Oyunculu", roundOf: "Kelime", of: "/", backToWheel: "Çarka Dön",
-    groupCallBtn: "Grup Çağırma", searchUser: "İsim ara...", noUserFound: "Kullanıcı bulunamadı",
-    alreadyMember: "Zaten üye", invited: "Davet edildi ✓", kickMember: "Gruptan At", kickConfirm: "gruptan atılsın mı?",
-    groupMembersTitle: "Grup Üyeleri", ownerTag: "Kurucu", watchMatch: "Maçını İzle", inMatch: "Maçta",
-    spectating: "İzleniyor", spectateBack: "Admin Paneline Dön", notInMatch: "Şu an bir maçta değil",
-    leaveGroup: "Gruptan Çık", deleteGroup: "Grubu Sil", leaveGroupConfirm: "Bu gruptan çıkmak istediğine emin misin?",
-    deleteGroupConfirm: "Bu grup tamamen silinsin mi? Bu işlem geri alınamaz.", you: "Sen",
-    googleAdminVerify: "Google ile Giriş Yap", googleAdminVerifying: "Giriş yapılıyor...",
-    googleAdminVerifiedMsg: "Google hesabı doğrulandı, admin girişine devam edebilirsin.",
-    googleAdminWrongAccount: "Bu Google hesabı yönetici için yetkili değil.",
-    googleAdminFailed: "Google ile giriş başarısız oldu, tekrar dene.",
-    googleAdminRequired: "Devam etmek için önce Google ile giriş yapmalısın.",
-    googleGateTitle: "Devam etmeden önce güvenlik doğrulaması",
-    googleGateDesc: "Kullanıcı adı ve şifre ile girişten önce Google hesabınla giriş yapman gerekiyor.",
-    continueAs: "Şu hesapla devam ediliyor",
-    switchGoogleAccount: "Farklı Google hesabı kullan",
+    accept: "Kabul Et", decline: "Reddet", adminPanelDesc: "KullanÄ±cÄ± puanlarÄ±nÄ± dÃ¼zenle", increase: "ArtÄ±r", decrease: "Azalt",
+    congrats: "Tebrikler!", earnedMedal: "madalyasÄ± kazandÄ±nÄ±z!", close: "Kapat", invalidWord: "Bu kelime geÃ§erli deÄŸil, 0 puan",
+    soloAllCorrectMsg: "Tebrikler, hepsini doÄŸru yaptÄ±ÄŸÄ±nÄ±z iÃ§in +20 puan aldÄ±nÄ±z!",
+    groupAllCorrectMsg: "Tebrikler, hepsini doÄŸru yaptÄ±ÄŸÄ±nÄ±z iÃ§in extra 20 puan bÃ¶lÃ¼ÅŸtÃ¼rÃ¼lecektir!",
+    validWord: "GeÃ§erli kelime!", checking: "Kontrol ediliyor...", groupLimitReached: "En fazla 50 gruba katÄ±labilirsin",
+    dailyGroupLimit: "GÃ¼nde en fazla 3 grup kurabilirsin", closesInGame: "Oyun bitince kapanacak", groupGone: "Bu grup artÄ±k mevcut deÄŸil.",
+    closesIn: "kapanÄ±yor", worldRank: "sÄ±rada", nextMedal: "SÄ±radaki madalya",
+    lobbyFull: "Lobi dolu (15 kiÅŸi)", inviteMember: "Ãœye Davet Et", invite: "Davet Et", groupChat: "Grup Sohbeti",
+    submit: "GÃ¶nder", solo: "Tek Oyunculu", roundOf: "Kelime", of: "/", backToWheel: "Ã‡arka DÃ¶n",
+    groupCallBtn: "Grup Ã‡aÄŸÄ±rma", searchUser: "Ä°sim ara...", noUserFound: "KullanÄ±cÄ± bulunamadÄ±",
+    alreadyMember: "Zaten Ã¼ye", invited: "Davet edildi âœ“", kickMember: "Gruptan At", kickConfirm: "gruptan atÄ±lsÄ±n mÄ±?",
+    groupMembersTitle: "Grup Ãœyeleri", ownerTag: "Kurucu", watchMatch: "MaÃ§Ä±nÄ± Ä°zle", inMatch: "MaÃ§ta",
+    spectating: "Ä°zleniyor", spectateBack: "Admin Paneline DÃ¶n", notInMatch: "Åu an bir maÃ§ta deÄŸil",
+    leaveGroup: "Gruptan Ã‡Ä±k", deleteGroup: "Grubu Sil", leaveGroupConfirm: "Bu gruptan Ã§Ä±kmak istediÄŸine emin misin?",
+    deleteGroupConfirm: "Bu grup tamamen silinsin mi? Bu iÅŸlem geri alÄ±namaz.", you: "Sen",
+    googleAdminVerify: "Google ile GiriÅŸ Yap", googleAdminVerifying: "GiriÅŸ yapÄ±lÄ±yor...",
+    googleAdminVerifiedMsg: "Google hesabÄ± doÄŸrulandÄ±, admin giriÅŸine devam edebilirsin.",
+    googleAdminWrongAccount: "Bu Google hesabÄ± yÃ¶netici iÃ§in yetkili deÄŸil.",
+    googleAdminFailed: "Google ile giriÅŸ baÅŸarÄ±sÄ±z oldu, tekrar dene.",
+    googleAdminRequired: "Devam etmek iÃ§in Ã¶nce Google ile giriÅŸ yapmalÄ±sÄ±n.",
+    googleGateTitle: "Devam etmeden Ã¶nce gÃ¼venlik doÄŸrulamasÄ±",
+    googleGateDesc: "KullanÄ±cÄ± adÄ± ve ÅŸifre ile giriÅŸten Ã¶nce Google hesabÄ±nla giriÅŸ yapman gerekiyor.",
+    continueAs: "Åu hesapla devam ediliyor",
+    switchGoogleAccount: "FarklÄ± Google hesabÄ± kullan",
     duplicateWordTitle: "Oyun Bitti!",
-    duplicateWordMsg: "kelimesini bu turda zaten kullandın. Aynı kelime bir turda iki kez yazılamaz.",
-    backToMenu: "Ana Menüye Dön",
+    duplicateWordMsg: "kelimesini bu turda zaten kullandÄ±n. AynÄ± kelime bir turda iki kez yazÄ±lamaz.",
+    backToMenu: "Ana MenÃ¼ye DÃ¶n",
   },
   en: {
     appName: "Word Derivation", login: "Log In", register: "Sign Up", username: "Username", password: "Password",
@@ -160,7 +160,7 @@ const T = {
     lobbyFull: "Lobby full (15 players)", inviteMember: "Invite Member", invite: "Invite", groupChat: "Group Chat",
     submit: "Submit", solo: "Solo", roundOf: "Word", of: "/", backToWheel: "Back to Wheel",
     groupCallBtn: "Invite to Group", searchUser: "Search name...", noUserFound: "No user found",
-    alreadyMember: "Already a member", invited: "Invited ✓", kickMember: "Remove from group", kickConfirm: "be removed from the group?",
+    alreadyMember: "Already a member", invited: "Invited âœ“", kickMember: "Remove from group", kickConfirm: "be removed from the group?",
     groupMembersTitle: "Group Members", ownerTag: "Owner", watchMatch: "Watch Match", inMatch: "In match",
     spectating: "Spectating", spectateBack: "Back to Admin Panel", notInMatch: "Not currently in a match",
     leaveGroup: "Leave Group", deleteGroup: "Delete Group", leaveGroupConfirm: "Are you sure you want to leave this group?",
@@ -181,8 +181,8 @@ const T = {
   de: {
     appName: "Wortkette", login: "Anmelden", register: "Registrieren", username: "Benutzername", password: "Passwort",
     noAccount: "Kein Konto? Registrieren", haveAccount: "Schon ein Konto? Anmelden", wrongLogin: "Falscher Benutzername oder Passwort",
-    userExists: "Benutzername bereits vergeben", fillFields: "Bitte alle Felder ausfüllen",
-    mainMenu: "Hauptmenü", createGroup: "Gruppe erstellen", myGroups: "Meine Gruppen", soloPlay: "Alleine spielen",
+    userExists: "Benutzername bereits vergeben", fillFields: "Bitte alle Felder ausfÃ¼llen",
+    mainMenu: "HauptmenÃ¼", createGroup: "Gruppe erstellen", myGroups: "Meine Gruppen", soloPlay: "Alleine spielen",
     leaderboard: "Rangliste", notifications: "Benachrichtigungen", admin: "Admin-Bereich", logout: "Abmelden",
     groupName: "Gruppenname", create: "Erstellen", cancel: "Abbrechen", noGroups: "Noch keine Gruppen",
     joinRequests: "Beitrittsanfragen", members: "Mitglieder", writeMessage: "Nachricht schreiben...", sendRequest: "Einladung senden",
@@ -190,52 +190,52 @@ const T = {
     lobby: "Lobby", waitingPlayers: "Warten auf Spieler", leaveLobby: "Lobby verlassen", startGame: "Spiel starten",
     playersInLobby: "Spieler in der Lobby", spinWheel: "Rad drehen", yourTurn: "Du bist dran!",
     writeWordStartingWith: "schreibe ein Wort beginnend mit", timeLeft: "Zeit", roundResults: "Rundenergebnis",
-    back: "Zurück", points: "Pkt", noWord: "Kein Wort eingegeben", nextRound: "Nächste Runde starten",
+    back: "ZurÃ¼ck", points: "Pkt", noWord: "Kein Wort eingegeben", nextRound: "NÃ¤chste Runde starten",
     worldLeaderboard: "Weltweite Rangliste", groupLeaderboard: "Gruppenrangliste", rank: "Rang",
     score: "Punkte", medals: "Medaillen", noNotifications: "Keine Benachrichtigungen", invitedYouToGroup: "hat dich zu einer Gruppe eingeladen",
-    accept: "Annehmen", decline: "Ablehnen", adminPanelDesc: "Punkte der Nutzer anpassen", increase: "Erhöhen", decrease: "Verringern",
-    congrats: "Glückwunsch!", earnedMedal: "Medaille erhalten!", close: "Schließen", invalidWord: "Ungültiges Wort, 0 Punkte",
-    soloAllCorrectMsg: "Glückwunsch, du hast +20 Punkte für alles richtig erhalten!",
-    groupAllCorrectMsg: "Glückwunsch, zusätzliche 20 Punkte werden in der Gruppe aufgeteilt!",
-    validWord: "Gültiges Wort!", checking: "Wird geprüft...", groupLimitReached: "Maximal 50 Gruppen möglich",
-    dailyGroupLimit: "Du kannst höchstens 3 Gruppen pro Tag erstellen", closesInGame: "Schließt, wenn das Spiel endet", groupGone: "Diese Gruppe existiert nicht mehr.",
-    closesIn: "schließt in", worldRank: "Rang", nextMedal: "Nächste Medaille",
+    accept: "Annehmen", decline: "Ablehnen", adminPanelDesc: "Punkte der Nutzer anpassen", increase: "ErhÃ¶hen", decrease: "Verringern",
+    congrats: "GlÃ¼ckwunsch!", earnedMedal: "Medaille erhalten!", close: "SchlieÃŸen", invalidWord: "UngÃ¼ltiges Wort, 0 Punkte",
+    soloAllCorrectMsg: "GlÃ¼ckwunsch, du hast +20 Punkte fÃ¼r alles richtig erhalten!",
+    groupAllCorrectMsg: "GlÃ¼ckwunsch, zusÃ¤tzliche 20 Punkte werden in der Gruppe aufgeteilt!",
+    validWord: "GÃ¼ltiges Wort!", checking: "Wird geprÃ¼ft...", groupLimitReached: "Maximal 50 Gruppen mÃ¶glich",
+    dailyGroupLimit: "Du kannst hÃ¶chstens 3 Gruppen pro Tag erstellen", closesInGame: "SchlieÃŸt, wenn das Spiel endet", groupGone: "Diese Gruppe existiert nicht mehr.",
+    closesIn: "schlieÃŸt in", worldRank: "Rang", nextMedal: "NÃ¤chste Medaille",
     lobbyFull: "Lobby voll (15 Spieler)", inviteMember: "Mitglied einladen", invite: "Einladen", groupChat: "Gruppenchat",
-    submit: "Senden", solo: "Solo", roundOf: "Wort", of: "/", backToWheel: "Zurück zum Rad",
+    submit: "Senden", solo: "Solo", roundOf: "Wort", of: "/", backToWheel: "ZurÃ¼ck zum Rad",
     groupCallBtn: "Zur Gruppe einladen", searchUser: "Name suchen...", noUserFound: "Kein Benutzer gefunden",
-    alreadyMember: "Bereits Mitglied", invited: "Eingeladen ✓", kickMember: "Aus der Gruppe entfernen", kickConfirm: "aus der Gruppe entfernen?",
-    groupMembersTitle: "Gruppenmitglieder", ownerTag: "Gründer", watchMatch: "Spiel ansehen", inMatch: "Im Spiel",
-    spectating: "Zuschauen", spectateBack: "Zurück zum Admin-Bereich", notInMatch: "Derzeit in keinem Spiel",
-    leaveGroup: "Gruppe verlassen", deleteGroup: "Gruppe löschen", leaveGroupConfirm: "Möchtest du diese Gruppe wirklich verlassen?",
-    deleteGroupConfirm: "Diese Gruppe endgültig löschen? Dies kann nicht rückgängig gemacht werden.", you: "Du",
-    googleAdminVerify: "Mit Google anmelden", googleAdminVerifying: "Anmeldung läuft...",
+    alreadyMember: "Bereits Mitglied", invited: "Eingeladen âœ“", kickMember: "Aus der Gruppe entfernen", kickConfirm: "aus der Gruppe entfernen?",
+    groupMembersTitle: "Gruppenmitglieder", ownerTag: "GrÃ¼nder", watchMatch: "Spiel ansehen", inMatch: "Im Spiel",
+    spectating: "Zuschauen", spectateBack: "ZurÃ¼ck zum Admin-Bereich", notInMatch: "Derzeit in keinem Spiel",
+    leaveGroup: "Gruppe verlassen", deleteGroup: "Gruppe lÃ¶schen", leaveGroupConfirm: "MÃ¶chtest du diese Gruppe wirklich verlassen?",
+    deleteGroupConfirm: "Diese Gruppe endgÃ¼ltig lÃ¶schen? Dies kann nicht rÃ¼ckgÃ¤ngig gemacht werden.", you: "Du",
+    googleAdminVerify: "Mit Google anmelden", googleAdminVerifying: "Anmeldung lÃ¤uft...",
     googleAdminVerifiedMsg: "Google-Konto verifiziert, du kannst mit dem Admin-Login fortfahren.",
-    googleAdminWrongAccount: "Dieses Google-Konto ist nicht für den Admin-Zugriff autorisiert.",
+    googleAdminWrongAccount: "Dieses Google-Konto ist nicht fÃ¼r den Admin-Zugriff autorisiert.",
     googleAdminFailed: "Google-Anmeldung fehlgeschlagen, bitte erneut versuchen.",
-    googleAdminRequired: "Du musst dich zuerst mit Google anmelden, bevor du fortfährst.",
-    googleGateTitle: "Sicherheitsprüfung vor dem Fortfahren",
+    googleAdminRequired: "Du musst dich zuerst mit Google anmelden, bevor du fortfÃ¤hrst.",
+    googleGateTitle: "SicherheitsprÃ¼fung vor dem Fortfahren",
     googleGateDesc: "Du musst dich mit deinem Google-Konto anmelden, bevor du dich mit Benutzername und Passwort anmeldest.",
     continueAs: "Weiter als",
     switchGoogleAccount: "Anderes Google-Konto verwenden",
     duplicateWordTitle: "Spiel vorbei!",
     duplicateWordMsg: "Du hast dieses Wort in dieser Runde bereits verwendet. Dasselbe Wort kann in einer Runde nicht zweimal geschrieben werden.",
-    backToMenu: "Zurück zum Hauptmenü",
+    backToMenu: "ZurÃ¼ck zum HauptmenÃ¼",
   },
 };
 
-const MedalBronze = makeIcon("🥉");
-const MedalSilver = makeIcon("🥈");
-const MedalGold = makeIcon("🥇");
-const MedalStart = makeIcon("🔰");
-const MedalUltra = makeIcon("🎖️");
+const MedalBronze = makeIcon("ğŸ¥‰");
+const MedalSilver = makeIcon("ğŸ¥ˆ");
+const MedalGold = makeIcon("ğŸ¥‡");
+const MedalStart = makeIcon("ğŸ”°");
+const MedalUltra = makeIcon("ğŸ–ï¸");
 const MEDAL_TIERS = [
-  { key: "start", threshold: 5000, label: { tr: "Başlangıç", en: "Starter", de: "Start" }, color: "#8fb3ff", icon: MedalStart },
+  { key: "start", threshold: 5000, label: { tr: "BaÅŸlangÄ±Ã§", en: "Starter", de: "Start" }, color: "#8fb3ff", icon: MedalStart },
   { key: "bronze", threshold: 10000, label: { tr: "Bronz", en: "Bronze", de: "Bronze" }, color: "#c17a4a", icon: MedalBronze },
-  { key: "silver", threshold: 20000, label: { tr: "Gümüş", en: "Silver", de: "Silber" }, color: "#b9c2cc", icon: MedalSilver },
-  { key: "gold", threshold: 35000, label: { tr: "Altın", en: "Gold", de: "Gold" }, color: "#f2b705", icon: MedalGold },
+  { key: "silver", threshold: 20000, label: { tr: "GÃ¼mÃ¼ÅŸ", en: "Silver", de: "Silber" }, color: "#b9c2cc", icon: MedalSilver },
+  { key: "gold", threshold: 35000, label: { tr: "AltÄ±n", en: "Gold", de: "Gold" }, color: "#f2b705", icon: MedalGold },
   { key: "diamond", threshold: 60000, label: { tr: "Elmas", en: "Diamond", de: "Diamant" }, color: "#5fd1e0", icon: Gem },
-  { key: "strongest", threshold: 150000, label: { tr: "En İyi Oyuncu", en: "Best Player", de: "Bester Spieler" }, color: "#ff5d8f", icon: Crown },
-  { key: "ultra", threshold: 1000000, label: { tr: "Ultra Süper Oyuncu", en: "Ultra Super Player", de: "Ultra-Superspieler" }, color: "#ff2e63", icon: MedalUltra },
+  { key: "strongest", threshold: 150000, label: { tr: "En Ä°yi Oyuncu", en: "Best Player", de: "Bester Spieler" }, color: "#ff5d8f", icon: Crown },
+  { key: "ultra", threshold: 1000000, label: { tr: "Ultra SÃ¼per Oyuncu", en: "Ultra Super Player", de: "Ultra-Superspieler" }, color: "#ff2e63", icon: MedalUltra },
 ];
 
 function medalsForScore(score) {
@@ -243,11 +243,46 @@ function medalsForScore(score) {
 }
 
 // ---------- storage helpers (Firebase Realtime Database-backed shared state) ----------
+// IMPORTANT: Firebase Realtime Database silently drops keys whose value is an
+// empty array/object (set([]) behaves like removing that key). That means a
+// freshly created group's "messages: []" or a freshly created game's
+// "wordChain: []" / "lastResults: []" can come back from the database as
+// `undefined` the moment they're empty. Any code that then does
+// `grp.messages.map(...)` or `.push(...)` throws, and since there's no error
+// boundary around the app, React unmounts and the screen goes blank/black.
+// Fix: normalize known array fields back to [] right where data enters the
+// app (here), so every screen and helper downstream can always rely on them
+// being real arrays.
+function normalizeRecord(key, obj) {
+  if (key === "groups") {
+    const out = {};
+    for (const [id, g] of Object.entries(obj || {})) {
+      out[id] = { ...g, members: g.members || [], messages: g.messages || [] };
+    }
+    return out;
+  }
+  if (key === "games") {
+    const out = {};
+    for (const [id, gm] of Object.entries(obj || {})) {
+      out[id] = { ...gm, members: gm.members || [], wordChain: gm.wordChain || [], lastResults: gm.lastResults || [] };
+    }
+    return out;
+  }
+  if (key === "notifications") {
+    const out = {};
+    for (const [uname, arr] of Object.entries(obj || {})) {
+      out[uname] = arr || [];
+    }
+    return out;
+  }
+  return obj;
+}
 async function loadShared(key, fallback) {
   try {
     const snap = await window.__fbdb.ref(key).get();
     const val = snap.exists() ? snap.val() : null;
-    return (val !== null && val !== undefined) ? val : fallback;
+    const result = (val !== null && val !== undefined) ? val : fallback;
+    return normalizeRecord(key, result);
   } catch (e) {
     console.error("loadShared(" + key + ") failed", e);
     return fallback;
@@ -263,7 +298,7 @@ async function saveShared(key, value) {
 // live subscription helper (used to push instant updates instead of waiting for the poll interval)
 function subscribeShared(key, cb) {
   const ref = window.__fbdb.ref(key);
-  const handler = (snap) => cb(snap.exists() ? snap.val() : {});
+  const handler = (snap) => cb(normalizeRecord(key, snap.exists() ? snap.val() : {}));
   ref.on("value", handler);
   return () => ref.off("value", handler);
 }
@@ -271,7 +306,7 @@ function subscribeShared(key, cb) {
 // ---------- word check: real dictionary lookup via Wiktionary's public,
 // key-free, CORS-enabled API (no backend needed).
 // Always queries English Wiktionary (by far the most complete edition) and
-// checks that the page actually has a section for the SELECTED language —
+// checks that the page actually has a section for the SELECTED language â€”
 // otherwise e.g. a Turkish word would wrongly pass while playing in English,
 // since Wiktionary pages list translations across many languages. ----------
 const WIKT_LANG_HEADER = { en: "English", tr: "Turkish", de: "German" };
@@ -282,7 +317,7 @@ async function checkWordValid(word, lang, mustStartWith) {
   const locale = lang === "tr" ? "tr-TR" : undefined;
   const wFirst = w[0].toLocaleUpperCase(locale);
   const reqUpper = mustStartWith.toLocaleUpperCase(locale);
-  if (wFirst !== reqUpper) return false; // wrong starting letter — no need to hit the network
+  if (wFirst !== reqUpper) return false; // wrong starting letter â€” no need to hit the network
 
   const headerName = WIKT_LANG_HEADER[lang] || "English";
   const headerRegex = new RegExp(`^==\\s*${headerName}\\s*==`, "m");
@@ -515,6 +550,7 @@ function App() {
   const [groupInviteSearch, setGroupInviteSearch] = useState("");
   const [showMedalInfo, setShowMedalInfo] = useState(false);
   const [adminSpectateGameId, setAdminSpectateGameId] = useState(null);
+  const [adminAmounts, setAdminAmounts] = useState({}); // username -> custom puan miktarÄ± (admin panelinde girilen)
   const [medalPopup, setMedalPopup] = useState(null);
   const [tick, setTick] = useState(Date.now());
   useEffect(() => {
@@ -605,12 +641,12 @@ function App() {
 
   // ---------------- AUTH ----------------
   // Google sign-in is now a mandatory first security step for EVERY user,
-  // not just the admin. Anyone can sign in with any Google account here —
+  // not just the admin. Anyone can sign in with any Google account here â€”
   // this step by itself does not grant admin access. After this succeeds,
-  // the normal rumuz (username) + şifre (password) login/register flow
+  // the normal rumuz (username) + ÅŸifre (password) login/register flow
   // continues exactly as before. Only if the Google account used here is
   // the exact ADMIN_GOOGLE_EMAIL does the resulting account get the admin
-  // panel button — regardless of which username/password was used.
+  // panel button â€” regardless of which username/password was used.
   async function handleGoogleAdminVerify() {
     setGoogleAdminError("");
     setGoogleAdminBusy(true);
@@ -662,6 +698,7 @@ function App() {
   }
 
   async function adjustScore(username, delta) {
+    if (!delta) return;
     const nu = { ...users, [username]: { ...users[username], score: Math.max(0, (users[username].score || 0) + delta) } };
     setUsers(nu); await saveShared("users", nu);
   }
@@ -706,7 +743,7 @@ function App() {
     userNotifs.push({ id: uid(), type: "groupInvite", from: me.username, groupId, groupName: g.name, ts: Date.now() });
     const nn = { ...notifs, [username]: userNotifs };
     await saveShared("notifications", nn);
-    alert(`${username} — ${t.invite} ✓`);
+    alert(`${username} â€” ${t.invite} âœ“`);
   }
 
   async function kickFromGroup(groupId, username) {
@@ -816,7 +853,7 @@ function App() {
   async function startSpin(gameId) {
     const gm = await loadShared("games", {});
     const game = gm[gameId];
-    const letters = ALPHABETS[game.lang].filter(l => game.lang === "tr" ? l !== "Ğ" : true);
+    const letters = ALPHABETS[game.lang].filter(l => game.lang === "tr" ? l !== "Ä" : true);
     const pick = letters[Math.floor(Math.random() * letters.length)];
     game.status = "spinning";
     game.currentLetter = pick;
@@ -841,9 +878,9 @@ function App() {
     const game = gm[gameId];
 
     if (timedOut) {
-      // süresi dolan oyuncunun serisi bozulur: sıra sıradaki kişiye geçer ve
-      // onun için baştan yeni bir çark çevirme turu başlar
-      const letters = ALPHABETS[game.lang].filter(l => game.lang === "tr" ? l !== "Ğ" : true);
+      // sÃ¼resi dolan oyuncunun serisi bozulur: sÄ±ra sÄ±radaki kiÅŸiye geÃ§er ve
+      // onun iÃ§in baÅŸtan yeni bir Ã§ark Ã§evirme turu baÅŸlar
+      const letters = ALPHABETS[game.lang].filter(l => game.lang === "tr" ? l !== "Ä" : true);
       const pick = letters[Math.floor(Math.random() * letters.length)];
       game.turnIndex = (game.turnIndex + 1) % game.members.length;
       game.status = "spinning";
@@ -860,7 +897,7 @@ function App() {
       w => w.word && normalizeWord(w.word, game.lang) === normalizeWord(trimmed, game.lang)
     );
     if (isDuplicate) {
-      // aynı kelime bu turda daha önce kullanılmış: oyun herkes için burada biter
+      // aynÄ± kelime bu turda daha Ã¶nce kullanÄ±lmÄ±ÅŸ: oyun herkes iÃ§in burada biter
       game.wordChain.push({ username: me.username, word: trimmed, points: 0 });
       game.status = "gameover";
       game.gameOverWord = trimmed;
@@ -877,8 +914,8 @@ function App() {
       game.lastResults = game.wordChain;
       const allCorrect = game.wordChain.every(w => w.points > 0);
       if (allCorrect) {
-        // hiç kaçırılmadan tur limitine ulaşıldı: bonus tüm gruba paylaştırılır,
-        // kişisel olarak kazanılmış kelime puanları olduğu gibi kalır
+        // hiÃ§ kaÃ§Ä±rÄ±lmadan tur limitine ulaÅŸÄ±ldÄ±: bonus tÃ¼m gruba paylaÅŸtÄ±rÄ±lÄ±r,
+        // kiÅŸisel olarak kazanÄ±lmÄ±ÅŸ kelime puanlarÄ± olduÄŸu gibi kalÄ±r
         const share = Math.round(STREAK_BONUS / game.members.length);
         for (const m of game.members) {
           await addPoints(m, share);
@@ -913,8 +950,8 @@ function App() {
 
       {/* scattered scrabble-style letter tiles, ghosted into the background */}
       {[
-        { ch: "K", pt: 1 }, { ch: "E", pt: 1 }, { ch: "L", pt: 2 }, { ch: "İ", pt: 3 },
-        { ch: "M", pt: 2 }, { ch: "E", pt: 1 }, { ch: "T", pt: 1 }, { ch: "Ü", pt: 3 },
+        { ch: "K", pt: 1 }, { ch: "E", pt: 1 }, { ch: "L", pt: 2 }, { ch: "Ä°", pt: 3 },
+        { ch: "M", pt: 2 }, { ch: "E", pt: 1 }, { ch: "T", pt: 1 }, { ch: "Ãœ", pt: 3 },
       ].map((tile, i) => (
         <div key={i} className="absolute flex items-center justify-center select-none" style={{
           left: `${(i * 29 + 6) % 92}%`, top: `${(i * 41 + 10) % 88}%`,
@@ -981,7 +1018,7 @@ function App() {
         <div className="w-full max-w-sm rounded-3xl p-7" style={{ background: "rgba(36,21,66,0.85)", backdropFilter: "blur(12px)", boxShadow: "0 20px 60px rgba(0,0,0,.5)", border: "1px solid rgba(255,255,255,0.08)" }}>
           <div className="text-center mb-6">
             <div className="mx-auto mb-3 flex items-center justify-center" style={{ filter: "drop-shadow(0 8px 20px rgba(242,183,5,0.25))" }}>
-              <Wheel lang={lang} spinning={false} resultLetter={null} size={84} excludeFirst={lang === "tr" ? "Ğ" : null} />
+              <Wheel lang={lang} spinning={false} resultLetter={null} size={84} excludeFirst={lang === "tr" ? "Ä" : null} />
             </div>
             <h1 className="text-2xl font-bold" style={{ fontFamily: "Fredoka, sans-serif", color: "#f5f0ff" }}>{t.appName}</h1>
           </div>
@@ -992,7 +1029,7 @@ function App() {
               <button onClick={handleGoogleAdminVerify} disabled={googleAdminBusy}
                 className="w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition"
                 style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.9)", border: "1px solid rgba(255,255,255,0.16)" }}>
-                <span style={{ fontSize: 15 }}>🔐</span>
+                <span style={{ fontSize: 15 }}>ğŸ”</span>
                 {googleAdminBusy ? t.googleAdminVerifying : t.googleAdminVerify}
               </button>
               {googleAdminError && <p className="text-red-400 text-xs mt-1.5 text-center">{googleAdminError}</p>}
@@ -1299,7 +1336,7 @@ function App() {
               )}
             </div>
           ))}
-          {grp.messages.length === 0 && <p className="text-white/40 text-center text-sm mt-8">…</p>}
+          {grp.messages.length === 0 && <p className="text-white/40 text-center text-sm mt-8">â€¦</p>}
         </div>
 
         <div className="max-w-md w-full mx-auto flex gap-2">
@@ -1360,7 +1397,7 @@ function App() {
         )}
         <div className="mt-16 text-center mb-6">
           <h2 className="text-xl font-bold text-white" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.lobby}</h2>
-          <p className="text-white/50 text-sm">{game.members.length}/{game.maxMembers} · {t.waitingPlayers}</p>
+          <p className="text-white/50 text-sm">{game.members.length}/{game.maxMembers} Â· {t.waitingPlayers}</p>
         </div>
         <div className="flex flex-wrap gap-2 justify-center max-w-md mb-8">
           {game.members.map(m => (
@@ -1449,8 +1486,11 @@ function App() {
                   <p className="text-yellow-400 text-sm font-bold">{rec.score || 0}</p>
                 </div>
                 <div className="flex gap-1 items-center">
-                  <button onClick={() => adjustScore(name, -100)} className="px-3 py-1.5 rounded-full bg-red-500/70 text-white text-xs font-bold">-100</button>
-                  <button onClick={() => adjustScore(name, 100)} className="px-3 py-1.5 rounded-full bg-green-500/70 text-white text-xs font-bold">+100</button>
+                  <input type="number" value={adminAmounts[name] ?? ""} placeholder="100"
+                    onChange={e => setAdminAmounts(a => ({ ...a, [name]: e.target.value }))}
+                    className="w-16 px-2 py-1.5 rounded-full bg-white/10 text-white text-xs text-center outline-none border border-white/20" />
+                  <button onClick={() => adjustScore(name, -(Number(adminAmounts[name]) || 100))} className="px-3 py-1.5 rounded-full bg-red-500/70 text-white text-xs font-bold">{t.decrease}</button>
+                  <button onClick={() => adjustScore(name, Number(adminAmounts[name]) || 100)} className="px-3 py-1.5 rounded-full bg-green-500/70 text-white text-xs font-bold">{t.increase}</button>
                   {liveGame && (
                     <button onClick={() => { setAdminSpectateGameId(liveGame.id); setScreen("adminSpectate"); }}
                       className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-bold">
@@ -1544,11 +1584,11 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
           <Shield size={12} /> {t.spectating}
         </span>
       )}
-      <p className="text-white/40 text-xs mt-14 mb-2">{t.roundOf} {game.roundNumber} · {game.wordChain.length}{t.of}{ROUND_WORD_LIMIT}</p>
+      <p className="text-white/40 text-xs mt-14 mb-2">{t.roundOf} {game.roundNumber} Â· {game.wordChain.length}{t.of}{ROUND_WORD_LIMIT}</p>
 
       {(game.status === "spinning" || (game.status === "playing" && game.wordChain.length === 0)) && (
         <div className="flex flex-col items-center mt-4">
-          <Wheel lang={lang} spinning={game.status === "spinning"} resultLetter={game.currentLetter} onSpinEnd={onSpinEnd} excludeFirst={lang === "tr" ? "Ğ" : null} />
+          <Wheel lang={lang} spinning={game.status === "spinning"} resultLetter={game.currentLetter} onSpinEnd={onSpinEnd} excludeFirst={lang === "tr" ? "Ä" : null} />
           {game.status === "playing" && <p className="text-3xl font-black text-yellow-400 mt-4">{game.currentLetter}</p>}
         </div>
       )}
@@ -1562,7 +1602,7 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
           </div>
           {game.wordChain.length > 0 && (
             <div className="text-center mb-4 text-white/70 text-sm">
-              {game.wordChain[game.wordChain.length - 1].username}: <b className="text-white">{game.wordChain[game.wordChain.length - 1].word || "—"}</b>
+              {game.wordChain[game.wordChain.length - 1].username}: <b className="text-white">{game.wordChain[game.wordChain.length - 1].word || "â€”"}</b>
             </div>
           )}
           <div className="text-center mb-3">
@@ -1596,7 +1636,7 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
           {game.lastResults.length > 0 && game.lastResults.every(r => r.points > 0) && (
             <div className="mb-4 px-4 py-3 rounded-2xl text-center font-bold text-sm"
               style={{ background: "#f2b70522", border: "1px solid #f2b70566", color: "#f2b705" }}>
-              🎉 {t.groupAllCorrectMsg}
+              ğŸ‰ {t.groupAllCorrectMsg}
             </div>
           )}
 
@@ -1630,7 +1670,7 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
             <X size={40} color="#ff6f61" className="mx-auto mb-3" />
             <h2 className="text-xl font-bold text-white mb-2" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.duplicateWordTitle}</h2>
             <p className="text-white/80 mb-1">
-              <b>{game.gameOverBy}</b>{lang === "en" ? " — " : ": "}<b className="text-yellow-400">"{game.gameOverWord}"</b>
+              <b>{game.gameOverBy}</b>{lang === "en" ? " â€” " : ": "}<b className="text-yellow-400">"{game.gameOverWord}"</b>
             </p>
             <p className="text-white/70 text-sm mb-5">{t.duplicateWordMsg}</p>
             <button onClick={isSpectator ? onExitToChat : onGameOver} className="w-full py-2.5 rounded-full font-bold" style={{ background: "#ff6f61", color: "#1b1030" }}>
@@ -1676,7 +1716,7 @@ function SoloGameView({ t, lang, me, onAddPoints, onExit }) {
   }, [status, chain.length]); // eslint-disable-line
 
   function spin() {
-    const letters = ALPHABETS[lang].filter(l => lang === "tr" ? l !== "Ğ" : true);
+    const letters = ALPHABETS[lang].filter(l => lang === "tr" ? l !== "Ä" : true);
     const pick = letters[Math.floor(Math.random() * letters.length)];
     setLetter(pick);
     setChain([]);
@@ -1695,7 +1735,7 @@ function SoloGameView({ t, lang, me, onAddPoints, onExit }) {
     setWordInput("");
 
     if (timedOut) {
-      // süre yetişmedi: seri burada bozulur, en baştan çark çevirmeye dön
+      // sÃ¼re yetiÅŸmedi: seri burada bozulur, en baÅŸtan Ã§ark Ã§evirmeye dÃ¶n
       flashFeedback(false, "");
       setFlash({ ok: false, key: ++feedbackKeyRef.current });
       setTimeout(() => { setStatus("wheel"); setChain([]); }, 1200);
@@ -1711,7 +1751,7 @@ function SoloGameView({ t, lang, me, onAddPoints, onExit }) {
 
     const isDuplicate = chain.some(c => c.word && normalizeWord(c.word, lang) === normalizeWord(w, lang));
     if (isDuplicate) {
-      // aynı kelime bu turda daha önce kullanılmış: oyun burada biter
+      // aynÄ± kelime bu turda daha Ã¶nce kullanÄ±lmÄ±ÅŸ: oyun burada biter
       flashFeedback(false, w);
       setFlash({ ok: false, key: ++feedbackKeyRef.current });
       setGameOverWord(w);
@@ -1746,10 +1786,10 @@ function SoloGameView({ t, lang, me, onAddPoints, onExit }) {
       {allCorrectMsg && (
         <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl text-center font-bold text-sm shadow-lg"
           style={{ background: "#f2b705", color: "#1b1030", maxWidth: "88vw" }}>
-          🎉 {t.soloAllCorrectMsg}
+          ğŸ‰ {t.soloAllCorrectMsg}
         </div>
       )}
-      <p className="text-white/40 text-xs mt-14 mb-2">{t.solo} · {t.roundOf} {chain.length}{t.of}{ROUND_WORD_LIMIT}</p>
+      <p className="text-white/40 text-xs mt-14 mb-2">{t.solo} Â· {t.roundOf} {chain.length}{t.of}{ROUND_WORD_LIMIT}</p>
 
       {gameOverWord && (
         <div className="w-full max-w-sm mt-16 text-center">
@@ -1767,7 +1807,7 @@ function SoloGameView({ t, lang, me, onAddPoints, onExit }) {
 
       {!gameOverWord && status !== "playing" && (
         <div className="flex flex-col items-center mt-4">
-          <Wheel lang={lang} spinning={status === "spinning"} resultLetter={letter} excludeFirst={lang === "tr" ? "Ğ" : null}
+          <Wheel lang={lang} spinning={status === "spinning"} resultLetter={letter} excludeFirst={lang === "tr" ? "Ä" : null}
             onSpinEnd={() => setStatus("playing")} />
           {status === "wheel" && (
             <button onClick={spin} className="mt-8 px-8 py-4 rounded-full font-bold text-lg flex items-center gap-2" style={{ background: "#f2b705", color: "#1b1030", fontFamily: "Fredoka, sans-serif" }}>
@@ -1798,7 +1838,7 @@ function SoloGameView({ t, lang, me, onAddPoints, onExit }) {
           </div>
           <div className="mt-4 flex flex-wrap gap-1 justify-center">
             {chain.slice(-10).map((c, i) => (
-              <span key={i} className={`px-2 py-1 rounded-full text-xs ${c.points > 0 ? "bg-green-500/20 text-green-300" : "bg-red-500/20 text-red-300"}`}>{c.word || "—"}</span>
+              <span key={i} className={`px-2 py-1 rounded-full text-xs ${c.points > 0 ? "bg-green-500/20 text-green-300" : "bg-red-500/20 text-red-300"}`}>{c.word || "â€”"}</span>
             ))}
           </div>
         </div>
