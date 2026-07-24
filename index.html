@@ -28,6 +28,7 @@
   window.__googleProvider = new firebase.auth.GoogleAuthProvider();
 </script>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Inter:wght@400;500;600;700&display=swap');
   html, body { margin:0; padding:0; background:#0f0a1e; }
 </style>
 </head>
@@ -83,6 +84,10 @@ const ADMIN_GOOGLE_EMAIL = "akca.yagiz2014@gmail.com";
 const WORD_TIME_SECONDS = 10;
 const ROUND_WORD_LIMIT = 25;
 const POINTS_PER_WORD = 10;
+// Grubun 2 saatlik hakkı, oluşturulduktan sonra geçen duvar-saati değil,
+// içinde fiilen oyun oynanan (spinning/playing) toplam süredir. Grup hiç
+// oynanmazsa bu süre hiç azalmaz ve grup süresiz açık kalır.
+const GROUP_BUDGET_MS = 2 * 60 * 60 * 1000;
 const STREAK_BONUS = 20; // tur limitine kadar hiç kaçırmadan gidenin alacağı ekstra puan
 
 const ALPHABETS = {
@@ -339,6 +344,21 @@ function formatRemaining(ms) {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
+// Bir grubun 2 saatlik hakkından ne kadarının kaldığını hesaplar. Bu,
+// biriken (kapanmış oturumlardan) usedMs ile, eğer şu an bir round fiilen
+// oynanıyorsa (spinning/playing) activeSince'ten bu yana geçen sürenin
+// toplamıdır. Grup hiç oynanmadıysa (activeSince hiç set edilmediyse ve
+// usedMs 0'sa) süre hiç azalmaz. Eski (bu özellikten önce oluşmuş) gruplar
+// için usedMs alanı yoktur; onlar için null döner (süresiz).
+function groupRemainingMs(g, gamesObj, now) {
+  if (!g || g.usedMs === undefined) return null;
+  const isPlaying = Object.values(gamesObj).some(
+    gm2 => gm2.groupId === g.id && (gm2.status === "playing" || gm2.status === "spinning")
+  );
+  const consumed = (g.usedMs || 0) + (g.activeSince && isPlaying ? now - g.activeSince : 0);
+  return GROUP_BUDGET_MS - consumed;
+}
+
 function WordFeedbackBadge({ feedback, t }) {
   if (!feedback) return null;
   const ok = feedback.ok;
@@ -535,23 +555,45 @@ function App() {
     return () => clearInterval(iv);
   }, []);
 
-  // ---- expired-group cleanup: groups auto-delete 1h after creation, unless
-  // a round is actively being played in them, in which case deletion waits
-  // until that round reaches "results" ----
+  // ---- expired-group cleanup: a group's 2-hour budget only counts time
+  // during which a round is actually being played (spinning/playing) in it —
+  // sitting in chat, or waiting in a lobby that never starts, never burns
+  // any of it. Deletion (once the budget is used up) waits until any round
+  // in progress reaches "results", same as before. ----
   function cleanExpiredGroups(groupsObj, gamesObj) {
     const now = Date.now();
     let groupsChanged = false;
     const nextGroups = { ...groupsObj };
     for (const [id, g] of Object.entries(groupsObj)) {
-      if (!g.expiresAt) continue; // legacy groups created before this feature: never auto-expire
-      const activeGame = Object.values(gamesObj).find(gm2 => gm2.groupId === id && (gm2.status === "playing" || gm2.status === "spinning"));
-      if (now >= g.expiresAt) {
-        if (activeGame) {
-          if (!g.pendingDelete) { nextGroups[id] = { ...g, pendingDelete: true }; groupsChanged = true; }
+      if (g.usedMs === undefined) continue; // legacy groups created before this feature: never auto-expire
+      const gamesForGroup = Object.values(gamesObj).filter(gm2 => gm2.groupId === id);
+      const isPlaying = gamesForGroup.some(gm2 => gm2.status === "playing" || gm2.status === "spinning");
+      const hasSession = gamesForGroup.some(gm2 => gm2.status === "playing" || gm2.status === "spinning" || gm2.status === "lobby");
+
+      // start/stop the active-play stopwatch as playing begins/ends
+      let usedMs = g.usedMs || 0;
+      let activeSince = g.activeSince || null;
+      let touched = false;
+      if (isPlaying && !activeSince) {
+        activeSince = now; touched = true;
+      } else if (!isPlaying && activeSince) {
+        usedMs += now - activeSince;
+        activeSince = null; touched = true;
+      }
+
+      const consumed = usedMs + (activeSince ? now - activeSince : 0);
+      if (consumed >= GROUP_BUDGET_MS) {
+        if (hasSession) {
+          if (!g.pendingDelete || touched) { nextGroups[id] = { ...g, usedMs, activeSince, pendingDelete: true }; groupsChanged = true; }
         } else {
           delete nextGroups[id];
           groupsChanged = true;
         }
+        continue;
+      }
+      if (touched) {
+        nextGroups[id] = { ...g, usedMs, activeSince };
+        groupsChanged = true;
       }
     }
     let gamesChanged = false;
@@ -760,7 +802,7 @@ function App() {
 
     const id = uid();
     const now = Date.now();
-    const g = { id, name: newGroupName.trim(), owner: me.username, members: [me.username], messages: [], createdAt: now, expiresAt: now + 2 * 60 * 60 * 1000, pendingDelete: false };
+    const g = { id, name: newGroupName.trim(), owner: me.username, members: [me.username], messages: [], createdAt: now, usedMs: 0, activeSince: null, pendingDelete: false };
     const ng = { ...groups, [id]: g };
     await saveShared("groups", ng); setGroups(ng);
 
@@ -1021,7 +1063,6 @@ function App() {
         @keyframes drift1 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(30px,20px) scale(1.08)} }
         @keyframes drift2 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-25px,25px) scale(1.1)} }
         @keyframes drift3 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(20px,-20px) scale(1.06)} }
-        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Inter:wght@400;500;600;700&display=swap');
       `}</style>
     </div>
   );
@@ -1271,7 +1312,7 @@ function App() {
         {myGroups.length === 0 && <p className="text-white/50 text-center mt-10">{t.noGroups}</p>}
         <div className="space-y-2 max-w-md mx-auto">
           {myGroups.map(g => {
-            const remaining = g.expiresAt ? g.expiresAt - tick : null;
+            const remaining = groupRemainingMs(g, games, tick);
             return (
               <button key={g.id} onClick={() => { setActiveGroupId(g.id); setScreen("chat"); }}
                 className="w-full flex items-center justify-between px-4 py-4 rounded-2xl bg-white/10 hover:bg-white/20 text-left">
@@ -1315,7 +1356,7 @@ function App() {
     if (!grp) {
       return <GoneScreen bg={bg} message={t.groupGone} backLabel={t.back} onBack={() => setScreen("groups")} />;
     }
-    const remaining = grp.expiresAt ? grp.expiresAt - tick : null;
+    const remaining = groupRemainingMs(grp, games, tick);
     const isOwner = grp.owner === me.username;
     const filteredUsers = Object.keys(users).filter(u => u !== me.username && u.toLocaleLowerCase(lang === "tr" ? "tr-TR" : undefined).includes(groupInviteSearch.trim().toLocaleLowerCase(lang === "tr" ? "tr-TR" : undefined)));
     return (
