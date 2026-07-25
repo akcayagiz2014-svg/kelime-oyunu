@@ -708,6 +708,17 @@ function App() {
   const [activeGroupId, setActiveGroupId] = useState(null);
   const [activeGameId, setActiveGameId] = useState(null);
   const [games, setGames] = useState({});
+  // Lobide beklerken oyun kaydı ortadan kaybolursa (kendi geri tuşuyla
+  // çıkışımız, ya da başka birinin lobiyi kapatması), bunu bir hata olarak
+  // göstermek yerine güvenli bir şekilde sohbet ekranına dönüyoruz. Bu iş
+  // render sırasında değil (o kararsız olabiliyordu), her zamanki gibi bir
+  // effect içinde, render tamamlandıktan sonra yapılıyor.
+  useEffect(() => {
+    if (screen === "lobby" && activeGameId && !games[activeGameId]) {
+      setScreen("chat");
+      setActiveGameId(null);
+    }
+  }, [screen, activeGameId, games]);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
   const [showGroupInvite, setShowGroupInvite] = useState(false);
@@ -1845,12 +1856,12 @@ function App() {
     if (!game) {
       // Oyun kaydı artık yok: çoğunlukla kullanıcı az önce geri tuşuyla
       // lobiden çıktı (leaveLobby boş kalan lobiyi siler) ya da başka bir
-      // üye lobiyi kapattı. Bu bir hata değil, normal bir durum — o yüzden
-      // "grup mevcut değil" gibi kafa karıştırıcı bir hata ekranı yerine
-      // sessizce sohbete dönüyoruz.
-      setScreen("chat");
-      setActiveGameId(null);
-      return null;
+      // üye lobiyi kapattı. Bu bir hata değil, normal bir durum. Ekranı
+      // render sırasında değiştirmek yerine (bu bazı tarayıcılarda kararsız
+      // davranıp hataya yol açabiliyordu) aşağıdaki useEffect üzerinden,
+      // render tamamlandıktan hemen sonra güvenle sohbete dönüyoruz; o ana
+      // kadar boş bir ekran gösteriyoruz.
+      return <div className="min-h-screen w-full" style={{ background: "#0f0a1e" }} />;
     }
     if (game.status !== "lobby") {
       const activeGrp = groups[game.groupId];
