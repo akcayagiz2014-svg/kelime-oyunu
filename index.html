@@ -75,6 +75,7 @@ const Gem = makeIcon("💎");
 const Star = makeIcon("⭐");
 const Check = makeIcon("✓");
 const Clock = makeIcon("⏱");
+const Trash = makeIcon("🗑️");
 
 /* ---------------------------------------------------------
    KELİME TÜRETMECE
@@ -129,7 +130,8 @@ const T = {
     accept: "Kabul Et", decline: "Reddet", adminPanelDesc: "Kullanıcı puanlarını düzenle", increase: "Artır", decrease: "Azalt", setScore: "Puanı Ayarla",
     congrats: "Tebrikler!", earnedMedal: "madalyası kazandınız!", close: "Kapat", invalidWord: "Bu kelime geçerli değil, 0 puan",
     soloAllCorrectMsg: "Tebrikler, hepsini doğru yaptığınız için +20 puan aldınız!",
-    groupAllCorrectMsg: "Tebrikler, hepsini doğru yaptığınız için extra 20 puan bölüştürülecektir!",
+    groupAllCorrectMsg: "Tebrikler, hepsini doğru yaptığınız için tur puanına +20 bonus eklendi!",
+    roundWinnerLabel: "Turun Galibi", roundWinnerDesc: "En az hatayı yaptı ve tur boyunca toplanan tüm puanları kazandı:",
     validWord: "Geçerli kelime!", checking: "Kontrol ediliyor...", groupLimitReached: "En fazla 50 gruba katılabilirsin",
     dailyGroupLimit: "Günde en fazla 3 grup kurabilirsin", closesInGame: "Oyun bitince kapanacak", groupGone: "Bu grup artık mevcut değil.",
     closesIn: "kapanıyor", worldRank: "sırada", nextMedal: "Sıradaki madalya",
@@ -153,6 +155,14 @@ const T = {
     duplicateWordTitle: "Oyun Bitti!",
     duplicateWordMsg: "kelimesini bu turda zaten kullandın. Aynı kelime bir turda iki kez yazılamaz.",
     backToMenu: "Ana Menüye Dön",
+    deleteAccount: "Üyeliği Sil", deleteAccountConfirm: "Üyeliğin kalıcı olarak silinsin mi? Puanların, gruplardaki ve maçlardaki üyeliğin, bildirimlerin dahil her yerden tamamen kaldırılacaksın. Bu işlem geri alınamaz.",
+    playersLeft: "oyuncu kaldı", eliminatedTitle: "Elendin!",
+    eliminatedInvalidMsg: "Yazdığın kelime geçerli bulunamadı.",
+    eliminatedTimeoutMsg: "Süresi içinde bir kelime yazamadın.",
+    eliminatedByDuplicate: "kelimesini tekrar yazdı ve elendi!",
+    eliminatedByInvalid: "geçersiz bir kelime yazdı ve elendi!",
+    eliminatedByTimeout: "süresini doldurdu ve elendi!",
+    onlyOwnerCanSpin: "Çarkı sadece grubu kuran kişi çevirebilir",
   },
   en: {
     appName: "Word Derivation", login: "Log In", register: "Sign Up", username: "Username", password: "Password",
@@ -172,7 +182,8 @@ const T = {
     accept: "Accept", decline: "Decline", adminPanelDesc: "Adjust user scores", increase: "Increase", decrease: "Decrease", setScore: "Set Score",
     congrats: "Congratulations!", earnedMedal: "medal earned!", close: "Close", invalidWord: "Not a valid word, 0 points",
     soloAllCorrectMsg: "Congratulations, you earned +20 points for getting them all right!",
-    groupAllCorrectMsg: "Congratulations, an extra 20 points will be shared among the group for getting them all right!",
+    groupAllCorrectMsg: "Congratulations, +20 bonus points were added to the round pool for getting them all right!",
+    roundWinnerLabel: "Round Winner", roundWinnerDesc: "Made the fewest mistakes and won all the points collected during the round:",
     validWord: "Valid word!", checking: "Checking...", groupLimitReached: "You can join at most 50 groups",
     dailyGroupLimit: "You can create at most 3 groups per day", closesInGame: "Will close when the game ends", groupGone: "This group no longer exists.",
     closesIn: "closes in", worldRank: "rank", nextMedal: "Next medal",
@@ -196,6 +207,14 @@ const T = {
     duplicateWordTitle: "Game Over!",
     duplicateWordMsg: "You already used the word in this round. The same word can't be written twice in one round.",
     backToMenu: "Back to Main Menu",
+    deleteAccount: "Delete Account", deleteAccountConfirm: "Permanently delete your account? You will be completely removed from your score, all groups and matches, and all notifications everywhere. This cannot be undone.",
+    playersLeft: "players left", eliminatedTitle: "You're Eliminated!",
+    eliminatedInvalidMsg: "The word you wrote wasn't valid.",
+    eliminatedTimeoutMsg: "You didn't submit a word in time.",
+    eliminatedByDuplicate: "wrote the same word again and was eliminated!",
+    eliminatedByInvalid: "wrote an invalid word and was eliminated!",
+    eliminatedByTimeout: "ran out of time and was eliminated!",
+    onlyOwnerCanSpin: "Only the group's creator can spin the wheel",
   },
   de: {
     appName: "Wortkette", login: "Anmelden", register: "Registrieren", username: "Benutzername", password: "Passwort",
@@ -215,7 +234,8 @@ const T = {
     accept: "Annehmen", decline: "Ablehnen", adminPanelDesc: "Punkte der Nutzer anpassen", increase: "Erhöhen", decrease: "Verringern", setScore: "Punkte setzen",
     congrats: "Glückwunsch!", earnedMedal: "Medaille erhalten!", close: "Schließen", invalidWord: "Ungültiges Wort, 0 Punkte",
     soloAllCorrectMsg: "Glückwunsch, du hast +20 Punkte für alles richtig erhalten!",
-    groupAllCorrectMsg: "Glückwunsch, zusätzliche 20 Punkte werden in der Gruppe aufgeteilt!",
+    groupAllCorrectMsg: "Glückwunsch, dem Rundentopf wurden +20 Bonuspunkte hinzugefügt, weil alles richtig war!",
+    roundWinnerLabel: "Rundensieger", roundWinnerDesc: "Hat die wenigsten Fehler gemacht und alle in dieser Runde gesammelten Punkte gewonnen:",
     validWord: "Gültiges Wort!", checking: "Wird geprüft...", groupLimitReached: "Maximal 50 Gruppen möglich",
     dailyGroupLimit: "Du kannst höchstens 3 Gruppen pro Tag erstellen", closesInGame: "Schließt, wenn das Spiel endet", groupGone: "Diese Gruppe existiert nicht mehr.",
     closesIn: "schließt in", worldRank: "Rang", nextMedal: "Nächste Medaille",
@@ -239,6 +259,14 @@ const T = {
     duplicateWordTitle: "Spiel vorbei!",
     duplicateWordMsg: "Du hast dieses Wort in dieser Runde bereits verwendet. Dasselbe Wort kann in einer Runde nicht zweimal geschrieben werden.",
     backToMenu: "Zurück zum Hauptmenü",
+    deleteAccount: "Konto löschen", deleteAccountConfirm: "Dein Konto endgültig löschen? Du wirst vollständig entfernt — aus deiner Punktzahl, allen Gruppen und Spielen sowie allen Benachrichtigungen. Dies kann nicht rückgängig gemacht werden.",
+    playersLeft: "Spieler übrig", eliminatedTitle: "Du bist ausgeschieden!",
+    eliminatedInvalidMsg: "Das von dir geschriebene Wort war ungültig.",
+    eliminatedTimeoutMsg: "Du hast nicht rechtzeitig ein Wort geschrieben.",
+    eliminatedByDuplicate: "hat dasselbe Wort erneut geschrieben und ist ausgeschieden!",
+    eliminatedByInvalid: "hat ein ungültiges Wort geschrieben und ist ausgeschieden!",
+    eliminatedByTimeout: "hat die Zeit überschritten und ist ausgeschieden!",
+    onlyOwnerCanSpin: "Nur der Gründer der Gruppe kann das Rad drehen",
   },
 };
 
@@ -254,7 +282,7 @@ const MEDAL_TIERS = [
   { key: "gold", threshold: 35000, label: { tr: "Altın", en: "Gold", de: "Gold" }, color: "#f2b705", icon: MedalGold },
   { key: "diamond", threshold: 60000, label: { tr: "Elmas", en: "Diamond", de: "Diamant" }, color: "#5fd1e0", icon: Gem },
   { key: "strongest", threshold: 150000, label: { tr: "En İyi Oyuncu", en: "Best Player", de: "Bester Spieler" }, color: "#ff5d8f", icon: Crown },
-  { key: "ultra", threshold: 1000000, label: { tr: "Ultra Süper Oyuncu", en: "Ultra Super Player", de: "Ultra-Superspieler" }, color: "#ff2e63", icon: MedalUltra },
+  { key: "ultra", threshold: 1000000, label: { tr: "Oyunun Kralı", en: "King of the Game", de: "König des Spiels" }, color: "#ff2e63", icon: MedalUltra },
 ];
 
 function medalsForScore(score) {
@@ -530,23 +558,56 @@ function GoneScreen({ bg, message, backLabel, onBack }) {
 function Wheel({ lang, spinning, resultLetter, onSpinEnd, size = 260, excludeFirst }) {
   const letters = ALPHABETS[lang].filter(l => (excludeFirst ? l !== excludeFirst : true));
   const [rotation, setRotation] = useState(0);
+  const [animate, setAnimate] = useState(false);
   const sliceAngle = 360 / letters.length;
   const prevSpinning = useRef(false);
+  const fallbackRef = useRef(null);
+  const doneRef = useRef(false);
+
+  function fireSpinEnd() {
+    if (doneRef.current) return;
+    doneRef.current = true;
+    clearTimeout(fallbackRef.current);
+    onSpinEnd && onSpinEnd();
+  }
 
   useEffect(() => {
     if (spinning && !prevSpinning.current && resultLetter) {
+      doneRef.current = false;
       const idx = letters.indexOf(resultLetter);
       const targetIdx = idx >= 0 ? idx : 0;
       // angle to bring slice center to top pointer (0deg)
       const sliceCenter = targetIdx * sliceAngle + sliceAngle / 2;
       const target = (360 - sliceCenter + 360) % 360;
-      setRotation(r => {
-        const currentMod = ((r % 360) + 360) % 360;
-        const delta = ((target - currentMod) + 360) % 360;
-        return r + 360 * 6 + delta;
+      // Bazı tarayıcılarda/cihazlarda component ilk kez mount olurken
+      // transition ile transform aynı anda değişince tarayıcı animasyonu
+      // hiç oynatmadan direkt son açıya atlıyor (bu da "çark bazı
+      // kişilerde dönmüyor" bugının asıl sebebiydi: animasyon oynamayınca
+      // transitionend hiç tetiklenmiyor ve oyun "spinning" durumunda
+      // sonsuza kadar takılı kalıyordu). Bunu önlemek için önce animasyonu
+      // kapatıp mevcut açıda bir kare çizdiriyoruz, sonraki karede
+      // animasyonu açıp hedef açıya geçiyoruz — böylece tarayıcı geçişi
+      // her zaman gerçekten oynatmak zorunda kalıyor.
+      setAnimate(false);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setAnimate(true);
+          setRotation(r => {
+            const currentMod = ((r % 360) + 360) % 360;
+            const delta = ((target - currentMod) + 360) % 360;
+            return r + 360 * 6 + delta;
+          });
+        });
       });
+      // Güvenlik ağı: transitionend bir sebeple hiç tetiklenmezse (arka
+      // plana alınmış sekme, düşük güçlü cihaz, vb.) oyun sonsuza kadar
+      // takılı kalmasın diye animasyon süresinden biraz uzun bir süre
+      // sonra otomatik olarak devam ettiriyoruz.
+      clearTimeout(fallbackRef.current);
+      fallbackRef.current = setTimeout(fireSpinEnd, 3900);
     }
     prevSpinning.current = spinning;
+    return () => clearTimeout(fallbackRef.current);
   }, [spinning, resultLetter]); // eslint-disable-line
 
   return (
@@ -559,10 +620,10 @@ function Wheel({ lang, spinning, resultLetter, onSpinEnd, size = 260, excludeFir
         className="absolute inset-0 rounded-full"
         style={{
           transform: `rotate(${rotation}deg)`,
-          transition: spinning ? "transform 3.2s cubic-bezier(.17,.67,.14,1)" : "none",
+          transition: animate ? "transform 3.2s cubic-bezier(.17,.67,.14,1)" : "none",
           boxShadow: "0 0 0 6px #3a2265, 0 0 0 10px #f2b70555, 0 20px 50px rgba(0,0,0,.55)",
         }}
-        onTransitionEnd={() => { if (spinning) onSpinEnd && onSpinEnd(); }}
+        onTransitionEnd={() => { if (spinning) fireSpinEnd(); }}
       >
         <svg viewBox="0 0 200 200" width="100%" height="100%">
           <circle cx="100" cy="100" r="99" fill="#241542" />
@@ -735,7 +796,8 @@ function App() {
     const unsubGroups = subscribeShared("groups", setGroups);
     const unsubGames = subscribeShared("games", setGames);
     const unsubPresence = subscribeShared("presence", setOnlineUsers);
-    return () => { unsubUsers(); unsubGroups(); unsubGames(); unsubPresence(); };
+    const unsubNotifs = subscribeShared("notifications", setAllNotifs);
+    return () => { unsubUsers(); unsubGroups(); unsubGames(); unsubPresence(); unsubNotifs(); };
   }, []);
 
   // ---- online presence: while logged in, mark this username as online in
@@ -855,6 +917,75 @@ function App() {
     localStorage.removeItem("kt_session");
   }
 
+  // ---- üyeliği tamamen sil: kullanıcı kaydı, kurucusu olduğu gruplar (ve
+  // onlara ait maçlar), sadece üye olduğu gruplardaki/maçlardaki üyeliği,
+  // bildirimleri ve çevrimiçi durumu — her yerden kalıcı olarak kaldırılır.
+  // Diğer gruplar/maçlar/kullanıcılar hiç etkilenmez. ----
+  async function deleteAccountFn() {
+    const username = me.username;
+    const [g0, gm0] = await Promise.all([
+      loadShared("groups", {}),
+      loadShared("games", {}),
+    ]);
+
+    const updates = {};
+    const nextGroups = { ...g0 };
+    const nextGames = { ...gm0 };
+
+    // 1) Kurucusu olduğu her grup, ona ait tüm maçlarla birlikte tamamen silinir.
+    for (const [gid, grp] of Object.entries(g0)) {
+      if (grp.owner === username) {
+        updates["groups/" + gid] = null;
+        delete nextGroups[gid];
+        for (const [mgid, game] of Object.entries(gm0)) {
+          if (game.groupId === gid && nextGames[mgid] !== undefined) {
+            updates["games/" + mgid] = null;
+            delete nextGames[mgid];
+          }
+        }
+      }
+    }
+
+    // 2) Sadece üyesi olduğu (kurucusu olmadığı) gruplardan ismi çıkarılır.
+    for (const [gid, grp] of Object.entries(nextGroups)) {
+      if (grp.owner !== username && grp.members.includes(username)) {
+        const newMembers = grp.members.filter(m => m !== username);
+        updates["groups/" + gid + "/members"] = newMembers;
+        nextGroups[gid] = { ...grp, members: newMembers };
+      }
+    }
+
+    // 3) Kalan (silinmemiş) gruplara ait maçlarda da üye listesinden çıkarılır;
+    // kendisiyle birlikte kimse kalmıyorsa maç tamamen silinir.
+    for (const [gid, game] of Object.entries(nextGames)) {
+      if (!game.members.includes(username)) continue;
+      const newMembers = game.members.filter(m => m !== username);
+      if (newMembers.length === 0) {
+        updates["games/" + gid] = null;
+        delete nextGames[gid];
+        continue;
+      }
+      const newTurnIndex = (game.turnIndex || 0) % newMembers.length;
+      updates["games/" + gid + "/members"] = newMembers;
+      updates["games/" + gid + "/turnIndex"] = newTurnIndex;
+      const updatedGame = { ...game, members: newMembers, turnIndex: newTurnIndex };
+      if (game.host === username) { updates["games/" + gid + "/host"] = newMembers[0]; updatedGame.host = newMembers[0]; }
+      nextGames[gid] = updatedGame;
+    }
+
+    // 4) Bildirimler, çevrimiçi durum ve kullanıcı kaydı tamamen silinir.
+    updates["notifications/" + username] = null;
+    updates["presence/" + username] = null;
+    updates["users/" + username] = null;
+
+    await updatePaths(updates);
+    setGroups(nextGroups);
+    setGames(nextGames);
+    setUsers(prev => { const nu = { ...prev }; delete nu[username]; return nu; });
+
+    logout();
+  }
+
   async function adjustScore(username, delta) {
     const nu = { ...users, [username]: { ...users[username], score: Math.max(0, (users[username].score || 0) + delta) } };
     setUsers(nu); await saveShared("users", nu);
@@ -969,12 +1100,19 @@ function App() {
     setMyNotifs(mine || []);
   }
 
+  // notifications/ tüm kullanıcılar için tek bir yerde tutulur; burada canlı
+  // (real-time) dinlenip sadece bana ait olan alt küme türetilir. Böylece
+  // hangi ekranda olursam olayım (menüde bile) yeni bir bildirim geldiği an
+  // zil ikonundaki yeşil nokta anında görünür/kaybolur.
+  const [allNotifs, setAllNotifs] = useState({});
   const [myNotifs, setMyNotifs] = useState([]);
   useEffect(() => {
-    if (screen === "notifications" && me) {
-      loadShared("notifications", {}).then(n => setMyNotifs(n[me.username] || []));
-    }
-  }, [screen, me]);
+    if (me) setMyNotifs(allNotifs[me.username] || []);
+    else setMyNotifs([]);
+  }, [allNotifs, me]);
+  useEffect(() => {
+    if (me) loadShared("notifications", {}).then(n => setAllNotifs(n || {}));
+  }, [me && me.username]); // eslint-disable-line
 
   // ---------------- CHAT / GAME INVITE ----------------
   const [chatInput, setChatInput] = useState("");
@@ -996,6 +1134,7 @@ function App() {
       members: [me.username], maxMembers: 15,
       currentLetter: null, turnIndex: 0, roundNumber: 0,
       wordChain: [], lastResults: [], spinToken: 0,
+      activeMembers: [me.username], eliminatedPlayers: {}, lastElimination: null, elimSeq: 0,
     };
     const grp = await transactRecord("groups/" + groupId, current => {
       if (!current) return current;
@@ -1023,10 +1162,15 @@ function App() {
   }
 
   async function leaveLobby(gameId) {
+    let empty = false;
     await transactRecord("games/" + gameId, current => {
       if (!current) return current;
-      return { ...current, members: current.members.filter(m => m !== me.username) };
+      const nextMembers = current.members.filter(m => m !== me.username);
+      empty = nextMembers.length === 0;
+      return { ...current, members: nextMembers };
     });
+    // Boş kalan (kimsenin bulunmadığı) lobiyi ortada bırakmamak için siliyoruz.
+    if (empty) { await (await waitForFbdb()).ref("games/" + gameId).remove().catch(() => {}); }
     setScreen("chat");
   }
 
@@ -1043,6 +1187,11 @@ function App() {
         turnIndex: 0,
         wordChain: [],
         roundNumber: (current.roundNumber || 0) + 1,
+        // yeni tur: herkes yeniden aktif, önceki turdan kalan elenme
+        // bilgileri temizlenir
+        activeMembers: [...current.members],
+        eliminatedPlayers: {},
+        lastElimination: null,
       };
     });
   }
@@ -1060,64 +1209,76 @@ function App() {
   }
 
   async function submitWord(gameId, word, isValid, timedOut) {
-    let pointsAwarded = 0;
-    let bonusShare = null;
+    // Grup maçları artık 25 kelimede bitmiyor: bir oyuncu yanlış/geçersiz bir
+    // kelime yazana, daha önce kullanılmış bir kelimeyi tekrar yazana ya da
+    // süresini geçirene kadar oyun sürer — o oyuncu tek başına elenir, diğer
+    // oyuncular oynamaya devam eder. Sadece bir kişi kalana kadar bu böyle
+    // gider; son kalan oyuncu, o tur boyunca toplanan tüm puanları (varsa
+    // +20 hepsi-doğru bonusuyla birlikte) tek başına kazanır.
+    let payout = null; // { username, amount }
     const game = await transactRecord("games/" + gameId, current => {
       if (!current) return current;
-      pointsAwarded = 0;
-      bonusShare = null;
+      payout = null;
 
-      if (timedOut) {
-        // süresi dolan oyuncunun serisi bozulur: sıra sıradaki kişiye geçer ve
-        // onun için baştan yeni bir çark çevirme turu başlar
-        const letters = ALPHABETS[current.lang].filter(l => current.lang === "tr" ? l !== "Ğ" : true);
-        const pick = letters[Math.floor(Math.random() * letters.length)];
-        return {
-          ...current,
-          turnIndex: (current.turnIndex + 1) % current.members.length,
-          status: "spinning",
-          currentLetter: pick,
-          spinToken: (current.spinToken || 0) + 1,
-          wordChain: [],
-          roundNumber: (current.roundNumber || 0) + 1,
-        };
-      }
-
-      const trimmed = word.trim();
+      const activeMembers = (current.activeMembers && current.activeMembers.length) ? current.activeMembers : current.members;
+      const turnIdx = current.turnIndex % activeMembers.length;
+      const actingPlayer = activeMembers[turnIdx];
       const wordChain = current.wordChain || [];
-      const isDuplicate = trimmed && wordChain.some(
-        w => w.word && normalizeWord(w.word, current.lang) === normalizeWord(trimmed, current.lang)
-      );
-      if (isDuplicate) {
-        // aynı kelime bu turda daha önce kullanılmış: oyun herkes için burada biter
+
+      let isElim = false, reason = null, trimmed = "";
+      if (timedOut) {
+        isElim = true; reason = "timeout";
+      } else {
+        trimmed = word.trim();
+        const isDuplicate = trimmed && wordChain.some(
+          w => w.word && normalizeWord(w.word, current.lang) === normalizeWord(trimmed, current.lang)
+        );
+        if (isDuplicate) { isElim = true; reason = "duplicate"; }
+        else if (!isValid || !trimmed) { isElim = true; reason = "invalid"; }
+      }
+
+      const points = (!isElim && isValid && trimmed) ? POINTS_PER_WORD : 0;
+      const nextChain = [...wordChain, { username: actingPlayer, word: trimmed, points }];
+
+      if (!isElim) {
+        // doğru cevap: sıradaki aktif oyuncuya geç, kimse elenmedi
+        return { ...current, wordChain: nextChain, turnIndex: (turnIdx + 1) % activeMembers.length };
+      }
+
+      // birisi elendi
+      const remaining = activeMembers.filter(m => m !== actingPlayer);
+      const eliminatedPlayers = { ...(current.eliminatedPlayers || {}) };
+      eliminatedPlayers[actingPlayer] = { word: trimmed, reason };
+      const elimSeq = (current.elimSeq || 0) + 1;
+      const lastElimination = { username: actingPlayer, word: trimmed, reason, seq: elimSeq };
+
+      if (remaining.length <= 1) {
+        // tur bitti: geriye kalan tek kişi (varsa) kazanır. Hepsi-doğru
+        // bonusu, elenme anına kadarki her kelimenin doğru olup olmadığına
+        // bakılarak hesaplanır (elenme kaydının kendisi hariç).
+        const winner = remaining[0] || null;
+        const preElim = nextChain.slice(0, -1);
+        const allCorrect = preElim.length > 0 && preElim.every(w => w.points > 0);
+        const teamPoints = nextChain.reduce((s, w) => s + w.points, 0) + (allCorrect ? STREAK_BONUS : 0);
+        if (winner) payout = { username: winner, amount: teamPoints };
         return {
-          ...current,
-          wordChain: [...wordChain, { username: me.username, word: trimmed, points: 0 }],
-          status: "gameover",
-          gameOverWord: trimmed,
-          gameOverBy: me.username,
+          ...current, wordChain: nextChain, status: "results", lastResults: nextChain,
+          roundWinner: winner, roundPool: winner ? teamPoints : 0,
+          activeMembers: remaining, eliminatedPlayers, lastElimination, elimSeq,
         };
       }
 
-      const points = isValid && trimmed ? POINTS_PER_WORD : 0;
-      pointsAwarded = points;
-      const nextChain = [...wordChain, { username: me.username, word: trimmed, points }];
-      if (nextChain.length >= ROUND_WORD_LIMIT) {
-        const allCorrect = nextChain.every(w => w.points > 0);
-        if (allCorrect) {
-          // hiç kaçırılmadan tur limitine ulaşıldı: bonus tüm gruba paylaştırılır,
-          // kişisel olarak kazanılmış kelime puanları olduğu gibi kalır
-          bonusShare = { members: current.members, share: Math.round(STREAK_BONUS / current.members.length) };
-        }
-        return { ...current, wordChain: nextChain, status: "results", lastResults: nextChain };
-      }
-      return { ...current, wordChain: nextChain, turnIndex: (current.turnIndex + 1) % current.members.length };
+      // oyun devam ediyor: elenen oyuncu aktif listeden çıkarılır, sıra
+      // listede onun yerini alan (bir sonraki) oyuncuya geçer
+      const elimIdx = activeMembers.indexOf(actingPlayer);
+      const newTurnIndex = remaining.length ? (elimIdx % remaining.length) : 0;
+      return {
+        ...current, wordChain: nextChain, activeMembers: remaining, turnIndex: newTurnIndex,
+        eliminatedPlayers, lastElimination, elimSeq,
+      };
     });
     if (!game) return;
-    if (pointsAwarded > 0) await addPoints(me.username, pointsAwarded);
-    if (bonusShare) {
-      for (const m of bonusShare.members) await addPoints(m, bonusShare.share);
-    }
+    if (payout && payout.amount > 0) await addPoints(payout.username, payout.amount);
   }
 
   async function backToWheelScreen(gameId) {
@@ -1351,11 +1512,18 @@ function App() {
               <Shield size={20} /> {t.admin}
             </button>
           )}
+          <button onClick={() => { if (window.confirm(t.deleteAccountConfirm)) deleteAccountFn(); }}
+            className="col-span-2 flex items-center justify-center gap-2 py-3 rounded-2xl bg-red-900/30 border border-red-500/30 text-red-300 font-semibold text-sm hover:bg-red-900/50">
+            <Trash size={16} /> {t.deleteAccount}
+          </button>
         </div>
 
         <div className="fixed bottom-6 left-0 right-0 flex justify-center gap-3">
-          <button onClick={() => setScreen("notifications")} className="flex items-center gap-2 px-5 py-3 rounded-full bg-black/40 backdrop-blur text-white font-semibold border border-white/10">
+          <button onClick={() => setScreen("notifications")} className="relative flex items-center gap-2 px-5 py-3 rounded-full bg-black/40 backdrop-blur text-white font-semibold border border-white/10">
             <Bell size={18} /> {t.notifications}
+            {myNotifs.length > 0 && (
+              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-green-500" style={{ border: "2px solid #0f0a1e" }} />
+            )}
           </button>
           <button onClick={logout} className="flex items-center gap-2 px-5 py-3 rounded-full bg-black/40 backdrop-blur text-white/70 font-semibold border border-white/10">
             <LogOut size={18} />
@@ -1589,16 +1757,17 @@ function App() {
         onNextRound={() => backToWheelScreen(activeGameId)}
         onExitToChat={() => setScreen("chat")} onGameOver={() => setScreen("menu")} lang={game.lang} onlineUsers={onlineUsers} />;
     }
-    const isHost = game.host === me.username;
-    const canLeave = game.members.length > 1;
+    const grp = groups[game.groupId];
+    // Çarkı sadece grubu kuran kişi çevirebilir (host değil, grup sahibi) —
+    // böylece çark kimsenin beklemediği bir anda "rastgele" dönmez, yalnızca
+    // grubun kurucusu bilerek bastığında döner.
+    const isOwner = !!grp && grp.owner === me.username;
     return (
       <div className="min-h-screen w-full p-5 flex flex-col items-center" style={{ fontFamily: "Inter, sans-serif" }}>
         {bg}
-        {canLeave && (
-          <button onClick={() => leaveLobby(activeGameId)} className="absolute top-5 left-1/2 -translate-x-1/2 flex items-center gap-1 px-4 py-2 rounded-full bg-red-500/80 text-white text-xs font-bold">
-            <X size={14} /> {t.leaveLobby}
-          </button>
-        )}
+        <button onClick={() => leaveLobby(activeGameId)} className="absolute top-5 left-5 p-2 rounded-full bg-white/10 text-white">
+          <ArrowLeft size={18} />
+        </button>
         <div className="mt-16 text-center mb-6">
           <h2 className="text-xl font-bold text-white" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.lobby}</h2>
           <p className="text-white/50 text-sm">{game.members.length}/{game.maxMembers} · {t.waitingPlayers}</p>
@@ -1606,16 +1775,16 @@ function App() {
         <div className="flex flex-wrap gap-2 justify-center max-w-md mb-8">
           {game.members.map(m => (
             <div key={m} className="px-3 py-2 rounded-full bg-white/10 text-white text-sm flex items-center gap-1">
-              {m === game.host && <Crown size={12} color="#f2b705" />} {m} <OnlineDot online={isOnline(m)} />
+              {!!grp && m === grp.owner && <Crown size={12} color="#f2b705" />} {m} <OnlineDot online={isOnline(m)} />
             </div>
           ))}
         </div>
-        {isHost && (
+        {isOwner && (
           <button onClick={() => startSpin(activeGameId)} className="px-8 py-4 rounded-full font-bold text-lg flex items-center gap-2" style={{ background: "#f2b705", color: "#1b1030", fontFamily: "Fredoka, sans-serif" }}>
             <Play size={20} /> {t.startGame}
           </button>
         )}
-        {!isHost && <p className="text-white/40 text-sm">{t.waitingPlayers}...</p>}
+        {!isOwner && <p className="text-white/40 text-sm">{t.onlyOwnerCanSpin}</p>}
       </div>
     );
   }
@@ -1682,7 +1851,6 @@ function App() {
         <p className="text-white/50 text-sm mb-4 max-w-md mx-auto">{t.adminPanelDesc}</p>
         <div className="max-w-md mx-auto space-y-2">
           {Object.entries(users).map(([name, rec]) => {
-            const liveGame = Object.values(games).find(gm2 => (gm2.status === "playing" || gm2.status === "spinning") && gm2.members.includes(name));
             return (
               <div key={name} className="flex items-center justify-between px-4 py-3 rounded-2xl bg-white/10">
                 <div>
@@ -1713,12 +1881,6 @@ function App() {
                     className="px-3 py-1.5 rounded-full bg-yellow-500/80 text-[#1b1030] text-xs font-bold">
                     {t.setScore}
                   </button>
-                  {liveGame && (
-                    <button onClick={() => { setAdminSpectateGameId(liveGame.id); setScreen("adminSpectate"); }}
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-bold">
-                      <Play size={11} /> {t.watchMatch}
-                    </button>
-                  )}
                 </div>
               </div>
             );
@@ -1754,16 +1916,40 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
   const [feedback, setFeedback] = useState(null);
   const [shake, setShake] = useState(false);
   const [flash, setFlash] = useState(null);
+  const [watching, setWatching] = useState(false); // elenen bir oyuncu "Maçı İzle" dediyse true
+  const [elimToast, setElimToast] = useState(null);
   const feedbackKeyRef = useRef(0);
   const timerRef = useRef(null);
   const feedbackTimeoutRef = useRef(null);
+  const elimToastTimeoutRef = useRef(null);
   const wordInputRef = useRef(null);
   const members = game.members || [];
+  const activeMembers = (game.activeMembers && game.activeMembers.length) ? game.activeMembers : members;
+  const eliminatedPlayers = game.eliminatedPlayers || {};
   const wordChain = game.wordChain || [];
   const lastResults = game.lastResults || [];
-  const currentPlayer = members[game.turnIndex];
-  const isMyTurn = !isSpectator && currentPlayer === me.username && game.status === "playing";
+  const currentPlayer = activeMembers[game.turnIndex % activeMembers.length];
+  // Elenmiş bir oyuncu, izlemeyi seçmediği sürece artık "oyuncu" değil,
+  // kendi elenme ekranını görür.
+  const amEliminated = !isSpectator && !!eliminatedPlayers[me.username];
+  const spectatorMode = isSpectator || (amEliminated && watching);
+  const isMyTurn = !spectatorMode && !amEliminated && currentPlayer === me.username && game.status === "playing";
   const requiredLetter = wordChain.length === 0 ? game.currentLetter : lastLetter(wordChain[wordChain.length - 1].word, lang);
+
+  // her yeni tur başladığında (yeniden çark çevrildiğinde) izleme durumu
+  // sıfırlanır — kişi tekrar oynayan bir üye olarak başlar
+  useEffect(() => { setWatching(false); }, [game.roundNumber]);
+
+  // diğer oyunculara "biri elendi" bildirimi: kendi elenmemizi burada
+  // ayrıca göstermiyoruz, çünkü o zaten tam ekran kendi ekranını görüyor
+  useEffect(() => {
+    const le = game.lastElimination;
+    if (!le || le.username === me.username) return;
+    clearTimeout(elimToastTimeoutRef.current);
+    setElimToast(le);
+    elimToastTimeoutRef.current = setTimeout(() => setElimToast(null), 2800);
+    return () => clearTimeout(elimToastTimeoutRef.current);
+  }, [game.lastElimination && game.lastElimination.seq]); // eslint-disable-line
 
   useEffect(() => {
     if (!isMyTurn) return;
@@ -1816,26 +2002,61 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
       <div className="fixed inset-0 -z-10" style={{ background: "radial-gradient(ellipse at 25% 15%, #2d1755 0%, #1c0f38 45%, #0f0a1e 100%)" }} />
       {flash && <FullScreenFlash key={flash.key} ok={flash.ok} onDone={() => setFlash(null)} />}
       <button onClick={onExitToChat} className="absolute top-5 left-5 p-2 rounded-full bg-white/10 text-white"><ArrowLeft size={18} /></button>
-      {isSpectator && (
+      {spectatorMode && (
         <span className="absolute top-5 right-5 flex items-center gap-1 px-3 py-2 rounded-full bg-purple-600/70 text-white text-xs font-bold">
           <Shield size={12} /> {t.spectating}
         </span>
       )}
-      <p className="text-white/40 text-xs mt-14 mb-2">{t.roundOf} {game.roundNumber} · {wordChain.length}{t.of}{ROUND_WORD_LIMIT}</p>
+      {elimToast && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl text-center font-bold text-sm shadow-lg"
+          style={{ background: "#ff6f61", color: "#1b1030", maxWidth: "88vw" }}>
+          {elimToast.username}{elimToast.word ? `: "${elimToast.word}" — ` : " "}
+          {elimToast.reason === "timeout" ? t.eliminatedByTimeout : elimToast.reason === "invalid" ? t.eliminatedByInvalid : t.eliminatedByDuplicate}
+        </div>
+      )}
+      <p className="text-white/40 text-xs mt-14 mb-2">{t.roundOf} {game.roundNumber} · {wordChain.length} {t.roundOf.toLowerCase()} · {activeMembers.length} {t.playersLeft}</p>
 
-      {(game.status === "spinning" || (game.status === "playing" && wordChain.length === 0)) && (
+      {game.status === "spinning" && (
         <div className="flex flex-col items-center mt-4">
-          <Wheel lang={lang} spinning={game.status === "spinning"} resultLetter={game.currentLetter} onSpinEnd={() => onSpinEnd(game.spinToken)} excludeFirst={lang === "tr" ? "Ğ" : null} />
-          {game.status === "playing" && <p className="text-3xl font-black text-yellow-400 mt-4">{game.currentLetter}</p>}
+          <Wheel lang={lang} spinning resultLetter={game.currentLetter} onSpinEnd={() => onSpinEnd(game.spinToken)} excludeFirst={lang === "tr" ? "Ğ" : null} />
         </div>
       )}
 
-      {game.status === "playing" && (
+      {game.status === "playing" && amEliminated && !watching && (
+        <div className="w-full max-w-sm mt-16 text-center">
+          <div className="rounded-3xl p-7" style={{ background: "linear-gradient(160deg,#2c1750,#1b1030)", border: "2px solid #ff6f61" }}>
+            <X size={40} color="#ff6f61" className="mx-auto mb-3" />
+            <h2 className="text-xl font-bold text-white mb-2" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.eliminatedTitle}</h2>
+            {eliminatedPlayers[me.username] && eliminatedPlayers[me.username].reason === "duplicate" && (
+              <p className="text-white/80 mb-1"><b className="text-yellow-400">"{eliminatedPlayers[me.username].word}"</b></p>
+            )}
+            <p className="text-white/70 text-sm mb-5">
+              {eliminatedPlayers[me.username] && eliminatedPlayers[me.username].reason === "duplicate" ? t.duplicateWordMsg
+                : eliminatedPlayers[me.username] && eliminatedPlayers[me.username].reason === "timeout" ? t.eliminatedTimeoutMsg
+                : t.eliminatedInvalidMsg}
+            </p>
+            <div className="flex flex-col gap-2">
+              <button onClick={() => setWatching(true)} className="w-full py-2.5 rounded-full font-bold flex items-center justify-center gap-2" style={{ background: "#f2b705", color: "#1b1030" }}>
+                <Shield size={16} /> {t.watchMatch}
+              </button>
+              <button onClick={onGameOver} className="w-full py-2.5 rounded-full font-bold" style={{ background: "#ff6f61", color: "#1b1030" }}>
+                {t.backToMenu}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {game.status === "playing" && (!amEliminated || watching) && (
         <div className="w-full max-w-sm mt-6">
           <div className="flex flex-wrap gap-2 justify-center mb-6">
-            {members.map((m, i) => (
-              <span key={m} className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1 ${i === game.turnIndex ? "bg-yellow-400 text-[#1b1030]" : "bg-white/10 text-white/60"}`}>{m} <OnlineDot online={!!onlineUsers[m]} /></span>
-            ))}
+            {members.map(m => {
+              const isElim = !!eliminatedPlayers[m];
+              const isTurn = !isElim && currentPlayer === m;
+              return (
+                <span key={m} className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1 ${isTurn ? "bg-yellow-400 text-[#1b1030]" : isElim ? "bg-white/5 text-white/30 line-through" : "bg-white/10 text-white/60"}`}>{m} <OnlineDot online={!!onlineUsers[m]} /></span>
+              );
+            })}
           </div>
           {wordChain.length > 0 && (
             <div className="text-center mb-4 text-white/70 text-sm">
@@ -1887,13 +2108,26 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
             </div>
           )}
 
-          {/* per-player totals for this round */}
+          {game.roundWinner && (
+            <div className="mb-4 px-4 py-4 rounded-2xl text-center" style={{ background: "#f2b70522", border: "1px solid #f2b70566" }}>
+              <p className="flex items-center justify-center gap-1 font-bold text-lg mb-1" style={{ color: "#f2b705", fontFamily: "Fredoka, sans-serif" }}>
+                <Crown size={18} color="#f2b705" /> {t.roundWinnerLabel}: {game.roundWinner}
+              </p>
+              <p className="text-white/70 text-xs mb-2">{t.roundWinnerDesc}</p>
+              <p className="text-yellow-400 font-black text-2xl">+{game.roundPool || 0} {t.points}</p>
+            </div>
+          )}
+
+          {/* bu turdaki doğru/yanlış sayıları — puanların tamamı yukarıdaki galibe verildi */}
           <div className="flex flex-wrap gap-2 justify-center mb-4">
             {members.map(m => {
-              const total = lastResults.filter(r => r.username === m).reduce((s, r) => s + r.points, 0);
+              const correct = lastResults.filter(r => r.username === m && r.points > 0).length;
+              const wrong = lastResults.filter(r => r.username === m && r.points === 0).length;
+              const isWinner = m === game.roundWinner;
               return (
-                <span key={m} className="px-3 py-1.5 rounded-full text-xs font-bold bg-white/10 text-white flex items-center gap-1">
-                  {m}: <span className="text-yellow-400">{total}</span> <OnlineDot online={!!onlineUsers[m]} />
+                <span key={m} className={`px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 ${isWinner ? "text-[#1b1030]" : "bg-white/10 text-white"}`}
+                  style={isWinner ? { background: "#f2b705" } : undefined}>
+                  {isWinner && <Crown size={11} />} {m}: <span className={isWinner ? "" : "text-green-400"}>{correct}</span>/<span className={isWinner ? "" : "text-red-400"}>{wrong}</span> <OnlineDot online={!!onlineUsers[m]} />
                 </span>
               );
             })}
@@ -1907,23 +2141,7 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
               </div>
             ))}
           </div>
-          <button onClick={isSpectator ? onExitToChat : onNextRound} className="w-full py-3 rounded-full font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>{isSpectator ? t.spectateBack : t.back}</button>
-        </div>
-      )}
-
-      {game.status === "gameover" && (
-        <div className="w-full max-w-sm mt-16 text-center">
-          <div className="rounded-3xl p-7" style={{ background: "linear-gradient(160deg,#2c1750,#1b1030)", border: "2px solid #ff6f61" }}>
-            <X size={40} color="#ff6f61" className="mx-auto mb-3" />
-            <h2 className="text-xl font-bold text-white mb-2" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.duplicateWordTitle}</h2>
-            <p className="text-white/80 mb-1">
-              <b>{game.gameOverBy}</b>{lang === "en" ? " — " : ": "}<b className="text-yellow-400">"{game.gameOverWord}"</b>
-            </p>
-            <p className="text-white/70 text-sm mb-5">{t.duplicateWordMsg}</p>
-            <button onClick={isSpectator ? onExitToChat : onGameOver} className="w-full py-2.5 rounded-full font-bold" style={{ background: "#ff6f61", color: "#1b1030" }}>
-              {isSpectator ? t.spectateBack : t.backToMenu}
-            </button>
-          </div>
+          <button onClick={spectatorMode ? onExitToChat : onNextRound} className="w-full py-3 rounded-full font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>{spectatorMode ? t.spectateBack : t.back}</button>
         </div>
       )}
     </div>
