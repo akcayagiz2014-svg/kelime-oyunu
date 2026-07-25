@@ -708,6 +708,49 @@ function App() {
     return () => clearInterval(iv);
   }, []);
 
+  // ---- telefon / tarayıcı "geri" tuşu desteği --------------------------
+  // Bu uygulama tek sayfalık (SPA) olduğu için ekranlar arasında (menü →
+  // gruplar → sohbet → lobi → oyun) tarayıcı geçmişine hiçbir kayıt
+  // eklenmiyordu. Bu yüzden kullanıcı telefonun/tarayıcının geri tuşuna
+  // bastığında tarayıcı sayfadan tamamen çıkmaya/yenilemeye çalışıyordu —
+  // bu da özellikle Firebase'den henüz veri gelmeden sayfa yarım şekilde
+  // yeniden başladığında "Cannot read properties of undefined" hatasıyla
+  // çökmesine yol açıyordu. Çözüm: her ekran girişinde geçmişe bir kayıt
+  // ekliyoruz; geri tuşuna basılınca (popstate) sayfadan çıkmak yerine
+  // uygulama içinde bir önceki ekrana dönüyoruz (aynı anda geçmişe yeni
+  // bir kayıt ekleyerek derinliği koruyoruz, böylece sayfa hiç terk
+  // edilmiyor).
+  const screenStateRef = useRef({ screen, activeGroupId, activeGameId, games });
+  useEffect(() => {
+    screenStateRef.current = { screen, activeGroupId, activeGameId, games };
+  }, [screen, activeGroupId, activeGameId, games]);
+
+  useEffect(() => {
+    window.history.pushState({ ktScreen: screen }, "");
+  }, [screen]);
+
+  useEffect(() => {
+    const onPopState = () => {
+      const { screen: cur, activeGroupId: agid, activeGameId: aggid, games: g } = screenStateRef.current;
+      if (cur === "lobby" && aggid) {
+        const game = g[aggid];
+        if (game && game.status !== "lobby") {
+          setScreen("chat"); // aktif bir tur oynanıyorsa oyunu terk etmeden sohbete dön
+        } else {
+          leaveLobby(aggid); // bekleme odasındaysa lobiden çık
+        }
+      } else if (cur === "chat") {
+        setScreen("groups");
+      } else if (["groups", "solo", "leaderboard", "notifications", "admin", "adminSpectate"].includes(cur)) {
+        setScreen("menu");
+      }
+      // "menu" (ve "auth") ekranında geri tuşu doğal davranışına bırakılır —
+      // kullanıcı isterse uygulamadan çıkabilir.
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []); // eslint-disable-line
+
   // ---- daily play-time budget upkeep: a group's 2-hour budget only counts
   // time during which a round is actually being played (spinning/playing)
   // in it — sitting in chat, or waiting in a lobby that never starts, never
