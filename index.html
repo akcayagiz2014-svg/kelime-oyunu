@@ -101,8 +101,19 @@ const ROUND_WORD_LIMIT = 25;
 const POINTS_PER_WORD = 10;
 // Grubun 2 saatlik hakkı, oluşturulduktan sonra geçen duvar-saati değil,
 // içinde fiilen oyun oynanan (spinning/playing) toplam süredir. Grup hiç
-// oynanmazsa bu süre hiç azalmaz ve grup süresiz açık kalır.
+// oynanmazsa bu süre hiç azalmaz ve grup süresiz açık kalır. Bu hak, grubu
+// SİLMEZ — sadece hak tükenince yeni oyun başlatmayı engeller ve her gün
+// saat 09:00'da otomatik olarak yeniden dolar.
 const GROUP_BUDGET_MS = 2 * 60 * 60 * 1000;
+const DAILY_RESET_HOUR = 9; // her sabah 09:00'da süre sıfırlanır
+
+// Verilen zamandan sonraki ilk saat 09:00'ı (yerel saat) döndürür.
+function nextDailyResetTime(fromTs) {
+  const d = new Date(fromTs);
+  d.setHours(DAILY_RESET_HOUR, 0, 0, 0);
+  if (d.getTime() <= fromTs) d.setDate(d.getDate() + 1);
+  return d.getTime();
+}
 const STREAK_BONUS = 20; // tur limitine kadar hiç kaçırmadan gidenin alacağı ekstra puan
 
 const ALPHABETS = {
@@ -133,7 +144,7 @@ const T = {
     groupAllCorrectMsg: "Tebrikler, hepsini doğru yaptığınız için tur puanına +20 bonus eklendi!",
     roundWinnerLabel: "Turun Galibi", roundWinnerDesc: "En az hatayı yaptı ve tur boyunca toplanan tüm puanları kazandı:",
     validWord: "Geçerli kelime!", checking: "Kontrol ediliyor...", groupLimitReached: "En fazla 50 gruba katılabilirsin",
-    dailyGroupLimit: "Günde en fazla 3 grup kurabilirsin", closesInGame: "Oyun bitince kapanacak", groupGone: "Bu grup artık mevcut değil.",
+    dailyGroupLimit: "Günde en fazla 3 grup kurabilirsin", dailyLimitReached: "Süre doldu", dailyLimitReachedFull: "Bugünlük 2 saatlik oyun süreniz doldu. Yarın saat 09:00'da tekrar oynayabilirsiniz.", groupGone: "Bu grup artık mevcut değil.",
     closesIn: "kapanıyor", worldRank: "sırada", nextMedal: "Sıradaki madalya",
     lobbyFull: "Lobi dolu (15 kişi)", inviteMember: "Üye Davet Et", invite: "Davet Et", groupChat: "Grup Sohbeti",
     submit: "Gönder", solo: "Tek Oyunculu", roundOf: "Kelime", of: "/", backToWheel: "Çarka Dön",
@@ -185,7 +196,7 @@ const T = {
     groupAllCorrectMsg: "Congratulations, +20 bonus points were added to the round pool for getting them all right!",
     roundWinnerLabel: "Round Winner", roundWinnerDesc: "Made the fewest mistakes and won all the points collected during the round:",
     validWord: "Valid word!", checking: "Checking...", groupLimitReached: "You can join at most 50 groups",
-    dailyGroupLimit: "You can create at most 3 groups per day", closesInGame: "Will close when the game ends", groupGone: "This group no longer exists.",
+    dailyGroupLimit: "You can create at most 3 groups per day", dailyLimitReached: "Time's up", dailyLimitReachedFull: "You've used today's 2-hour play time for this group. You can play again tomorrow at 09:00.", groupGone: "This group no longer exists.",
     closesIn: "closes in", worldRank: "rank", nextMedal: "Next medal",
     lobbyFull: "Lobby full (15 players)", inviteMember: "Invite Member", invite: "Invite", groupChat: "Group Chat",
     submit: "Submit", solo: "Solo", roundOf: "Word", of: "/", backToWheel: "Back to Wheel",
@@ -237,7 +248,7 @@ const T = {
     groupAllCorrectMsg: "Glückwunsch, dem Rundentopf wurden +20 Bonuspunkte hinzugefügt, weil alles richtig war!",
     roundWinnerLabel: "Rundensieger", roundWinnerDesc: "Hat die wenigsten Fehler gemacht und alle in dieser Runde gesammelten Punkte gewonnen:",
     validWord: "Gültiges Wort!", checking: "Wird geprüft...", groupLimitReached: "Maximal 50 Gruppen möglich",
-    dailyGroupLimit: "Du kannst höchstens 3 Gruppen pro Tag erstellen", closesInGame: "Schließt, wenn das Spiel endet", groupGone: "Diese Gruppe existiert nicht mehr.",
+    dailyGroupLimit: "Du kannst höchstens 3 Gruppen pro Tag erstellen", dailyLimitReached: "Zeit abgelaufen", dailyLimitReachedFull: "Die heutige 2-Stunden-Spielzeit dieser Gruppe ist aufgebraucht. Ihr könnt morgen um 09:00 Uhr wieder spielen.", groupGone: "Diese Gruppe existiert nicht mehr.",
     closesIn: "schließt in", worldRank: "Rang", nextMedal: "Nächste Medaille",
     lobbyFull: "Lobby voll (15 Spieler)", inviteMember: "Mitglied einladen", invite: "Einladen", groupChat: "Gruppenchat",
     submit: "Senden", solo: "Solo", roundOf: "Wort", of: "/", backToWheel: "Zurück zum Rad",
@@ -450,11 +461,22 @@ function formatRemaining(ms) {
 // için usedMs alanı yoktur; onlar için null döner (süresiz).
 function groupRemainingMs(g, gamesObj, now) {
   if (!g || g.usedMs === undefined) return null;
+  // Saat 09:00'ı geçtiyse (bir sonraki sıfırlama zamanına ulaşıldıysa) henüz
+  // veritabanına yazılmamış olsa bile ekranda süre dolu gösterilsin.
+  if (g.budgetResetAt && now >= g.budgetResetAt) return GROUP_BUDGET_MS;
   const isPlaying = Object.values(gamesObj || {}).some(
     gm2 => gm2 && gm2.groupId === g.id && (gm2.status === "playing" || gm2.status === "spinning")
   );
   const consumed = (g.usedMs || 0) + (g.activeSince && isPlaying ? now - g.activeSince : 0);
   return GROUP_BUDGET_MS - consumed;
+}
+
+// Grubun günlük 2 saatlik hakkı tükendi mi? (yeni bir tur/oyun başlatmayı
+// engellemek için kullanılır; hâlihazırda devam eden bir tur bundan
+// etkilenmez, sadece lobiden yeni bir çark çevirme engellenir.)
+function groupLimitReached(g, gamesObj, now) {
+  const remaining = groupRemainingMs(g, gamesObj, now);
+  return remaining != null && remaining <= 0;
 }
 
 function WordFeedbackBadge({ feedback, t }) {
@@ -686,11 +708,12 @@ function App() {
     return () => clearInterval(iv);
   }, []);
 
-  // ---- expired-group cleanup: a group's 2-hour budget only counts time
-  // during which a round is actually being played (spinning/playing) in it —
-  // sitting in chat, or waiting in a lobby that never starts, never burns
-  // any of it. Deletion (once the budget is used up) waits until any round
-  // in progress reaches "results", same as before. ----
+  // ---- daily play-time budget upkeep: a group's 2-hour budget only counts
+  // time during which a round is actually being played (spinning/playing)
+  // in it — sitting in chat, or waiting in a lobby that never starts, never
+  // burns any of it. Once the budget is used up, the group is NOT deleted:
+  // members simply can't start a new round until the budget refills, which
+  // happens automatically every day at 09:00 (local time). ----
   function cleanExpiredGroups(groupsObj, gamesObj) {
     const now = Date.now();
     const nextGroups = { ...groupsObj };
@@ -702,15 +725,24 @@ function App() {
     // exactly what was clobbering other players' concurrent game actions.
     const groupUpdates = {};
     for (const [id, g] of Object.entries(groupsObj)) {
-      if (g.usedMs === undefined) continue; // legacy groups created before this feature: never auto-expire
+      if (g.usedMs === undefined) continue; // legacy groups created before this feature: never auto-limited
       const gamesForGroup = Object.values(gamesObj || {}).filter(gm2 => gm2 && gm2.groupId === id);
       const isPlaying = gamesForGroup.some(gm2 => gm2.status === "playing" || gm2.status === "spinning");
-      const hasSession = gamesForGroup.some(gm2 => gm2.status === "playing" || gm2.status === "spinning" || gm2.status === "lobby");
 
-      // start/stop the active-play stopwatch as playing begins/ends
       let usedMs = g.usedMs || 0;
       let activeSince = g.activeSince || null;
+      let budgetResetAt = g.budgetResetAt || nextDailyResetTime(now);
       let touched = false;
+
+      // her sabah 09:00'da hak tamamen yeniden dolar
+      if (now >= budgetResetAt) {
+        usedMs = 0;
+        if (activeSince) activeSince = now; // o an oynanan bir tur varsa sayacı bu andan itibaren yeniden başlat
+        budgetResetAt = nextDailyResetTime(now);
+        touched = true;
+      }
+
+      // start/stop the active-play stopwatch as playing begins/ends
       if (isPlaying && !activeSince) {
         activeSince = now; touched = true;
       } else if (!isPlaying && activeSince) {
@@ -718,22 +750,10 @@ function App() {
         activeSince = null; touched = true;
       }
 
-      const consumed = usedMs + (activeSince ? now - activeSince : 0);
-      if (consumed >= GROUP_BUDGET_MS) {
-        if (hasSession) {
-          if (!g.pendingDelete || touched) {
-            const updated = { ...g, usedMs, activeSince, pendingDelete: true };
-            nextGroups[id] = updated;
-            groupUpdates["groups/" + id] = updated;
-          }
-        } else {
-          delete nextGroups[id];
-          groupUpdates["groups/" + id] = null;
-        }
-        continue;
-      }
+      if (!g.budgetResetAt) touched = true; // ilk kez bir sıfırlama zamanı atanıyorsa kaydet
+
       if (touched) {
-        const updated = { ...g, usedMs, activeSince };
+        const updated = { ...g, usedMs, activeSince, budgetResetAt, pendingDelete: false };
         nextGroups[id] = updated;
         groupUpdates["groups/" + id] = updated;
       }
@@ -1031,7 +1051,7 @@ function App() {
 
     const id = uid();
     const now = Date.now();
-    const g = { id, name: newGroupName.trim(), owner: me.username, members: [me.username], messages: [], createdAt: now, usedMs: 0, activeSince: null, pendingDelete: false };
+    const g = { id, name: newGroupName.trim(), owner: me.username, members: [me.username], messages: [], createdAt: now, usedMs: 0, activeSince: null, pendingDelete: false, budgetResetAt: nextDailyResetTime(now) };
     // brand-new id, so a plain scoped set is safe — nothing else can already
     // be writing to this path
     await (await waitForFbdb()).ref("groups/" + id).set(g);
@@ -1175,6 +1195,9 @@ function App() {
   }
 
   async function startSpin(gameId) {
+    const game0 = games[gameId];
+    const grp0 = game0 && groups[game0.groupId];
+    if (grp0 && groupLimitReached(grp0, games, Date.now())) return; // günlük 2 saatlik hak tükendi
     await transactRecord("games/" + gameId, current => {
       if (!current) return current;
       const letters = ALPHABETS[current.lang].filter(l => current.lang === "tr" ? l !== "Ğ" : true);
@@ -1598,7 +1621,7 @@ function App() {
                   <Swords size={18} className="text-white/40" />
                   {remaining != null && (
                     <span className="flex items-center gap-1 text-[10px] font-semibold" style={{ color: remaining <= 0 ? "#ff8a8a" : remaining < 5 * 60 * 1000 ? "#ffb84d" : "rgba(255,255,255,0.35)" }}>
-                      <Clock size={9} /> {remaining > 0 ? formatRemaining(remaining) : g.pendingDelete ? t.closesInGame : "0:00"}
+                      <Clock size={9} /> {remaining > 0 ? formatRemaining(remaining) : t.dailyLimitReached}
                     </span>
                   )}
                 </div>
@@ -1669,7 +1692,7 @@ function App() {
             </button>
             {remaining != null && (
               <span className="flex items-center gap-1 text-[10px] font-semibold" style={{ color: remaining <= 0 ? "#ff8a8a" : remaining < 5 * 60 * 1000 ? "#ffb84d" : "rgba(255,255,255,0.4)" }}>
-                <Clock size={10} /> {remaining > 0 ? formatRemaining(remaining) : grp.pendingDelete ? t.closesInGame : "0:00"}
+                <Clock size={10} /> {remaining > 0 ? formatRemaining(remaining) : t.dailyLimitReached}
               </span>
             )}
           </div>
@@ -1752,16 +1775,21 @@ function App() {
       return <GoneScreen bg={bg} message={t.groupGone} backLabel={t.back} onBack={() => setScreen("groups")} />;
     }
     if (game.status !== "lobby") {
+      const activeGrp = groups[game.groupId];
+      const budgetRemainingMs = activeGrp ? groupRemainingMs(activeGrp, games, tick) : null;
       return <GroupGameView game={game} me={me} t={t} onSpinEnd={(token) => finishSpin(activeGameId, token)}
         onSubmitWord={(w, ok, timedOut) => submitWord(activeGameId, w, ok, timedOut)}
         onNextRound={() => backToWheelScreen(activeGameId)}
-        onExitToChat={() => setScreen("chat")} onGameOver={() => setScreen("menu")} lang={game.lang} onlineUsers={onlineUsers} />;
+        onExitToChat={() => setScreen("chat")} onGameOver={() => setScreen("menu")} lang={game.lang} onlineUsers={onlineUsers}
+        budgetRemainingMs={budgetRemainingMs} />;
     }
     const grp = groups[game.groupId];
     // Çarkı sadece grubu kuran kişi çevirebilir (host değil, grup sahibi) —
     // böylece çark kimsenin beklemediği bir anda "rastgele" dönmez, yalnızca
     // grubun kurucusu bilerek bastığında döner.
     const isOwner = !!grp && grp.owner === me.username;
+    const remaining = grp ? groupRemainingMs(grp, games, tick) : null;
+    const limitReached = grp ? groupLimitReached(grp, games, tick) : false;
     return (
       <div className="min-h-screen w-full p-5 flex flex-col items-center" style={{ fontFamily: "Inter, sans-serif" }}>
         {bg}
@@ -1771,6 +1799,12 @@ function App() {
         <div className="mt-16 text-center mb-6">
           <h2 className="text-xl font-bold text-white" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.lobby}</h2>
           <p className="text-white/50 text-sm">{game.members.length}/{game.maxMembers} · {t.waitingPlayers}</p>
+          {remaining != null && (
+            <p className="flex items-center justify-center gap-1 text-xs font-semibold mt-2"
+              style={{ color: remaining <= 0 ? "#ff8a8a" : remaining < 5 * 60 * 1000 ? "#ffb84d" : "rgba(255,255,255,0.4)" }}>
+              <Clock size={11} /> {remaining > 0 ? formatRemaining(remaining) : t.dailyLimitReached}
+            </p>
+          )}
         </div>
         <div className="flex flex-wrap gap-2 justify-center max-w-md mb-8">
           {game.members.map(m => (
@@ -1779,12 +1813,15 @@ function App() {
             </div>
           ))}
         </div>
-        {isOwner && (
+        {limitReached ? (
+          <p className="text-center text-sm max-w-xs" style={{ color: "#ffb84d" }}>{t.dailyLimitReachedFull}</p>
+        ) : isOwner ? (
           <button onClick={() => startSpin(activeGameId)} className="px-8 py-4 rounded-full font-bold text-lg flex items-center gap-2" style={{ background: "#f2b705", color: "#1b1030", fontFamily: "Fredoka, sans-serif" }}>
             <Play size={20} /> {t.startGame}
           </button>
+        ) : (
+          <p className="text-white/40 text-sm">{t.onlyOwnerCanSpin}</p>
         )}
-        {!isOwner && <p className="text-white/40 text-sm">{t.onlyOwnerCanSpin}</p>}
       </div>
     );
   }
@@ -1909,7 +1946,7 @@ function App() {
 // =========================================================
 // GROUP GAME VIEW (wheel + relay chain for a lobby's round)
 // =========================================================
-function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onExitToChat, onGameOver, lang, isSpectator, onlineUsers = {} }) {
+function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onExitToChat, onGameOver, lang, isSpectator, onlineUsers = {}, budgetRemainingMs = null }) {
   const [wordInput, setWordInput] = useState("");
   const [timeLeft, setTimeLeft] = useState(WORD_TIME_SECONDS);
   const [checking, setChecking] = useState(false);
@@ -2002,11 +2039,19 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
       <div className="fixed inset-0 -z-10" style={{ background: "radial-gradient(ellipse at 25% 15%, #2d1755 0%, #1c0f38 45%, #0f0a1e 100%)" }} />
       {flash && <FullScreenFlash key={flash.key} ok={flash.ok} onDone={() => setFlash(null)} />}
       <button onClick={onExitToChat} className="absolute top-5 left-5 p-2 rounded-full bg-white/10 text-white"><ArrowLeft size={18} /></button>
-      {spectatorMode && (
-        <span className="absolute top-5 right-5 flex items-center gap-1 px-3 py-2 rounded-full bg-purple-600/70 text-white text-xs font-bold">
-          <Shield size={12} /> {t.spectating}
-        </span>
-      )}
+      <div className="absolute top-5 right-5 flex flex-col items-end gap-2">
+        {budgetRemainingMs != null && (
+          <span className="flex items-center gap-1 px-3 py-2 rounded-full bg-black/30 text-xs font-semibold"
+            style={{ color: budgetRemainingMs <= 0 ? "#ff8a8a" : budgetRemainingMs < 5 * 60 * 1000 ? "#ffb84d" : "rgba(255,255,255,0.6)" }}>
+            <Clock size={11} /> {budgetRemainingMs > 0 ? formatRemaining(budgetRemainingMs) : t.dailyLimitReached}
+          </span>
+        )}
+        {spectatorMode && (
+          <span className="flex items-center gap-1 px-3 py-2 rounded-full bg-purple-600/70 text-white text-xs font-bold">
+            <Shield size={12} /> {t.spectating}
+          </span>
+        )}
+      </div>
       {elimToast && (
         <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl text-center font-bold text-sm shadow-lg"
           style={{ background: "#ff6f61", color: "#1b1030", maxWidth: "88vw" }}>
