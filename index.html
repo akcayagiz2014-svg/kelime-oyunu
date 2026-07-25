@@ -106,21 +106,6 @@ const POINTS_PER_WORD = 10;
 // saat 09:00'da otomatik olarak yeniden dolar.
 const GROUP_BUDGET_MS = 2 * 60 * 60 * 1000;
 const DAILY_RESET_HOUR = 9; // her sabah 09:00'da süre sıfırlanır
-// Bir oyun "playing"/"spinning" durumunda kalsa bile, üzerinden bu süreden
-// uzun zaman geçtiyse artık gerçekten oynanmıyor demektir (biri çarkı
-// çevirip animasyon bitmeden sekmeyi kapatmış, ağ kopmuş, uygulama
-// çökmüş vb.). Böyle "takılı kalmış" bir oyun, aşağıdaki kontrol
-// olmadan grubun 2 saatlik hakkını kimse oynamadan sonsuza kadar
-// tüketmeye devam ederdi — asıl "boşuna süre doldu" hatasının kaynağı
-// buydu. Her gerçek oyun hamlesi (çark çevirme, kelime yazma, tur
-// bitişi) lastActivityAt'i günceller; bu yenilenmezse oyun "aktif
-// oynanmıyor" sayılır ve süre sayacı durur.
-const STALE_GAME_MS = 3 * 60 * 1000; // 3 dakika hareketsizlik = takılı kalmış sayılır
-function isGameActivelyPlaying(gm, now) {
-  if (!gm || (gm.status !== "playing" && gm.status !== "spinning")) return false;
-  const last = gm.lastActivityAt || 0;
-  return (now - last) < STALE_GAME_MS;
-}
 
 // Verilen zamandan sonraki ilk saat 09:00'ı (yerel saat) döndürür.
 function nextDailyResetTime(fromTs) {
@@ -480,7 +465,7 @@ function groupRemainingMs(g, gamesObj, now) {
   // veritabanına yazılmamış olsa bile ekranda süre dolu gösterilsin.
   if (g.budgetResetAt && now >= g.budgetResetAt) return GROUP_BUDGET_MS;
   const isPlaying = Object.values(gamesObj || {}).some(
-    gm2 => gm2 && gm2.groupId === g.id && isGameActivelyPlaying(gm2, now)
+    gm2 => gm2 && gm2.groupId === g.id && (gm2.status === "playing" || gm2.status === "spinning")
   );
   const consumed = (g.usedMs || 0) + (g.activeSince && isPlaying ? now - g.activeSince : 0);
   return GROUP_BUDGET_MS - consumed;
@@ -708,17 +693,6 @@ function App() {
   const [activeGroupId, setActiveGroupId] = useState(null);
   const [activeGameId, setActiveGameId] = useState(null);
   const [games, setGames] = useState({});
-  // Lobide beklerken oyun kaydı ortadan kaybolursa (kendi geri tuşuyla
-  // çıkışımız, ya da başka birinin lobiyi kapatması), bunu bir hata olarak
-  // göstermek yerine güvenli bir şekilde sohbet ekranına dönüyoruz. Bu iş
-  // render sırasında değil (o kararsız olabiliyordu), her zamanki gibi bir
-  // effect içinde, render tamamlandıktan sonra yapılıyor.
-  useEffect(() => {
-    if (screen === "lobby" && activeGameId && !games[activeGameId]) {
-      setScreen("chat");
-      setActiveGameId(null);
-    }
-  }, [screen, activeGameId, games]);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState("");
   const [showGroupInvite, setShowGroupInvite] = useState(false);
@@ -751,6 +725,16 @@ function App() {
     screenStateRef.current = { screen, activeGroupId, activeGameId, games };
   }, [screen, activeGroupId, activeGameId, games]);
 
+  // leaveLobby, o anki `me` kullanıcısını okuyarak kişiyi lobi üyelerinden
+  // çıkarır. Aşağıdaki popstate efekti SADECE bir kez (mount'ta) kayıt
+  // olduğu için, içinde doğrudan `leaveLobby` çağrılsaydı bu her zaman
+  // *ilk render'daki* (henüz giriş yapılmamışken `me` hâlâ null olan)
+  // leaveLobby kopyasını kullanırdı — bu da geri tuşuna basılınca `me`
+  // null olduğu için çökmeye yol açıyordu. Bunun yerine her render'da
+  // güncellenen bir ref üzerinden en güncel fonksiyonu çağırıyoruz.
+  const leaveLobbyRef = useRef(null);
+  useEffect(() => { leaveLobbyRef.current = leaveLobby; });
+
   useEffect(() => {
     window.history.pushState({ ktScreen: screen }, "");
   }, [screen]);
@@ -762,8 +746,8 @@ function App() {
         const game = g[aggid];
         if (game && game.status !== "lobby") {
           setScreen("chat"); // aktif bir tur oynanıyorsa oyunu terk etmeden sohbete dön
-        } else {
-          leaveLobby(aggid); // bekleme odasındaysa lobiden çık
+        } else if (leaveLobbyRef.current) {
+          leaveLobbyRef.current(aggid); // bekleme odasındaysa lobiden çık
         }
       } else if (cur === "chat") {
         setScreen("groups");
@@ -783,7 +767,7 @@ function App() {
   // burns any of it. Once the budget is used up, the group is NOT deleted:
   // members simply can't start a new round until the budget refills, which
   // happens automatically every day at 09:00 (local time). ----
-  function cleanExpiredGroups(groupsObj, gamesObj) {
+  function cleanExpiredGroups(groupsObj, gamesObj, onlineUsersObj) {
     const now = Date.now();
     const nextGroups = { ...groupsObj };
     // groupUpdates/gameUpdates only ever contain the specific records that
@@ -793,10 +777,37 @@ function App() {
     // full-tree overwrite every 5s on every connected client, which is
     // exactly what was clobbering other players' concurrent game actions.
     const groupUpdates = {};
+    let nextGames = { ...gamesObj };
+    const gameUpdates = {};
+
+    // Terk edilmiş turlar: bir oyun "playing"/"spinning" durumundayken
+    // (sekme kapanması, çökme, bağlantı kopması gibi bir sebeple) o turdaki
+    // hiçbir üye artık çevrimiçi değilse, kimse hamle yapmadığı için bu
+    // durum SONSUZA DEK böyle kalır — ve grubun 2 saatlik hakkı, hiç kelime
+    // yazılmadan, sadece geçen duvar-saatiyle tükenmeye devam eder. Bunu
+    // önlemek için, aktif üyesi çevrimiçi olmayan turları otomatik olarak
+    // lobiye geri alıyoruz (oyun silinmiyor, sadece tur sıfırlanıyor).
+    // onlineUsersObj henüz yüklenmediyse (ilk açılışta) bu kontrol atlanır.
+    if (onlineUsersObj) {
+      for (const [gid, game] of Object.entries(gamesObj || {})) {
+        if (!game || (game.status !== "playing" && game.status !== "spinning")) continue;
+        const activePlayers = (game.activeMembers && game.activeMembers.length) ? game.activeMembers : (game.members || []);
+        const anyoneOnline = activePlayers.some(m => onlineUsersObj[m]);
+        if (!anyoneOnline) {
+          const resetGame = {
+            ...game, status: "lobby", currentLetter: null, wordChain: [],
+            activeMembers: [...(game.members || [])], eliminatedPlayers: {}, lastElimination: null,
+          };
+          nextGames[gid] = resetGame;
+          gameUpdates["games/" + gid] = resetGame;
+        }
+      }
+    }
+
     for (const [id, g] of Object.entries(groupsObj)) {
       if (g.usedMs === undefined) continue; // legacy groups created before this feature: never auto-limited
-      const gamesForGroup = Object.values(gamesObj || {}).filter(gm2 => gm2 && gm2.groupId === id);
-      const isPlaying = gamesForGroup.some(gm2 => isGameActivelyPlaying(gm2, now));
+      const gamesForGroup = Object.values(nextGames || {}).filter(gm2 => gm2 && gm2.groupId === id);
+      const isPlaying = gamesForGroup.some(gm2 => gm2.status === "playing" || gm2.status === "spinning");
 
       let usedMs = g.usedMs || 0;
       let activeSince = g.activeSince || null;
@@ -827,20 +838,8 @@ function App() {
         groupUpdates["groups/" + id] = updated;
       }
     }
-    const nextGames = { ...gamesObj };
-    const gameUpdates = {};
-    for (const [gid, game] of Object.entries(gamesObj)) {
-      if (!nextGroups[game.groupId]) { delete nextGames[gid]; gameUpdates["games/" + gid] = null; continue; }
-      // Takılı kalmış (3+ dakikadır hareketsiz) "playing"/"spinning" bir tur
-      // varsa, oyuncuları sonsuza dek beklemeye/kilitli kalmaya mahkum
-      // etmemek için otomatik olarak lobiye geri döndürülür. Böylece hem
-      // grubun bütçesi boşa akmaz hem de içerideki gerçek oyuncular
-      // (varsa) takılı kalmaz.
-      if ((game.status === "playing" || game.status === "spinning") && !isGameActivelyPlaying(game, now)) {
-        const healed = { ...game, status: "lobby" };
-        nextGames[gid] = healed;
-        gameUpdates["games/" + gid] = healed;
-      }
+    for (const [gid, game] of Object.entries(nextGames)) {
+      if (!nextGroups[game.groupId]) { delete nextGames[gid]; gameUpdates["games/" + gid] = null; }
     }
     return { groups: nextGroups, games: nextGames, groupUpdates, gameUpdates };
   }
@@ -930,11 +929,13 @@ function App() {
   // change), so it still needs its own lightweight periodic check ----
   const groupsRef = useRef(groups);
   const gamesRef = useRef(games);
+  const onlineUsersRef = useRef(onlineUsers);
   useEffect(() => { groupsRef.current = groups; }, [groups]);
   useEffect(() => { gamesRef.current = games; }, [games]);
+  useEffect(() => { onlineUsersRef.current = onlineUsers; }, [onlineUsers]);
   useEffect(() => {
     const iv = setInterval(async () => {
-      const { groupUpdates, gameUpdates } = cleanExpiredGroups(groupsRef.current, gamesRef.current);
+      const { groupUpdates, gameUpdates } = cleanExpiredGroups(groupsRef.current, gamesRef.current, onlineUsersRef.current);
       const cleanupUpdates = { ...groupUpdates, ...gameUpdates };
       if (Object.keys(cleanupUpdates).length) await updatePaths(cleanupUpdates);
     }, 5000);
@@ -1234,7 +1235,6 @@ function App() {
       currentLetter: null, turnIndex: 0, roundNumber: 0,
       wordChain: [], lastResults: [], spinToken: 0,
       activeMembers: [me.username], eliminatedPlayers: {}, lastElimination: null, elimSeq: 0,
-      lastActivityAt: Date.now(),
     };
     const grp = await transactRecord("groups/" + groupId, current => {
       if (!current) return current;
@@ -1262,13 +1262,14 @@ function App() {
   }
 
   async function leaveLobby(gameId) {
+    if (!gameId) { setScreen("chat"); return; }
     let empty = false;
     await transactRecord("games/" + gameId, current => {
       if (!current) return current;
-      const nextMembers = current.members.filter(m => m !== me.username);
+      const nextMembers = (current.members || []).filter(m => m !== (me && me.username));
       empty = nextMembers.length === 0;
       return { ...current, members: nextMembers };
-    });
+    }).catch(() => {});
     // Boş kalan (kimsenin bulunmadığı) lobiyi ortada bırakmamak için siliyoruz.
     if (empty) { await (await waitForFbdb()).ref("games/" + gameId).remove().catch(() => {}); }
     setScreen("chat");
@@ -1295,7 +1296,6 @@ function App() {
         activeMembers: [...current.members],
         eliminatedPlayers: {},
         lastElimination: null,
-        lastActivityAt: Date.now(),
       };
     });
   }
@@ -1308,7 +1308,7 @@ function App() {
       // moved on to a newer spin
       if (expectedToken !== undefined && current.spinToken !== expectedToken) return current;
       if (current.status !== "spinning") return current;
-      return { ...current, status: "playing", lastActivityAt: Date.now() };
+      return { ...current, status: "playing" };
     });
   }
 
@@ -1346,7 +1346,7 @@ function App() {
 
       if (!isElim) {
         // doğru cevap: sıradaki aktif oyuncuya geç, kimse elenmedi
-        return { ...current, wordChain: nextChain, turnIndex: (turnIdx + 1) % activeMembers.length, lastActivityAt: Date.now() };
+        return { ...current, wordChain: nextChain, turnIndex: (turnIdx + 1) % activeMembers.length };
       }
 
       // birisi elendi
@@ -1369,7 +1369,6 @@ function App() {
           ...current, wordChain: nextChain, status: "results", lastResults: nextChain,
           roundWinner: winner, roundPool: winner ? teamPoints : 0,
           activeMembers: remaining, eliminatedPlayers, lastElimination, elimSeq,
-          lastActivityAt: Date.now(),
         };
       }
 
@@ -1379,7 +1378,7 @@ function App() {
       const newTurnIndex = remaining.length ? (elimIdx % remaining.length) : 0;
       return {
         ...current, wordChain: nextChain, activeMembers: remaining, turnIndex: newTurnIndex,
-        eliminatedPlayers, lastElimination, elimSeq, lastActivityAt: Date.now(),
+        eliminatedPlayers, lastElimination, elimSeq,
       };
     });
     if (!game) return;
@@ -1389,7 +1388,7 @@ function App() {
   async function backToWheelScreen(gameId) {
     await transactRecord("games/" + gameId, current => {
       if (!current) return current;
-      return { ...current, status: "lobby", lastActivityAt: Date.now() };
+      return { ...current, status: "lobby" };
     });
   }
 
@@ -1854,14 +1853,7 @@ function App() {
   if (screen === "lobby" && activeGameId) {
     const game = games[activeGameId];
     if (!game) {
-      // Oyun kaydı artık yok: çoğunlukla kullanıcı az önce geri tuşuyla
-      // lobiden çıktı (leaveLobby boş kalan lobiyi siler) ya da başka bir
-      // üye lobiyi kapattı. Bu bir hata değil, normal bir durum. Ekranı
-      // render sırasında değiştirmek yerine (bu bazı tarayıcılarda kararsız
-      // davranıp hataya yol açabiliyordu) aşağıdaki useEffect üzerinden,
-      // render tamamlandıktan hemen sonra güvenle sohbete dönüyoruz; o ana
-      // kadar boş bir ekran gösteriyoruz.
-      return <div className="min-h-screen w-full" style={{ background: "#0f0a1e" }} />;
+      return <GoneScreen bg={bg} message={t.groupGone} backLabel={t.back} onBack={() => setScreen("groups")} />;
     }
     if (game.status !== "lobby") {
       const activeGrp = groups[game.groupId];
@@ -1887,7 +1879,7 @@ function App() {
         </button>
         <div className="mt-16 text-center mb-6">
           <h2 className="text-xl font-bold text-white" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.lobby}</h2>
-          <p className="text-white/50 text-sm">{game.members.length}/{game.maxMembers} · {t.waitingPlayers}</p>
+          <p className="text-white/50 text-sm">{(game.members || []).length}/{game.maxMembers} · {t.waitingPlayers}</p>
           {remaining != null && (
             <p className="flex items-center justify-center gap-1 text-xs font-semibold mt-2"
               style={{ color: remaining <= 0 ? "#ff8a8a" : remaining < 5 * 60 * 1000 ? "#ffb84d" : "rgba(255,255,255,0.4)" }}>
@@ -1896,7 +1888,7 @@ function App() {
           )}
         </div>
         <div className="flex flex-wrap gap-2 justify-center max-w-md mb-8">
-          {game.members.map(m => (
+          {(game.members || []).map(m => (
             <div key={m} className="px-3 py-2 rounded-full bg-white/10 text-white text-sm flex items-center gap-1">
               {!!grp && m === grp.owner && <Crown size={12} color="#f2b705" />} {m} <OnlineDot online={isOnline(m)} />
             </div>
