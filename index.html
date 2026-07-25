@@ -99,20 +99,36 @@ const ADMIN_GOOGLE_EMAIL = "akca.yagiz2014@gmail.com";
 const WORD_TIME_SECONDS = 10;
 const ROUND_WORD_LIMIT = 25;
 const POINTS_PER_WORD = 10;
-// Grubun 2 saatlik hakkı, oluşturulduktan sonra geçen duvar-saati değil,
-// içinde fiilen oyun oynanan (spinning/playing) toplam süredir. Grup hiç
-// oynanmazsa bu süre hiç azalmaz ve grup süresiz açık kalır. Bu hak, grubu
-// SİLMEZ — sadece hak tükenince yeni oyun başlatmayı engeller ve her gün
-// saat 09:00'da otomatik olarak yeniden dolar.
+// Bir grubun GÜNLÜK oyun hakkı: duvar-saati değil, içinde fiilen oyun
+// oynanan (spinning/playing) toplam süredir. Grup hiç oynanmazsa bu süre
+// hiç azalmaz. Bu hak her gün saat 09:00'da sıfırlanır (aşağıdaki
+// GROUP_DAILY_RESET_HOUR) — grup asla kapanmaz/silinmez, sadece o günkü
+// 2 saat dolunca ertesi 09:00'a kadar yeni oyun başlatılamaz.
 const GROUP_BUDGET_MS = 2 * 60 * 60 * 1000;
-const DAILY_RESET_HOUR = 9; // her sabah 09:00'da süre sıfırlanır
+const GROUP_DAILY_RESET_HOUR = 9; // her gün saat 09:00'da yenilenir
 
-// Verilen zamandan sonraki ilk saat 09:00'ı (yerel saat) döndürür.
-function nextDailyResetTime(fromTs) {
-  const d = new Date(fromTs);
-  d.setHours(DAILY_RESET_HOUR, 0, 0, 0);
-  if (d.getTime() <= fromTs) d.setDate(d.getDate() + 1);
+// "Oyun günü" 09:00'dan ertesi gün 09:00'a kadar sürer. Bu fonksiyon,
+// verilen `now` anının içinde bulunduğu oyun gününün başlangıç zamanını
+// (o günün veya -henüz 09:00 olmadıysa- dünün 09:00'ı) döndürür.
+function getGroupPeriodStart(now) {
+  const d = new Date(now);
+  d.setHours(GROUP_DAILY_RESET_HOUR, 0, 0, 0);
+  if (d.getTime() > now) d.setDate(d.getDate() - 1);
   return d.getTime();
+}
+
+// Şu anki periyodun ne zaman biteceğini (bir sonraki 09:00'ı) döndürür.
+function getGroupNextResetAt(now) {
+  return getGroupPeriodStart(now) + 24 * 60 * 60 * 1000;
+}
+
+// Bir sonraki sıfırlanmanın "bugün" mü yoksa "yarın" mı olacağını
+// (takvim günü karşılaştırarak) belirler; saat 03:00 gibi gece yarısını
+// geçmiş ama henüz 09:00 olmamış saatlerde de doğru sonucu verir.
+function isGroupResetToday(now) {
+  const resetAt = getGroupNextResetAt(now);
+  const a = new Date(resetAt), b = new Date(now);
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 const STREAK_BONUS = 20; // tur limitine kadar hiç kaçırmadan gidenin alacağı ekstra puan
 
@@ -144,7 +160,9 @@ const T = {
     groupAllCorrectMsg: "Tebrikler, hepsini doğru yaptığınız için tur puanına +20 bonus eklendi!",
     roundWinnerLabel: "Turun Galibi", roundWinnerDesc: "En az hatayı yaptı ve tur boyunca toplanan tüm puanları kazandı:",
     validWord: "Geçerli kelime!", checking: "Kontrol ediliyor...", groupLimitReached: "En fazla 50 gruba katılabilirsin",
-    dailyGroupLimit: "Günde en fazla 3 grup kurabilirsin", dailyLimitReached: "Süre doldu", dailyLimitReachedFull: "Bugünlük 2 saatlik oyun süreniz doldu. Yarın saat 09:00'da tekrar oynayabilirsiniz.", groupGone: "Bu grup artık mevcut değil.",
+    dailyGroupLimit: "Günde en fazla 3 grup kurabilirsin", closesInGame: "Oyun bitince kapanacak", groupGone: "Bu grup artık mevcut değil.",
+    dailyPlayLimitShort: "Süre doldu", dailyPlayLimitToday: "Bu grubun günlük oyun süresi (2 saat) doldu. Bugün saat 09:00'da tekrar oynayabilirsiniz.",
+    dailyPlayLimitTomorrow: "Bu grubun günlük oyun süresi (2 saat) doldu. Yarın saat 09:00'da tekrar oynayabilirsiniz.",
     closesIn: "kapanıyor", worldRank: "sırada", nextMedal: "Sıradaki madalya",
     lobbyFull: "Lobi dolu (15 kişi)", inviteMember: "Üye Davet Et", invite: "Davet Et", groupChat: "Grup Sohbeti",
     submit: "Gönder", solo: "Tek Oyunculu", roundOf: "Kelime", of: "/", backToWheel: "Çarka Dön",
@@ -196,7 +214,9 @@ const T = {
     groupAllCorrectMsg: "Congratulations, +20 bonus points were added to the round pool for getting them all right!",
     roundWinnerLabel: "Round Winner", roundWinnerDesc: "Made the fewest mistakes and won all the points collected during the round:",
     validWord: "Valid word!", checking: "Checking...", groupLimitReached: "You can join at most 50 groups",
-    dailyGroupLimit: "You can create at most 3 groups per day", dailyLimitReached: "Time's up", dailyLimitReachedFull: "You've used today's 2-hour play time for this group. You can play again tomorrow at 09:00.", groupGone: "This group no longer exists.",
+    dailyGroupLimit: "You can create at most 3 groups per day", closesInGame: "Will close when the game ends", groupGone: "This group no longer exists.",
+    dailyPlayLimitShort: "Time's up", dailyPlayLimitToday: "This group's daily play time (2 hours) is up. You can play again today at 09:00.",
+    dailyPlayLimitTomorrow: "This group's daily play time (2 hours) is up. You can play again tomorrow at 09:00.",
     closesIn: "closes in", worldRank: "rank", nextMedal: "Next medal",
     lobbyFull: "Lobby full (15 players)", inviteMember: "Invite Member", invite: "Invite", groupChat: "Group Chat",
     submit: "Submit", solo: "Solo", roundOf: "Word", of: "/", backToWheel: "Back to Wheel",
@@ -248,7 +268,9 @@ const T = {
     groupAllCorrectMsg: "Glückwunsch, dem Rundentopf wurden +20 Bonuspunkte hinzugefügt, weil alles richtig war!",
     roundWinnerLabel: "Rundensieger", roundWinnerDesc: "Hat die wenigsten Fehler gemacht und alle in dieser Runde gesammelten Punkte gewonnen:",
     validWord: "Gültiges Wort!", checking: "Wird geprüft...", groupLimitReached: "Maximal 50 Gruppen möglich",
-    dailyGroupLimit: "Du kannst höchstens 3 Gruppen pro Tag erstellen", dailyLimitReached: "Zeit abgelaufen", dailyLimitReachedFull: "Die heutige 2-Stunden-Spielzeit dieser Gruppe ist aufgebraucht. Ihr könnt morgen um 09:00 Uhr wieder spielen.", groupGone: "Diese Gruppe existiert nicht mehr.",
+    dailyGroupLimit: "Du kannst höchstens 3 Gruppen pro Tag erstellen", closesInGame: "Schließt, wenn das Spiel endet", groupGone: "Diese Gruppe existiert nicht mehr.",
+    dailyPlayLimitShort: "Zeit abgelaufen", dailyPlayLimitToday: "Die tägliche Spielzeit (2 Stunden) dieser Gruppe ist aufgebraucht. Ihr könnt heute um 09:00 Uhr wieder spielen.",
+    dailyPlayLimitTomorrow: "Die tägliche Spielzeit (2 Stunden) dieser Gruppe ist aufgebraucht. Ihr könnt morgen um 09:00 Uhr wieder spielen.",
     closesIn: "schließt in", worldRank: "Rang", nextMedal: "Nächste Medaille",
     lobbyFull: "Lobby voll (15 Spieler)", inviteMember: "Mitglied einladen", invite: "Einladen", groupChat: "Gruppenchat",
     submit: "Senden", solo: "Solo", roundOf: "Wort", of: "/", backToWheel: "Zurück zum Rad",
@@ -289,10 +311,10 @@ const MedalUltra = makeIcon("🎖️");
 const MEDAL_TIERS = [
   { key: "start", threshold: 5000, label: { tr: "Başlangıç", en: "Starter", de: "Start" }, color: "#8fb3ff", icon: MedalStart },
   { key: "bronze", threshold: 10000, label: { tr: "Bronz", en: "Bronze", de: "Bronze" }, color: "#c17a4a", icon: MedalBronze },
-  { key: "ultra", threshold: 10000, label: { tr: "Ultra Süper Oyuncu", en: "Ultra Super Player", de: "Ultra-Superspieler" }, color: "#ff2e63", icon: MedalUltra },
-  { key: "silver", threshold: 25000, label: { tr: "Gümüş", en: "Silver", de: "Silber" }, color: "#b9c2cc", icon: MedalSilver },
-  { key: "gold", threshold: 55000, label: { tr: "Altın", en: "Gold", de: "Gold" }, color: "#f2b705", icon: MedalGold },
-  { key: "diamond", threshold: 110000, label: { tr: "Elmas", en: "Diamond", de: "Diamant" }, color: "#5fd1e0", icon: Gem },
+  { key: "silver", threshold: 20000, label: { tr: "Gümüş", en: "Silver", de: "Silber" }, color: "#b9c2cc", icon: MedalSilver },
+  { key: "gold", threshold: 35000, label: { tr: "Altın", en: "Gold", de: "Gold" }, color: "#f2b705", icon: MedalGold },
+  { key: "diamond", threshold: 60000, label: { tr: "Elmas", en: "Diamond", de: "Diamant" }, color: "#5fd1e0", icon: Gem },
+  { key: "ultra", threshold: 1000000, label: { tr: "Ultra Süper Oyuncu", en: "Ultra Super Player", de: "Ultra-Superspieler" }, color: "#ff2e63", icon: MedalUltra },
   { key: "king", threshold: 100000000, label: { tr: "Oyunun Kralı", en: "King of the Game", de: "König des Spiels" }, color: "#ff5d8f", icon: Crown },
 ];
 
@@ -453,30 +475,27 @@ function formatRemaining(ms) {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-// Bir grubun 2 saatlik hakkından ne kadarının kaldığını hesaplar. Bu,
-// biriken (kapanmış oturumlardan) usedMs ile, eğer şu an bir round fiilen
-// oynanıyorsa (spinning/playing) activeSince'ten bu yana geçen sürenin
-// toplamıdır. Grup hiç oynanmadıysa (activeSince hiç set edilmediyse ve
-// usedMs 0'sa) süre hiç azalmaz. Eski (bu özellikten önce oluşmuş) gruplar
-// için usedMs alanı yoktur; onlar için null döner (süresiz).
+// Bir grubun o GÜNKÜ (mevcut 09:00-09:00 periyodundaki) 2 saatlik
+// hakkından ne kadarının kaldığını hesaplar. Bu, biriken (kapanmış
+// oturumlardan) usedMs ile, eğer şu an bir round fiilen oynanıyorsa
+// (spinning/playing) activeSince'ten bu yana geçen sürenin toplamıdır.
+// Grup hiç oynanmadıysa süre hiç azalmaz. Veritabanındaki periodStart şu
+// anki periyottan farklıysa (yani 09:00 geçilmiş ama henüz veritabanına
+// yazılmamışsa) burada da sıfırlanmış gibi gösterilir — böylece "süre
+// doldu" uyarısı, günün sayaçları arka planda henüz sıfırlanmamış olsa
+// bile 09:00'ı geçer geçmez ekrandan kalkar. Eski (bu özellikten önce
+// oluşmuş) gruplar için usedMs alanı yoktur; onlar için null döner (süresiz).
 function groupRemainingMs(g, gamesObj, now) {
   if (!g || g.usedMs === undefined) return null;
-  // Saat 09:00'ı geçtiyse (bir sonraki sıfırlama zamanına ulaşıldıysa) henüz
-  // veritabanına yazılmamış olsa bile ekranda süre dolu gösterilsin.
-  if (g.budgetResetAt && now >= g.budgetResetAt) return GROUP_BUDGET_MS;
+  const currentPeriod = getGroupPeriodStart(now);
+  const samePeriod = g.periodStart === currentPeriod;
+  const usedMs = samePeriod ? (g.usedMs || 0) : 0;
+  const activeSince = samePeriod ? (g.activeSince || null) : null;
   const isPlaying = Object.values(gamesObj || {}).some(
     gm2 => gm2 && gm2.groupId === g.id && (gm2.status === "playing" || gm2.status === "spinning")
   );
-  const consumed = (g.usedMs || 0) + (g.activeSince && isPlaying ? now - g.activeSince : 0);
+  const consumed = usedMs + (activeSince && isPlaying ? now - activeSince : 0);
   return GROUP_BUDGET_MS - consumed;
-}
-
-// Grubun günlük 2 saatlik hakkı tükendi mi? (yeni bir tur/oyun başlatmayı
-// engellemek için kullanılır; hâlihazırda devam eden bir tur bundan
-// etkilenmez, sadece lobiden yeni bir çark çevirme engellenir.)
-function groupLimitReached(g, gamesObj, now) {
-  const remaining = groupRemainingMs(g, gamesObj, now);
-  return remaining != null && remaining <= 0;
 }
 
 function WordFeedbackBadge({ feedback, t }) {
@@ -708,67 +727,16 @@ function App() {
     return () => clearInterval(iv);
   }, []);
 
-  // ---- telefon / tarayıcı "geri" tuşu desteği --------------------------
-  // Bu uygulama tek sayfalık (SPA) olduğu için ekranlar arasında (menü →
-  // gruplar → sohbet → lobi → oyun) tarayıcı geçmişine hiçbir kayıt
-  // eklenmiyordu. Bu yüzden kullanıcı telefonun/tarayıcının geri tuşuna
-  // bastığında tarayıcı sayfadan tamamen çıkmaya/yenilemeye çalışıyordu —
-  // bu da özellikle Firebase'den henüz veri gelmeden sayfa yarım şekilde
-  // yeniden başladığında "Cannot read properties of undefined" hatasıyla
-  // çökmesine yol açıyordu. Çözüm: her ekran girişinde geçmişe bir kayıt
-  // ekliyoruz; geri tuşuna basılınca (popstate) sayfadan çıkmak yerine
-  // uygulama içinde bir önceki ekrana dönüyoruz (aynı anda geçmişe yeni
-  // bir kayıt ekleyerek derinliği koruyoruz, böylece sayfa hiç terk
-  // edilmiyor).
-  const screenStateRef = useRef({ screen, activeGroupId, activeGameId, games });
-  useEffect(() => {
-    screenStateRef.current = { screen, activeGroupId, activeGameId, games };
-  }, [screen, activeGroupId, activeGameId, games]);
-
-  // leaveLobby, o anki `me` kullanıcısını okuyarak kişiyi lobi üyelerinden
-  // çıkarır. Aşağıdaki popstate efekti SADECE bir kez (mount'ta) kayıt
-  // olduğu için, içinde doğrudan `leaveLobby` çağrılsaydı bu her zaman
-  // *ilk render'daki* (henüz giriş yapılmamışken `me` hâlâ null olan)
-  // leaveLobby kopyasını kullanırdı — bu da geri tuşuna basılınca `me`
-  // null olduğu için çökmeye yol açıyordu. Bunun yerine her render'da
-  // güncellenen bir ref üzerinden en güncel fonksiyonu çağırıyoruz.
-  const leaveLobbyRef = useRef(null);
-  useEffect(() => { leaveLobbyRef.current = leaveLobby; });
-
-  useEffect(() => {
-    window.history.pushState({ ktScreen: screen }, "");
-  }, [screen]);
-
-  useEffect(() => {
-    const onPopState = () => {
-      const { screen: cur, activeGroupId: agid, activeGameId: aggid, games: g } = screenStateRef.current;
-      if (cur === "lobby" && aggid) {
-        const game = g[aggid];
-        if (game && game.status !== "lobby") {
-          setScreen("chat"); // aktif bir tur oynanıyorsa oyunu terk etmeden sohbete dön
-        } else if (leaveLobbyRef.current) {
-          leaveLobbyRef.current(aggid); // bekleme odasındaysa lobiden çık
-        }
-      } else if (cur === "chat") {
-        setScreen("groups");
-      } else if (["groups", "solo", "leaderboard", "notifications", "admin", "adminSpectate"].includes(cur)) {
-        setScreen("menu");
-      }
-      // "menu" (ve "auth") ekranında geri tuşu doğal davranışına bırakılır —
-      // kullanıcı isterse uygulamadan çıkabilir.
-    };
-    window.addEventListener("popstate", onPopState);
-    return () => window.removeEventListener("popstate", onPopState);
-  }, []); // eslint-disable-line
-
-  // ---- daily play-time budget upkeep: a group's 2-hour budget only counts
-  // time during which a round is actually being played (spinning/playing)
-  // in it — sitting in chat, or waiting in a lobby that never starts, never
-  // burns any of it. Once the budget is used up, the group is NOT deleted:
-  // members simply can't start a new round until the budget refills, which
-  // happens automatically every day at 09:00 (local time). ----
-  function cleanExpiredGroups(groupsObj, gamesObj, onlineUsersObj) {
+  // ---- daily group play-time sweep: a group's 2-hour daily budget only
+  // counts time during which a round is actually being played
+  // (spinning/playing) in it — sitting in chat, or waiting in a lobby that
+  // never starts, never burns any of it. Once 09:00 passes, the budget for
+  // every group resets on its own (the group itself is NEVER closed or
+  // deleted for running out of time — starting a *new* game is simply
+  // blocked until the next 09:00, see sendGameInvite). ----
+  function cleanExpiredGroups(groupsObj, gamesObj) {
     const now = Date.now();
+    const currentPeriod = getGroupPeriodStart(now);
     const nextGroups = { ...groupsObj };
     // groupUpdates/gameUpdates only ever contain the specific records that
     // actually changed (keyed by their full db path), so the caller can
@@ -777,68 +745,40 @@ function App() {
     // full-tree overwrite every 5s on every connected client, which is
     // exactly what was clobbering other players' concurrent game actions.
     const groupUpdates = {};
-    let nextGames = { ...gamesObj };
-    const gameUpdates = {};
-
-    // Terk edilmiş turlar: bir oyun "playing"/"spinning" durumundayken
-    // (sekme kapanması, çökme, bağlantı kopması gibi bir sebeple) o turdaki
-    // hiçbir üye artık çevrimiçi değilse, kimse hamle yapmadığı için bu
-    // durum SONSUZA DEK böyle kalır — ve grubun 2 saatlik hakkı, hiç kelime
-    // yazılmadan, sadece geçen duvar-saatiyle tükenmeye devam eder. Bunu
-    // önlemek için, aktif üyesi çevrimiçi olmayan turları otomatik olarak
-    // lobiye geri alıyoruz (oyun silinmiyor, sadece tur sıfırlanıyor).
-    // onlineUsersObj henüz yüklenmediyse (ilk açılışta) bu kontrol atlanır.
-    if (onlineUsersObj) {
-      for (const [gid, game] of Object.entries(gamesObj || {})) {
-        if (!game || (game.status !== "playing" && game.status !== "spinning")) continue;
-        const activePlayers = (game.activeMembers && game.activeMembers.length) ? game.activeMembers : (game.members || []);
-        const anyoneOnline = activePlayers.some(m => onlineUsersObj[m]);
-        if (!anyoneOnline) {
-          const resetGame = {
-            ...game, status: "lobby", currentLetter: null, wordChain: [],
-            activeMembers: [...(game.members || [])], eliminatedPlayers: {}, lastElimination: null,
-          };
-          nextGames[gid] = resetGame;
-          gameUpdates["games/" + gid] = resetGame;
-        }
-      }
-    }
-
     for (const [id, g] of Object.entries(groupsObj)) {
-      if (g.usedMs === undefined) continue; // legacy groups created before this feature: never auto-limited
-      const gamesForGroup = Object.values(nextGames || {}).filter(gm2 => gm2 && gm2.groupId === id);
+      if (g.usedMs === undefined) continue; // legacy groups created before this feature: never track/limit
+      const gamesForGroup = Object.values(gamesObj || {}).filter(gm2 => gm2 && gm2.groupId === id);
       const isPlaying = gamesForGroup.some(gm2 => gm2.status === "playing" || gm2.status === "spinning");
 
       let usedMs = g.usedMs || 0;
       let activeSince = g.activeSince || null;
-      let budgetResetAt = g.budgetResetAt || nextDailyResetTime(now);
+      let periodStart = g.periodStart !== undefined ? g.periodStart : currentPeriod;
       let touched = false;
 
-      // her sabah 09:00'da hak tamamen yeniden dolar
-      if (now >= budgetResetAt) {
+      // saat 09:00 geçildiyse (yeni bir "oyun günü" başladıysa) günlük
+      // sayaç sıfırlanır
+      if (periodStart !== currentPeriod) {
         usedMs = 0;
-        if (activeSince) activeSince = now; // o an oynanan bir tur varsa sayacı bu andan itibaren yeniden başlat
-        budgetResetAt = nextDailyResetTime(now);
+        activeSince = isPlaying ? now : null;
+        periodStart = currentPeriod;
         touched = true;
-      }
-
-      // start/stop the active-play stopwatch as playing begins/ends
-      if (isPlaying && !activeSince) {
+      } else if (isPlaying && !activeSince) {
+        // start/stop the active-play stopwatch as playing begins/ends
         activeSince = now; touched = true;
       } else if (!isPlaying && activeSince) {
         usedMs += now - activeSince;
         activeSince = null; touched = true;
       }
 
-      if (!g.budgetResetAt) touched = true; // ilk kez bir sıfırlama zamanı atanıyorsa kaydet
-
       if (touched) {
-        const updated = { ...g, usedMs, activeSince, budgetResetAt, pendingDelete: false };
+        const updated = { ...g, usedMs, activeSince, periodStart, pendingDelete: false };
         nextGroups[id] = updated;
         groupUpdates["groups/" + id] = updated;
       }
     }
-    for (const [gid, game] of Object.entries(nextGames)) {
+    const nextGames = { ...gamesObj };
+    const gameUpdates = {};
+    for (const [gid, game] of Object.entries(gamesObj)) {
       if (!nextGroups[game.groupId]) { delete nextGames[gid]; gameUpdates["games/" + gid] = null; }
     }
     return { groups: nextGroups, games: nextGames, groupUpdates, gameUpdates };
@@ -929,17 +869,61 @@ function App() {
   // change), so it still needs its own lightweight periodic check ----
   const groupsRef = useRef(groups);
   const gamesRef = useRef(games);
-  const onlineUsersRef = useRef(onlineUsers);
   useEffect(() => { groupsRef.current = groups; }, [groups]);
   useEffect(() => { gamesRef.current = games; }, [games]);
-  useEffect(() => { onlineUsersRef.current = onlineUsers; }, [onlineUsers]);
   useEffect(() => {
     const iv = setInterval(async () => {
-      const { groupUpdates, gameUpdates } = cleanExpiredGroups(groupsRef.current, gamesRef.current, onlineUsersRef.current);
+      const { groupUpdates, gameUpdates } = cleanExpiredGroups(groupsRef.current, gamesRef.current);
       const cleanupUpdates = { ...groupUpdates, ...gameUpdates };
       if (Object.keys(cleanupUpdates).length) await updatePaths(cleanupUpdates);
     }, 5000);
     return () => clearInterval(iv);
+  }, []);
+
+  // ---- phone/tarayıcı "geri" tuşu desteği: bu uygulama tek bir sayfa
+  // (SPA) olduğu için ekranlar arasında normalde hiç tarayıcı geçmişi
+  // (history) birikmiyordu. Bu yüzden telefonun geri tuşuna/kaydırma
+  // hareketine basıldığında (özellikle lobide beklerken) tarayıcı/WebView
+  // kendi varsayılan davranışını uyguluyor ve uygulamayı beklenmedik bir
+  // duruma (uyarı ekranı, sayfa yenilenmesi vb.) sokuyordu. Bunu önlemek
+  // için: alt bir ekrana her girildiğinde bir history kaydı ekliyoruz;
+  // geri tuşuna basıldığında (popstate) tarayıcının sayfadan çıkmasına
+  // izin vermek yerine, o ekranın kendi "geri" butonuyla aynı işlemi
+  // (gerekirse lobiden çıkma gibi) biz tetikliyoruz. ----
+  const screenRef = useRef(screen);
+  useEffect(() => { screenRef.current = screen; }, [screen]);
+  const activeGameIdRef = useRef(activeGameId);
+  useEffect(() => { activeGameIdRef.current = activeGameId; }, [activeGameId]);
+  const TOP_LEVEL_SCREENS = ["auth", "menu"];
+  useEffect(() => {
+    if (!TOP_LEVEL_SCREENS.includes(screen)) {
+      window.history.pushState({ ktScreen: screen }, "");
+    }
+    // eslint-disable-next-line
+  }, [screen]);
+  useEffect(() => {
+    function onPopState() {
+      const cur = screenRef.current;
+      if (cur === "lobby") {
+        const game = gamesRef.current[activeGameIdRef.current];
+        if (game && game.status === "lobby") {
+          // lobide bekleme ekranındaysa, geri tuşu "Lobiden Çık" ile aynı
+          // işlemi yapar (grubu/oyunu bozuk bir durumda bırakmadan)
+          leaveLobby(activeGameIdRef.current);
+        } else {
+          setScreen("chat");
+        }
+      } else if (cur === "chat") {
+        setScreen("groups");
+      } else if (["groups", "solo", "leaderboard", "notifications", "admin"].includes(cur)) {
+        setScreen("menu");
+      }
+      // "menu"/"auth" ekranındaysak hiçbir şey yapmıyoruz; telefonun
+      // varsayılan geri davranışı (uygulamadan çıkma) devreye girer.
+    }
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+    // eslint-disable-next-line
   }, []);
 
   // keep `me` synced with latest users store (for score updates elsewhere)
@@ -1131,7 +1115,7 @@ function App() {
 
     const id = uid();
     const now = Date.now();
-    const g = { id, name: newGroupName.trim(), owner: me.username, members: [me.username], messages: [], createdAt: now, usedMs: 0, activeSince: null, pendingDelete: false, budgetResetAt: nextDailyResetTime(now) };
+    const g = { id, name: newGroupName.trim(), owner: me.username, members: [me.username], messages: [], createdAt: now, usedMs: 0, activeSince: null, periodStart: getGroupPeriodStart(now), pendingDelete: false };
     // brand-new id, so a plain scoped set is safe — nothing else can already
     // be writing to this path
     await (await waitForFbdb()).ref("groups/" + id).set(g);
@@ -1228,6 +1212,12 @@ function App() {
   }
 
   async function sendGameInvite(groupId) {
+    const grpForLimit = groups[groupId];
+    const remainingForLimit = groupRemainingMs(grpForLimit, games, Date.now());
+    if (remainingForLimit !== null && remainingForLimit <= 0) {
+      alert(isGroupResetToday(Date.now()) ? t.dailyPlayLimitToday : t.dailyPlayLimitTomorrow);
+      return;
+    }
     const gameId = uid();
     const newGame = {
       id: gameId, groupId, host: me.username, lang, status: "lobby",
@@ -1262,23 +1252,25 @@ function App() {
   }
 
   async function leaveLobby(gameId) {
-    if (!gameId) { setScreen("chat"); return; }
     let empty = false;
     await transactRecord("games/" + gameId, current => {
       if (!current) return current;
-      const nextMembers = (current.members || []).filter(m => m !== (me && me.username));
+      const nextMembers = current.members.filter(m => m !== me.username);
       empty = nextMembers.length === 0;
       return { ...current, members: nextMembers };
-    }).catch(() => {});
+    });
     // Boş kalan (kimsenin bulunmadığı) lobiyi ortada bırakmamak için siliyoruz.
     if (empty) { await (await waitForFbdb()).ref("games/" + gameId).remove().catch(() => {}); }
     setScreen("chat");
   }
 
   async function startSpin(gameId) {
-    const game0 = games[gameId];
-    const grp0 = game0 && groups[game0.groupId];
-    if (grp0 && groupLimitReached(grp0, games, Date.now())) return; // günlük 2 saatlik hak tükendi
+    const gForLimit = games[gameId] && groups[games[gameId].groupId];
+    const remainingForLimit = gForLimit ? groupRemainingMs(gForLimit, games, Date.now()) : null;
+    if (remainingForLimit !== null && remainingForLimit <= 0) {
+      alert(isGroupResetToday(Date.now()) ? t.dailyPlayLimitToday : t.dailyPlayLimitTomorrow);
+      return;
+    }
     await transactRecord("games/" + gameId, current => {
       if (!current) return current;
       const letters = ALPHABETS[current.lang].filter(l => current.lang === "tr" ? l !== "Ğ" : true);
@@ -1702,7 +1694,7 @@ function App() {
                   <Swords size={18} className="text-white/40" />
                   {remaining != null && (
                     <span className="flex items-center gap-1 text-[10px] font-semibold" style={{ color: remaining <= 0 ? "#ff8a8a" : remaining < 5 * 60 * 1000 ? "#ffb84d" : "rgba(255,255,255,0.35)" }}>
-                      <Clock size={9} /> {remaining > 0 ? formatRemaining(remaining) : t.dailyLimitReached}
+                      <Clock size={9} /> {remaining > 0 ? formatRemaining(remaining) : t.dailyPlayLimitShort}
                     </span>
                   )}
                 </div>
@@ -1773,7 +1765,7 @@ function App() {
             </button>
             {remaining != null && (
               <span className="flex items-center gap-1 text-[10px] font-semibold" style={{ color: remaining <= 0 ? "#ff8a8a" : remaining < 5 * 60 * 1000 ? "#ffb84d" : "rgba(255,255,255,0.4)" }}>
-                <Clock size={10} /> {remaining > 0 ? formatRemaining(remaining) : t.dailyLimitReached}
+                <Clock size={10} /> {remaining > 0 ? formatRemaining(remaining) : t.dailyPlayLimitShort}
               </span>
             )}
           </div>
@@ -1856,21 +1848,16 @@ function App() {
       return <GoneScreen bg={bg} message={t.groupGone} backLabel={t.back} onBack={() => setScreen("groups")} />;
     }
     if (game.status !== "lobby") {
-      const activeGrp = groups[game.groupId];
-      const budgetRemainingMs = activeGrp ? groupRemainingMs(activeGrp, games, tick) : null;
       return <GroupGameView game={game} me={me} t={t} onSpinEnd={(token) => finishSpin(activeGameId, token)}
         onSubmitWord={(w, ok, timedOut) => submitWord(activeGameId, w, ok, timedOut)}
         onNextRound={() => backToWheelScreen(activeGameId)}
-        onExitToChat={() => setScreen("chat")} onGameOver={() => setScreen("menu")} lang={game.lang} onlineUsers={onlineUsers}
-        budgetRemainingMs={budgetRemainingMs} />;
+        onExitToChat={() => setScreen("chat")} onGameOver={() => setScreen("menu")} lang={game.lang} onlineUsers={onlineUsers} />;
     }
     const grp = groups[game.groupId];
     // Çarkı sadece grubu kuran kişi çevirebilir (host değil, grup sahibi) —
     // böylece çark kimsenin beklemediği bir anda "rastgele" dönmez, yalnızca
     // grubun kurucusu bilerek bastığında döner.
     const isOwner = !!grp && grp.owner === me.username;
-    const remaining = grp ? groupRemainingMs(grp, games, tick) : null;
-    const limitReached = grp ? groupLimitReached(grp, games, tick) : false;
     return (
       <div className="min-h-screen w-full p-5 flex flex-col items-center" style={{ fontFamily: "Inter, sans-serif" }}>
         {bg}
@@ -1879,30 +1866,21 @@ function App() {
         </button>
         <div className="mt-16 text-center mb-6">
           <h2 className="text-xl font-bold text-white" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.lobby}</h2>
-          <p className="text-white/50 text-sm">{(game.members || []).length}/{game.maxMembers} · {t.waitingPlayers}</p>
-          {remaining != null && (
-            <p className="flex items-center justify-center gap-1 text-xs font-semibold mt-2"
-              style={{ color: remaining <= 0 ? "#ff8a8a" : remaining < 5 * 60 * 1000 ? "#ffb84d" : "rgba(255,255,255,0.4)" }}>
-              <Clock size={11} /> {remaining > 0 ? formatRemaining(remaining) : t.dailyLimitReached}
-            </p>
-          )}
+          <p className="text-white/50 text-sm">{game.members.length}/{game.maxMembers} · {t.waitingPlayers}</p>
         </div>
         <div className="flex flex-wrap gap-2 justify-center max-w-md mb-8">
-          {(game.members || []).map(m => (
+          {game.members.map(m => (
             <div key={m} className="px-3 py-2 rounded-full bg-white/10 text-white text-sm flex items-center gap-1">
               {!!grp && m === grp.owner && <Crown size={12} color="#f2b705" />} {m} <OnlineDot online={isOnline(m)} />
             </div>
           ))}
         </div>
-        {limitReached ? (
-          <p className="text-center text-sm max-w-xs" style={{ color: "#ffb84d" }}>{t.dailyLimitReachedFull}</p>
-        ) : isOwner ? (
+        {isOwner && (
           <button onClick={() => startSpin(activeGameId)} className="px-8 py-4 rounded-full font-bold text-lg flex items-center gap-2" style={{ background: "#f2b705", color: "#1b1030", fontFamily: "Fredoka, sans-serif" }}>
             <Play size={20} /> {t.startGame}
           </button>
-        ) : (
-          <p className="text-white/40 text-sm">{t.onlyOwnerCanSpin}</p>
         )}
+        {!isOwner && <p className="text-white/40 text-sm">{t.onlyOwnerCanSpin}</p>}
       </div>
     );
   }
@@ -2027,7 +2005,7 @@ function App() {
 // =========================================================
 // GROUP GAME VIEW (wheel + relay chain for a lobby's round)
 // =========================================================
-function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onExitToChat, onGameOver, lang, isSpectator, onlineUsers = {}, budgetRemainingMs = null }) {
+function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onExitToChat, onGameOver, lang, isSpectator, onlineUsers = {} }) {
   const [wordInput, setWordInput] = useState("");
   const [timeLeft, setTimeLeft] = useState(WORD_TIME_SECONDS);
   const [checking, setChecking] = useState(false);
@@ -2120,19 +2098,11 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
       <div className="fixed inset-0 -z-10" style={{ background: "radial-gradient(ellipse at 25% 15%, #2d1755 0%, #1c0f38 45%, #0f0a1e 100%)" }} />
       {flash && <FullScreenFlash key={flash.key} ok={flash.ok} onDone={() => setFlash(null)} />}
       <button onClick={onExitToChat} className="absolute top-5 left-5 p-2 rounded-full bg-white/10 text-white"><ArrowLeft size={18} /></button>
-      <div className="absolute top-5 right-5 flex flex-col items-end gap-2">
-        {budgetRemainingMs != null && (
-          <span className="flex items-center gap-1 px-3 py-2 rounded-full bg-black/30 text-xs font-semibold"
-            style={{ color: budgetRemainingMs <= 0 ? "#ff8a8a" : budgetRemainingMs < 5 * 60 * 1000 ? "#ffb84d" : "rgba(255,255,255,0.6)" }}>
-            <Clock size={11} /> {budgetRemainingMs > 0 ? formatRemaining(budgetRemainingMs) : t.dailyLimitReached}
-          </span>
-        )}
-        {spectatorMode && (
-          <span className="flex items-center gap-1 px-3 py-2 rounded-full bg-purple-600/70 text-white text-xs font-bold">
-            <Shield size={12} /> {t.spectating}
-          </span>
-        )}
-      </div>
+      {spectatorMode && (
+        <span className="absolute top-5 right-5 flex items-center gap-1 px-3 py-2 rounded-full bg-purple-600/70 text-white text-xs font-bold">
+          <Shield size={12} /> {t.spectating}
+        </span>
+      )}
       {elimToast && (
         <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl text-center font-bold text-sm shadow-lg"
           style={{ background: "#ff6f61", color: "#1b1030", maxWidth: "88vw" }}>
