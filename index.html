@@ -106,6 +106,21 @@ const POINTS_PER_WORD = 10;
 // saat 09:00'da otomatik olarak yeniden dolar.
 const GROUP_BUDGET_MS = 2 * 60 * 60 * 1000;
 const DAILY_RESET_HOUR = 9; // her sabah 09:00'da süre sıfırlanır
+// Bir oyun "playing"/"spinning" durumunda kalsa bile, üzerinden bu süreden
+// uzun zaman geçtiyse artık gerçekten oynanmıyor demektir (biri çarkı
+// çevirip animasyon bitmeden sekmeyi kapatmış, ağ kopmuş, uygulama
+// çökmüş vb.). Böyle "takılı kalmış" bir oyun, aşağıdaki kontrol
+// olmadan grubun 2 saatlik hakkını kimse oynamadan sonsuza kadar
+// tüketmeye devam ederdi — asıl "boşuna süre doldu" hatasının kaynağı
+// buydu. Her gerçek oyun hamlesi (çark çevirme, kelime yazma, tur
+// bitişi) lastActivityAt'i günceller; bu yenilenmezse oyun "aktif
+// oynanmıyor" sayılır ve süre sayacı durur.
+const STALE_GAME_MS = 3 * 60 * 1000; // 3 dakika hareketsizlik = takılı kalmış sayılır
+function isGameActivelyPlaying(gm, now) {
+  if (!gm || (gm.status !== "playing" && gm.status !== "spinning")) return false;
+  const last = gm.lastActivityAt || 0;
+  return (now - last) < STALE_GAME_MS;
+}
 
 // Verilen zamandan sonraki ilk saat 09:00'ı (yerel saat) döndürür.
 function nextDailyResetTime(fromTs) {
@@ -465,7 +480,7 @@ function groupRemainingMs(g, gamesObj, now) {
   // veritabanına yazılmamış olsa bile ekranda süre dolu gösterilsin.
   if (g.budgetResetAt && now >= g.budgetResetAt) return GROUP_BUDGET_MS;
   const isPlaying = Object.values(gamesObj || {}).some(
-    gm2 => gm2 && gm2.groupId === g.id && (gm2.status === "playing" || gm2.status === "spinning")
+    gm2 => gm2 && gm2.groupId === g.id && isGameActivelyPlaying(gm2, now)
   );
   const consumed = (g.usedMs || 0) + (g.activeSince && isPlaying ? now - g.activeSince : 0);
   return GROUP_BUDGET_MS - consumed;
@@ -770,7 +785,7 @@ function App() {
     for (const [id, g] of Object.entries(groupsObj)) {
       if (g.usedMs === undefined) continue; // legacy groups created before this feature: never auto-limited
       const gamesForGroup = Object.values(gamesObj || {}).filter(gm2 => gm2 && gm2.groupId === id);
-      const isPlaying = gamesForGroup.some(gm2 => gm2.status === "playing" || gm2.status === "spinning");
+      const isPlaying = gamesForGroup.some(gm2 => isGameActivelyPlaying(gm2, now));
 
       let usedMs = g.usedMs || 0;
       let activeSince = g.activeSince || null;
@@ -804,7 +819,17 @@ function App() {
     const nextGames = { ...gamesObj };
     const gameUpdates = {};
     for (const [gid, game] of Object.entries(gamesObj)) {
-      if (!nextGroups[game.groupId]) { delete nextGames[gid]; gameUpdates["games/" + gid] = null; }
+      if (!nextGroups[game.groupId]) { delete nextGames[gid]; gameUpdates["games/" + gid] = null; continue; }
+      // Takılı kalmış (3+ dakikadır hareketsiz) "playing"/"spinning" bir tur
+      // varsa, oyuncuları sonsuza dek beklemeye/kilitli kalmaya mahkum
+      // etmemek için otomatik olarak lobiye geri döndürülür. Böylece hem
+      // grubun bütçesi boşa akmaz hem de içerideki gerçek oyuncular
+      // (varsa) takılı kalmaz.
+      if ((game.status === "playing" || game.status === "spinning") && !isGameActivelyPlaying(game, now)) {
+        const healed = { ...game, status: "lobby" };
+        nextGames[gid] = healed;
+        gameUpdates["games/" + gid] = healed;
+      }
     }
     return { groups: nextGroups, games: nextGames, groupUpdates, gameUpdates };
   }
@@ -1198,6 +1223,7 @@ function App() {
       currentLetter: null, turnIndex: 0, roundNumber: 0,
       wordChain: [], lastResults: [], spinToken: 0,
       activeMembers: [me.username], eliminatedPlayers: {}, lastElimination: null, elimSeq: 0,
+      lastActivityAt: Date.now(),
     };
     const grp = await transactRecord("groups/" + groupId, current => {
       if (!current) return current;
@@ -1258,6 +1284,7 @@ function App() {
         activeMembers: [...current.members],
         eliminatedPlayers: {},
         lastElimination: null,
+        lastActivityAt: Date.now(),
       };
     });
   }
@@ -1270,7 +1297,7 @@ function App() {
       // moved on to a newer spin
       if (expectedToken !== undefined && current.spinToken !== expectedToken) return current;
       if (current.status !== "spinning") return current;
-      return { ...current, status: "playing" };
+      return { ...current, status: "playing", lastActivityAt: Date.now() };
     });
   }
 
@@ -1308,7 +1335,7 @@ function App() {
 
       if (!isElim) {
         // doğru cevap: sıradaki aktif oyuncuya geç, kimse elenmedi
-        return { ...current, wordChain: nextChain, turnIndex: (turnIdx + 1) % activeMembers.length };
+        return { ...current, wordChain: nextChain, turnIndex: (turnIdx + 1) % activeMembers.length, lastActivityAt: Date.now() };
       }
 
       // birisi elendi
@@ -1331,6 +1358,7 @@ function App() {
           ...current, wordChain: nextChain, status: "results", lastResults: nextChain,
           roundWinner: winner, roundPool: winner ? teamPoints : 0,
           activeMembers: remaining, eliminatedPlayers, lastElimination, elimSeq,
+          lastActivityAt: Date.now(),
         };
       }
 
@@ -1340,7 +1368,7 @@ function App() {
       const newTurnIndex = remaining.length ? (elimIdx % remaining.length) : 0;
       return {
         ...current, wordChain: nextChain, activeMembers: remaining, turnIndex: newTurnIndex,
-        eliminatedPlayers, lastElimination, elimSeq,
+        eliminatedPlayers, lastElimination, elimSeq, lastActivityAt: Date.now(),
       };
     });
     if (!game) return;
@@ -1350,7 +1378,7 @@ function App() {
   async function backToWheelScreen(gameId) {
     await transactRecord("games/" + gameId, current => {
       if (!current) return current;
-      return { ...current, status: "lobby" };
+      return { ...current, status: "lobby", lastActivityAt: Date.now() };
     });
   }
 
@@ -1815,7 +1843,14 @@ function App() {
   if (screen === "lobby" && activeGameId) {
     const game = games[activeGameId];
     if (!game) {
-      return <GoneScreen bg={bg} message={t.groupGone} backLabel={t.back} onBack={() => setScreen("groups")} />;
+      // Oyun kaydı artık yok: çoğunlukla kullanıcı az önce geri tuşuyla
+      // lobiden çıktı (leaveLobby boş kalan lobiyi siler) ya da başka bir
+      // üye lobiyi kapattı. Bu bir hata değil, normal bir durum — o yüzden
+      // "grup mevcut değil" gibi kafa karıştırıcı bir hata ekranı yerine
+      // sessizce sohbete dönüyoruz.
+      setScreen("chat");
+      setActiveGameId(null);
+      return null;
     }
     if (game.status !== "lobby") {
       const activeGrp = groups[game.groupId];
