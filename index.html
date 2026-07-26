@@ -44,6 +44,16 @@
 
   @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Inter:wght@400;500;600;700&display=swap');
   html, body { margin:0; padding:0; background:#0f0a1e; }
+
+  /* ---- modern button feel, applied globally so every button in the app
+     gets a tactile press + subtle lift, without needing per-button edits ---- */
+  button {
+    transition: transform 0.15s cubic-bezier(.34,1.56,.64,1), filter 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:not(:disabled):hover { filter: brightness(1.08); }
+  button:not(:disabled):active { transform: scale(0.95); filter: brightness(0.96); }
+  button:disabled { cursor: default; }
 </style>
 </head>
 <body>
@@ -98,6 +108,11 @@ const ADMIN_PASS = "030714yagiz";
 const ADMIN_GOOGLE_EMAIL = "akca.yagiz2014@gmail.com";
 const WORD_TIME_SECONDS = 10;
 const ROUND_WORD_LIMIT = 25;
+// Grup maçlarında artık kimse elenmiyor: yanlış/geçersiz kelime yazan ya da
+// süresini geçiren oyuncu oyunda kalır, sıra sıradaki oyuncuya geçer ve
+// çark o oyuncu için yeniden çevrilir. Tur, toplam 55 kelime yazılınca
+// biter; en çok puanı toplayan (ya da eşitlik varsa toplayanlar) kazanır.
+const GROUP_ROUND_WORD_LIMIT = 55;
 const POINTS_PER_WORD = 10;
 // Grubun 2 saatlik hakkı, oluşturulduktan sonra geçen duvar-saati değil,
 // içinde fiilen oyun oynanan (spinning/playing) toplam süredir. Grup hiç
@@ -106,6 +121,21 @@ const POINTS_PER_WORD = 10;
 // saat 09:00'da otomatik olarak yeniden dolar.
 const GROUP_BUDGET_MS = 2 * 60 * 60 * 1000;
 const DAILY_RESET_HOUR = 9; // her sabah 09:00'da süre sıfırlanır
+// Bir oyun "playing"/"spinning" durumunda kalsa bile, üzerinden bu süreden
+// uzun zaman geçtiyse artık gerçekten oynanmıyor demektir (biri çarkı
+// çevirip animasyon bitmeden sekmeyi kapatmış, ağ kopmuş, uygulama
+// çökmüş vb.). Böyle "takılı kalmış" bir oyun, aşağıdaki kontrol
+// olmadan grubun 2 saatlik hakkını kimse oynamadan sonsuza kadar
+// tüketmeye devam ederdi — asıl "boşuna süre doldu" hatasının kaynağı
+// buydu. Her gerçek oyun hamlesi (çark çevirme, kelime yazma, tur
+// bitişi) lastActivityAt'i günceller; bu yenilenmezse oyun "aktif
+// oynanmıyor" sayılır ve süre sayacı durur.
+const STALE_GAME_MS = 3 * 60 * 1000; // 3 dakika hareketsizlik = takılı kalmış sayılır
+function isGameActivelyPlaying(gm, now) {
+  if (!gm || (gm.status !== "playing" && gm.status !== "spinning")) return false;
+  const last = gm.lastActivityAt || 0;
+  return (now - last) < STALE_GAME_MS;
+}
 
 // Verilen zamandan sonraki ilk saat 09:00'ı (yerel saat) döndürür.
 function nextDailyResetTime(fromTs) {
@@ -142,7 +172,8 @@ const T = {
     congrats: "Tebrikler!", earnedMedal: "madalyası kazandınız!", close: "Kapat", invalidWord: "Bu kelime geçerli değil, 0 puan",
     soloAllCorrectMsg: "Tebrikler, hepsini doğru yaptığınız için +20 puan aldınız!",
     groupAllCorrectMsg: "Tebrikler, hepsini doğru yaptığınız için tur puanına +20 bonus eklendi!",
-    roundWinnerLabel: "Turun Galibi", roundWinnerDesc: "En az hatayı yaptı ve tur boyunca toplanan tüm puanları kazandı:",
+    roundWinnerLabel: "Turun Galibi", roundWinnerDesc: "Tur boyunca en çok puanı topladı ve toplanan tüm puanları kazandı:",
+    each: "her biri", splitPoolLabel: "Toplam",
     validWord: "Geçerli kelime!", checking: "Kontrol ediliyor...", groupLimitReached: "En fazla 50 gruba katılabilirsin",
     dailyGroupLimit: "Günde en fazla 3 grup kurabilirsin", dailyLimitReached: "Süre doldu", dailyLimitReachedFull: "Bugünlük 2 saatlik oyun süreniz doldu. Yarın saat 09:00'da tekrar oynayabilirsiniz.", groupGone: "Bu grup artık mevcut değil.",
     closesIn: "kapanıyor", worldRank: "sırada", nextMedal: "Sıradaki madalya",
@@ -173,6 +204,7 @@ const T = {
     eliminatedByDuplicate: "kelimesini tekrar yazdı ve elendi!",
     eliminatedByInvalid: "geçersiz bir kelime yazdı ve elendi!",
     eliminatedByTimeout: "süresini doldurdu ve elendi!",
+    eliminatedByLeft: "maçtan çıktı ve elendi!",
     onlyOwnerCanSpin: "Çarkı sadece grubu kuran kişi çevirebilir",
   },
   en: {
@@ -194,7 +226,8 @@ const T = {
     congrats: "Congratulations!", earnedMedal: "medal earned!", close: "Close", invalidWord: "Not a valid word, 0 points",
     soloAllCorrectMsg: "Congratulations, you earned +20 points for getting them all right!",
     groupAllCorrectMsg: "Congratulations, +20 bonus points were added to the round pool for getting them all right!",
-    roundWinnerLabel: "Round Winner", roundWinnerDesc: "Made the fewest mistakes and won all the points collected during the round:",
+    roundWinnerLabel: "Round Winner", roundWinnerDesc: "Scored the most points and won all the points collected during the round:",
+    each: "each", splitPoolLabel: "Total",
     validWord: "Valid word!", checking: "Checking...", groupLimitReached: "You can join at most 50 groups",
     dailyGroupLimit: "You can create at most 3 groups per day", dailyLimitReached: "Time's up", dailyLimitReachedFull: "You've used today's 2-hour play time for this group. You can play again tomorrow at 09:00.", groupGone: "This group no longer exists.",
     closesIn: "closes in", worldRank: "rank", nextMedal: "Next medal",
@@ -225,6 +258,7 @@ const T = {
     eliminatedByDuplicate: "wrote the same word again and was eliminated!",
     eliminatedByInvalid: "wrote an invalid word and was eliminated!",
     eliminatedByTimeout: "ran out of time and was eliminated!",
+    eliminatedByLeft: "left the match and was eliminated!",
     onlyOwnerCanSpin: "Only the group's creator can spin the wheel",
   },
   de: {
@@ -246,7 +280,8 @@ const T = {
     congrats: "Glückwunsch!", earnedMedal: "Medaille erhalten!", close: "Schließen", invalidWord: "Ungültiges Wort, 0 Punkte",
     soloAllCorrectMsg: "Glückwunsch, du hast +20 Punkte für alles richtig erhalten!",
     groupAllCorrectMsg: "Glückwunsch, dem Rundentopf wurden +20 Bonuspunkte hinzugefügt, weil alles richtig war!",
-    roundWinnerLabel: "Rundensieger", roundWinnerDesc: "Hat die wenigsten Fehler gemacht und alle in dieser Runde gesammelten Punkte gewonnen:",
+    roundWinnerLabel: "Rundensieger", roundWinnerDesc: "Hat die meisten Punkte gesammelt und alle in dieser Runde gesammelten Punkte gewonnen:",
+    each: "je", splitPoolLabel: "Gesamt",
     validWord: "Gültiges Wort!", checking: "Wird geprüft...", groupLimitReached: "Maximal 50 Gruppen möglich",
     dailyGroupLimit: "Du kannst höchstens 3 Gruppen pro Tag erstellen", dailyLimitReached: "Zeit abgelaufen", dailyLimitReachedFull: "Die heutige 2-Stunden-Spielzeit dieser Gruppe ist aufgebraucht. Ihr könnt morgen um 09:00 Uhr wieder spielen.", groupGone: "Diese Gruppe existiert nicht mehr.",
     closesIn: "schließt in", worldRank: "Rang", nextMedal: "Nächste Medaille",
@@ -277,6 +312,7 @@ const T = {
     eliminatedByDuplicate: "hat dasselbe Wort erneut geschrieben und ist ausgeschieden!",
     eliminatedByInvalid: "hat ein ungültiges Wort geschrieben und ist ausgeschieden!",
     eliminatedByTimeout: "hat die Zeit überschritten und ist ausgeschieden!",
+    eliminatedByLeft: "hat das Spiel verlassen und ist ausgeschieden!",
     onlyOwnerCanSpin: "Nur der Gründer der Gruppe kann das Rad drehen",
   },
 };
@@ -289,9 +325,9 @@ const MedalUltra = makeIcon("🎖️");
 const MEDAL_TIERS = [
   { key: "start", threshold: 5000, label: { tr: "Başlangıç", en: "Starter", de: "Start" }, color: "#8fb3ff", icon: MedalStart },
   { key: "bronze", threshold: 10000, label: { tr: "Bronz", en: "Bronze", de: "Bronze" }, color: "#c17a4a", icon: MedalBronze },
-  { key: "silver", threshold: 25000, label: { tr: "Gümüş", en: "Silver", de: "Silber" }, color: "#b9c2cc", icon: MedalSilver },
-  { key: "gold", threshold: 55000, label: { tr: "Altın", en: "Gold", de: "Gold" }, color: "#f2b705", icon: MedalGold },
-  { key: "diamond", threshold: 110000, label: { tr: "Elmas", en: "Diamond", de: "Diamant" }, color: "#5fd1e0", icon: Gem },
+  { key: "silver", threshold: 20000, label: { tr: "Gümüş", en: "Silver", de: "Silber" }, color: "#b9c2cc", icon: MedalSilver },
+  { key: "gold", threshold: 35000, label: { tr: "Altın", en: "Gold", de: "Gold" }, color: "#f2b705", icon: MedalGold },
+  { key: "diamond", threshold: 60000, label: { tr: "Elmas", en: "Diamond", de: "Diamant" }, color: "#5fd1e0", icon: Gem },
   { key: "ultra", threshold: 1000000, label: { tr: "Ultra Süper Oyuncu", en: "Ultra Super Player", de: "Ultra-Superspieler" }, color: "#ff2e63", icon: MedalUltra },
   { key: "king", threshold: 100000000, label: { tr: "Oyunun Kralı", en: "King of the Game", de: "König des Spiels" }, color: "#ff5d8f", icon: Crown },
 ];
@@ -382,13 +418,77 @@ async function updatePaths(updates) {
   await db.ref().update(updates);
 }
 
-// ---------- word check: real dictionary lookup via Wiktionary's public,
-// key-free, CORS-enabled API (no backend needed).
-// Always queries English Wiktionary (by far the most complete edition) and
-// checks that the page actually has a section for the SELECTED language —
-// otherwise e.g. a Turkish word would wrongly pass while playing in English,
-// since Wiktionary pages list translations across many languages. ----------
-const WIKT_LANG_HEADER = { en: "English", tr: "Turkish", de: "German" };
+// ---------- word check ----------
+// Eskiden her kelime, İngilizce Wiktionary üzerinden ağ çağrısıyla
+// kontrol ediliyordu. Bu, oyunu ciddi şekilde bozuyordu: Wiktionary'nin
+// Türkçe kapsamı çok zayıf (özellikle "Esma", "Nurdan" gibi isimler ve
+// "çarık" gibi bölgesel/gündelik kelimeler orada neredeyse hiç yok),
+// üstelik ağ çağrısı zaman zaman başarısız/gecikmeli oluyordu — bu da
+// AYNI kelimenin bir seferinde kabul edilip bir dahakinde reddedilmesine
+// Sadece doğru harfle başlamayı kontrol etmek yetersizdi: bu, uydurma/
+// anlamsız harf dizilerinin de kelime diye kabul edilmesine yol açıyordu.
+// Bu yüzden harf kontrolüne ek olarak, kelimenin dile göre gerçek bir
+// sözlükte var olup olmadığı da kontrol ediliyor:
+//   - Türkçe: TDK (Türk Dil Kurumu) Güncel Türkçe Sözlük — resmi API,
+//     Türkiye'deki kelime oyunlarında yaygın kullanılan kaynak. Bu API
+//     tarayıcıdan doğrudan çağrıldığında CORS engeline takılabiliyor; bu
+//     yüzden önce doğrudan, o başarısız olursa herkese açık bir CORS
+//     proxy'si üzerinden tekrar denenir.
+//   - İngilizce: dictionaryapi.dev (Free Dictionary API) — İngilizce
+//     kelime oyunu/uygulamalarında en yaygın kullanılan ücretsiz sözlük API'si.
+//   - Almanca: OpenThesaurus — Duden'in ücretsiz/genel API'si olmadığı
+//     için, LibreOffice/OpenOffice gibi projelerde de kullanılan, açık ve
+//     Almanların kendi geliştirdiği en yaygın ücretsiz kelime veritabanı.
+// ÖNEMLİ: artık ağ hatası durumunda kelime "otomatik kabul" edilmiyor —
+// sözlükte doğrulanamayan hiçbir kelime geçerli sayılmaz. Güvenilirlik
+// için her istek 8 saniye zaman aşımı ile ve (TDK için) proxy fallback'i
+// ile deneniyor.
+async function fetchWithTimeout(url, ms) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), ms);
+  try {
+    return await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+async function wordExistsInDictionary(lang, candidate) {
+  try {
+    if (lang === "tr") {
+      const directUrl = `https://sozluk.gov.tr/gts?ara=${encodeURIComponent(candidate)}`;
+      let res;
+      try {
+        res = await fetchWithTimeout(directUrl, 6000);
+      } catch (e) {
+        res = null; // CORS/ağ hatası: proxy ile tekrar denenecek
+      }
+      if (!res || !res.ok) {
+        // CORS engeli ya da geçici bir hata olabilir: herkese açık bir CORS
+        // proxy'si üzerinden tekrar dene, tamamen pes etmeden önce.
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(directUrl)}`;
+        res = await fetchWithTimeout(proxyUrl, 8000);
+      }
+      if (!res.ok) return false;
+      const data = await res.json();
+      return Array.isArray(data) && data.length > 0;
+    } else if (lang === "en") {
+      const res = await fetchWithTimeout(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(candidate)}`, 6000);
+      if (!res.ok) return false;
+      const data = await res.json();
+      return Array.isArray(data) && data.length > 0;
+    } else {
+      const res = await fetchWithTimeout(`https://www.openthesaurus.de/synonyme/search?q=${encodeURIComponent(candidate)}&format=application/json`, 6000);
+      if (!res.ok) return false;
+      const data = await res.json();
+      return !!(data && Array.isArray(data.synsets) && data.synsets.length > 0);
+    }
+  } catch (e) {
+    // Zaman aşımı, ağ tamamen kopuk ya da proxy de başarısız: bu kelime
+    // doğrulanamadı, dolayısıyla GEÇERSİZ sayılır (otomatik kabul yok).
+    return false;
+  }
+}
 
 async function checkWordValid(word, lang, mustStartWith) {
   const w = word.trim();
@@ -396,30 +496,20 @@ async function checkWordValid(word, lang, mustStartWith) {
   const locale = lang === "tr" ? "tr-TR" : undefined;
   const wFirst = w[0].toLocaleUpperCase(locale);
   const reqUpper = mustStartWith.toLocaleUpperCase(locale);
-  if (wFirst !== reqUpper) return false; // wrong starting letter — no need to hit the network
+  if (wFirst !== reqUpper) return false; // yanlış harfle başlıyorsa geçersiz
 
-  const headerName = WIKT_LANG_HEADER[lang] || "English";
-  const headerRegex = new RegExp(`^==\\s*${headerName}\\s*==`, "m");
-  const candidates = [w.toLocaleLowerCase(locale), w]; // most entries are lowercase; also try as-typed
+  // Almanca'da isimler büyük harfle başlar, Türkçe/İngilizce sözlük
+  // girişleri küçük harfledir; hangi yazımın doğru olduğundan emin
+  // olamayacağımız için ikisini de deniyoruz.
+  const candidates = lang === "de"
+    ? [w.charAt(0).toLocaleUpperCase(locale) + w.slice(1).toLocaleLowerCase(locale), w.toLocaleLowerCase(locale)]
+    : [w.toLocaleLowerCase(locale), w];
+  const uniqueCandidates = [...new Set(candidates)];
 
-  for (const candidate of candidates) {
-    try {
-      const url = `https://en.wiktionary.org/w/api.php?action=query&prop=revisions&titles=${encodeURIComponent(candidate)}&rvprop=content&rvslots=main&formatversion=2&format=json&origin=*`;
-      const res = await fetch(url);
-      const data = await res.json();
-      const pages = (data && data.query && data.query.pages) || [];
-      for (const page of pages) {
-        if (page.missing) continue;
-        const rev = page.revisions && page.revisions[0];
-        const content = rev ? (rev.content || (rev.slots && rev.slots.main && rev.slots.main.content) || "") : "";
-        if (content && headerRegex.test(content)) return true; // confirmed: this page has a section specifically for the selected language
-      }
-    } catch (e) {
-      console.error("dictionary lookup failed", e);
-      // network hiccup: don't hard-fail on this candidate, try the next one / fall through
-    }
+  for (const candidate of uniqueCandidates) {
+    if (await wordExistsInDictionary(lang, candidate)) return true; // sözlükte bulundu
   }
-  return false;
+  return false; // sözlükte hiçbir adayı bulunamadı: uydurma kelime kabul edilmez
 }
 
 function lastLetter(word, lang) {
@@ -465,7 +555,7 @@ function groupRemainingMs(g, gamesObj, now) {
   // veritabanına yazılmamış olsa bile ekranda süre dolu gösterilsin.
   if (g.budgetResetAt && now >= g.budgetResetAt) return GROUP_BUDGET_MS;
   const isPlaying = Object.values(gamesObj || {}).some(
-    gm2 => gm2 && gm2.groupId === g.id && (gm2.status === "playing" || gm2.status === "spinning")
+    gm2 => gm2 && gm2.groupId === g.id && isGameActivelyPlaying(gm2, now)
   );
   const consumed = (g.usedMs || 0) + (g.activeSince && isPlaying ? now - g.activeSince : 0);
   return GROUP_BUDGET_MS - consumed;
@@ -569,7 +659,7 @@ function GoneScreen({ bg, message, backLabel, onBack }) {
     <div className="min-h-screen w-full flex flex-col items-center justify-center gap-4 p-6" style={{ fontFamily: "Inter, sans-serif" }}>
       {bg}
       <p className="text-white/60 text-center">{message}</p>
-      <button onClick={onBack} className="px-6 py-3 rounded-full font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>{backLabel}</button>
+      <button onClick={onBack} className="px-6 py-3 rounded-full font-bold" style={{ background: "#f2b705", color: "#1b1030", boxShadow: "0 4px 16px rgba(242,183,5,0.35)" }}>{backLabel}</button>
     </div>
   );
 }
@@ -725,16 +815,6 @@ function App() {
     screenStateRef.current = { screen, activeGroupId, activeGameId, games };
   }, [screen, activeGroupId, activeGameId, games]);
 
-  // leaveLobby, o anki `me` kullanıcısını okuyarak kişiyi lobi üyelerinden
-  // çıkarır. Aşağıdaki popstate efekti SADECE bir kez (mount'ta) kayıt
-  // olduğu için, içinde doğrudan `leaveLobby` çağrılsaydı bu her zaman
-  // *ilk render'daki* (henüz giriş yapılmamışken `me` hâlâ null olan)
-  // leaveLobby kopyasını kullanırdı — bu da geri tuşuna basılınca `me`
-  // null olduğu için çökmeye yol açıyordu. Bunun yerine her render'da
-  // güncellenen bir ref üzerinden en güncel fonksiyonu çağırıyoruz.
-  const leaveLobbyRef = useRef(null);
-  useEffect(() => { leaveLobbyRef.current = leaveLobby; });
-
   useEffect(() => {
     window.history.pushState({ ktScreen: screen }, "");
   }, [screen]);
@@ -746,8 +826,8 @@ function App() {
         const game = g[aggid];
         if (game && game.status !== "lobby") {
           setScreen("chat"); // aktif bir tur oynanıyorsa oyunu terk etmeden sohbete dön
-        } else if (leaveLobbyRef.current) {
-          leaveLobbyRef.current(aggid); // bekleme odasındaysa lobiden çık
+        } else {
+          leaveLobby(aggid); // bekleme odasındaysa lobiden çık
         }
       } else if (cur === "chat") {
         setScreen("groups");
@@ -767,7 +847,7 @@ function App() {
   // burns any of it. Once the budget is used up, the group is NOT deleted:
   // members simply can't start a new round until the budget refills, which
   // happens automatically every day at 09:00 (local time). ----
-  function cleanExpiredGroups(groupsObj, gamesObj, onlineUsersObj) {
+  function cleanExpiredGroups(groupsObj, gamesObj) {
     const now = Date.now();
     const nextGroups = { ...groupsObj };
     // groupUpdates/gameUpdates only ever contain the specific records that
@@ -777,37 +857,10 @@ function App() {
     // full-tree overwrite every 5s on every connected client, which is
     // exactly what was clobbering other players' concurrent game actions.
     const groupUpdates = {};
-    let nextGames = { ...gamesObj };
-    const gameUpdates = {};
-
-    // Terk edilmiş turlar: bir oyun "playing"/"spinning" durumundayken
-    // (sekme kapanması, çökme, bağlantı kopması gibi bir sebeple) o turdaki
-    // hiçbir üye artık çevrimiçi değilse, kimse hamle yapmadığı için bu
-    // durum SONSUZA DEK böyle kalır — ve grubun 2 saatlik hakkı, hiç kelime
-    // yazılmadan, sadece geçen duvar-saatiyle tükenmeye devam eder. Bunu
-    // önlemek için, aktif üyesi çevrimiçi olmayan turları otomatik olarak
-    // lobiye geri alıyoruz (oyun silinmiyor, sadece tur sıfırlanıyor).
-    // onlineUsersObj henüz yüklenmediyse (ilk açılışta) bu kontrol atlanır.
-    if (onlineUsersObj) {
-      for (const [gid, game] of Object.entries(gamesObj || {})) {
-        if (!game || (game.status !== "playing" && game.status !== "spinning")) continue;
-        const activePlayers = (game.activeMembers && game.activeMembers.length) ? game.activeMembers : (game.members || []);
-        const anyoneOnline = activePlayers.some(m => onlineUsersObj[m]);
-        if (!anyoneOnline) {
-          const resetGame = {
-            ...game, status: "lobby", currentLetter: null, wordChain: [],
-            activeMembers: [...(game.members || [])], eliminatedPlayers: {}, lastElimination: null,
-          };
-          nextGames[gid] = resetGame;
-          gameUpdates["games/" + gid] = resetGame;
-        }
-      }
-    }
-
     for (const [id, g] of Object.entries(groupsObj)) {
       if (g.usedMs === undefined) continue; // legacy groups created before this feature: never auto-limited
-      const gamesForGroup = Object.values(nextGames || {}).filter(gm2 => gm2 && gm2.groupId === id);
-      const isPlaying = gamesForGroup.some(gm2 => gm2.status === "playing" || gm2.status === "spinning");
+      const gamesForGroup = Object.values(gamesObj || {}).filter(gm2 => gm2 && gm2.groupId === id);
+      const isPlaying = gamesForGroup.some(gm2 => isGameActivelyPlaying(gm2, now));
 
       let usedMs = g.usedMs || 0;
       let activeSince = g.activeSince || null;
@@ -838,8 +891,20 @@ function App() {
         groupUpdates["groups/" + id] = updated;
       }
     }
-    for (const [gid, game] of Object.entries(nextGames)) {
-      if (!nextGroups[game.groupId]) { delete nextGames[gid]; gameUpdates["games/" + gid] = null; }
+    const nextGames = { ...gamesObj };
+    const gameUpdates = {};
+    for (const [gid, game] of Object.entries(gamesObj)) {
+      if (!nextGroups[game.groupId]) { delete nextGames[gid]; gameUpdates["games/" + gid] = null; continue; }
+      // Takılı kalmış (3+ dakikadır hareketsiz) "playing"/"spinning" bir tur
+      // varsa, oyuncuları sonsuza dek beklemeye/kilitli kalmaya mahkum
+      // etmemek için otomatik olarak lobiye geri döndürülür. Böylece hem
+      // grubun bütçesi boşa akmaz hem de içerideki gerçek oyuncular
+      // (varsa) takılı kalmaz.
+      if ((game.status === "playing" || game.status === "spinning") && !isGameActivelyPlaying(game, now)) {
+        const healed = { ...game, status: "lobby" };
+        nextGames[gid] = healed;
+        gameUpdates["games/" + gid] = healed;
+      }
     }
     return { groups: nextGroups, games: nextGames, groupUpdates, gameUpdates };
   }
@@ -929,13 +994,11 @@ function App() {
   // change), so it still needs its own lightweight periodic check ----
   const groupsRef = useRef(groups);
   const gamesRef = useRef(games);
-  const onlineUsersRef = useRef(onlineUsers);
   useEffect(() => { groupsRef.current = groups; }, [groups]);
   useEffect(() => { gamesRef.current = games; }, [games]);
-  useEffect(() => { onlineUsersRef.current = onlineUsers; }, [onlineUsers]);
   useEffect(() => {
     const iv = setInterval(async () => {
-      const { groupUpdates, gameUpdates } = cleanExpiredGroups(groupsRef.current, gamesRef.current, onlineUsersRef.current);
+      const { groupUpdates, gameUpdates } = cleanExpiredGroups(groupsRef.current, gamesRef.current);
       const cleanupUpdates = { ...groupUpdates, ...gameUpdates };
       if (Object.keys(cleanupUpdates).length) await updatePaths(cleanupUpdates);
     }, 5000);
@@ -1235,6 +1298,7 @@ function App() {
       currentLetter: null, turnIndex: 0, roundNumber: 0,
       wordChain: [], lastResults: [], spinToken: 0,
       activeMembers: [me.username], eliminatedPlayers: {}, lastElimination: null, elimSeq: 0,
+      lastActivityAt: Date.now(),
     };
     const grp = await transactRecord("groups/" + groupId, current => {
       if (!current) return current;
@@ -1262,17 +1326,58 @@ function App() {
   }
 
   async function leaveLobby(gameId) {
-    if (!gameId) { setScreen("chat"); return; }
     let empty = false;
     await transactRecord("games/" + gameId, current => {
       if (!current) return current;
-      const nextMembers = (current.members || []).filter(m => m !== (me && me.username));
+      const nextMembers = current.members.filter(m => m !== me.username);
       empty = nextMembers.length === 0;
       return { ...current, members: nextMembers };
-    }).catch(() => {});
+    });
     // Boş kalan (kimsenin bulunmadığı) lobiyi ortada bırakmamak için siliyoruz.
     if (empty) { await (await waitForFbdb()).ref("games/" + gameId).remove().catch(() => {}); }
     setScreen("chat");
+  }
+
+  // Bir oyuncu maç DEVAM EDERKEN (çark dönerken/oynanırken) çıkış yaparsa,
+  // artık kimse elenmediği için çıkan kişi sadece üye listesinden çıkarılır;
+  // sıra ondaysa bir sonraki kalan oyuncuya geçer ve maç kaldığı yerden
+  // (toplanan puanlar/kelime zinciri korunarak) sürer. Puan dağıtımı sadece
+  // GROUP_ROUND_WORD_LIMIT kelimeye ulaşıldığında yapılır, çıkışta değil.
+  async function leaveMatch(gameId, targetScreen = "chat") {
+    const game = games[gameId];
+    if (!game || game.status === "lobby") { await leaveLobby(gameId); return; }
+    let shouldDelete = false;
+    await transactRecord("games/" + gameId, current => {
+      if (!current) return current;
+      shouldDelete = false;
+      const members = current.members || [];
+      const nextMembers = members.filter(m => m !== me.username);
+
+      if (current.status === "results" || !members.includes(me.username)) {
+        // Tur zaten bitmiş ya da kişi zaten üye değildi: sadece üyelikten çık.
+        return { ...current, members: nextMembers, activeMembers: nextMembers };
+      }
+
+      if (nextMembers.length === 0) {
+        shouldDelete = true;
+        return { ...current, members: nextMembers, activeMembers: nextMembers };
+      }
+
+      // Sıranın kimde olduğunu, listeden çıkarma işleminden ÖNCE not ediyoruz —
+      // çıkan kişi o an sırada olan kişi değilse, gerçek sıradaki oyuncunun
+      // hamlesi bu yüzden atlanmamalı.
+      const currentPlayerName = members[current.turnIndex % members.length];
+      const leavingIdx = members.indexOf(me.username);
+      const newTurnIndex = currentPlayerName === me.username
+        ? (leavingIdx % nextMembers.length)
+        : Math.max(0, nextMembers.indexOf(currentPlayerName));
+      return {
+        ...current, members: nextMembers, activeMembers: nextMembers, turnIndex: newTurnIndex,
+        lastActivityAt: Date.now(),
+      };
+    });
+    if (shouldDelete) { await (await waitForFbdb()).ref("games/" + gameId).remove().catch(() => {}); }
+    setScreen(targetScreen);
   }
 
   async function startSpin(gameId) {
@@ -1296,6 +1401,7 @@ function App() {
         activeMembers: [...current.members],
         eliminatedPlayers: {},
         lastElimination: null,
+        lastActivityAt: Date.now(),
       };
     });
   }
@@ -1308,87 +1414,93 @@ function App() {
       // moved on to a newer spin
       if (expectedToken !== undefined && current.spinToken !== expectedToken) return current;
       if (current.status !== "spinning") return current;
-      return { ...current, status: "playing" };
+      return { ...current, status: "playing", lastActivityAt: Date.now() };
     });
   }
 
   async function submitWord(gameId, word, isValid, timedOut) {
-    // Grup maçları artık 25 kelimede bitmiyor: bir oyuncu yanlış/geçersiz bir
-    // kelime yazana, daha önce kullanılmış bir kelimeyi tekrar yazana ya da
-    // süresini geçirene kadar oyun sürer — o oyuncu tek başına elenir, diğer
-    // oyuncular oynamaya devam eder. Sadece bir kişi kalana kadar bu böyle
-    // gider; son kalan oyuncu, o tur boyunca toplanan tüm puanları (varsa
-    // +20 hepsi-doğru bonusuyla birlikte) tek başına kazanır.
-    let payout = null; // { username, amount }
+    // Grup maçlarında artık kimse elenmiyor: bir oyuncu yanlış/geçersiz bir
+    // kelime yazsa, daha önce kullanılmış bir kelimeyi tekrar yazsa ya da
+    // süresini geçirse bile oyunda kalır — o 0 puan alır, sıra doğrudan bir
+    // sonraki oyuncuya geçer ve çark o oyuncu için yeniden çevrilerek yeni
+    // bir harfle devam edilir. Tur, toplam GROUP_ROUND_WORD_LIMIT kelime
+    // yazılınca biter; en çok puanı toplayan oyuncu tur boyunca toplanan
+    // tüm puanları kazanır. Birden fazla oyuncu aynı (en yüksek) puanda
+    // eşitse, toplam puan aralarında eşit bölüşülür.
+    let payouts = []; // [{ username, amount }, ...]
     const game = await transactRecord("games/" + gameId, current => {
       if (!current) return current;
-      payout = null;
+      payouts = [];
 
-      const activeMembers = (current.activeMembers && current.activeMembers.length) ? current.activeMembers : current.members;
-      const turnIdx = current.turnIndex % activeMembers.length;
-      const actingPlayer = activeMembers[turnIdx];
+      const members = current.members || [];
+      if (members.length === 0) return current;
+      const turnIdx = current.turnIndex % members.length;
+      const actingPlayer = members[turnIdx];
       const wordChain = current.wordChain || [];
 
-      let isElim = false, reason = null, trimmed = "";
-      if (timedOut) {
-        isElim = true; reason = "timeout";
-      } else {
+      let trimmed = "", ok = false;
+      if (!timedOut) {
         trimmed = word.trim();
         const isDuplicate = trimmed && wordChain.some(
           w => w.word && normalizeWord(w.word, current.lang) === normalizeWord(trimmed, current.lang)
         );
-        if (isDuplicate) { isElim = true; reason = "duplicate"; }
-        else if (!isValid || !trimmed) { isElim = true; reason = "invalid"; }
+        ok = !!(isValid && trimmed && !isDuplicate);
       }
-
-      const points = (!isElim && isValid && trimmed) ? POINTS_PER_WORD : 0;
+      const points = ok ? POINTS_PER_WORD : 0;
       const nextChain = [...wordChain, { username: actingPlayer, word: trimmed, points }];
+      const nextTurnIndex = (turnIdx + 1) % members.length;
 
-      if (!isElim) {
-        // doğru cevap: sıradaki aktif oyuncuya geç, kimse elenmedi
-        return { ...current, wordChain: nextChain, turnIndex: (turnIdx + 1) % activeMembers.length };
-      }
-
-      // birisi elendi
-      const remaining = activeMembers.filter(m => m !== actingPlayer);
-      const eliminatedPlayers = { ...(current.eliminatedPlayers || {}) };
-      eliminatedPlayers[actingPlayer] = { word: trimmed, reason };
-      const elimSeq = (current.elimSeq || 0) + 1;
-      const lastElimination = { username: actingPlayer, word: trimmed, reason, seq: elimSeq };
-
-      if (remaining.length <= 1) {
-        // tur bitti: geriye kalan tek kişi (varsa) kazanır. Hepsi-doğru
-        // bonusu, elenme anına kadarki her kelimenin doğru olup olmadığına
-        // bakılarak hesaplanır (elenme kaydının kendisi hariç).
-        const winner = remaining[0] || null;
-        const preElim = nextChain.slice(0, -1);
-        const allCorrect = preElim.length > 0 && preElim.every(w => w.points > 0);
-        const teamPoints = nextChain.reduce((s, w) => s + w.points, 0) + (allCorrect ? STREAK_BONUS : 0);
-        if (winner) payout = { username: winner, amount: teamPoints };
+      if (nextChain.length >= GROUP_ROUND_WORD_LIMIT) {
+        // tur bitti: en çok puanı toplayan(lar) kazanır
+        const scores = {};
+        members.forEach(m => { scores[m] = 0; });
+        nextChain.forEach(entry => { scores[entry.username] = (scores[entry.username] || 0) + entry.points; });
+        const maxScore = Math.max(0, ...Object.values(scores));
+        const winners = maxScore > 0 ? Object.keys(scores).filter(u => scores[u] === maxScore) : [];
+        const totalPool = nextChain.reduce((s, w) => s + w.points, 0);
+        const base = winners.length ? Math.floor(totalPool / winners.length) : 0;
+        let remainder = winners.length ? totalPool % winners.length : 0;
+        payouts = winners.map(u => {
+          const amount = base + (remainder > 0 ? 1 : 0);
+          if (remainder > 0) remainder--;
+          return { username: u, amount };
+        });
         return {
           ...current, wordChain: nextChain, status: "results", lastResults: nextChain,
-          roundWinner: winner, roundPool: winner ? teamPoints : 0,
-          activeMembers: remaining, eliminatedPlayers, lastElimination, elimSeq,
+          roundWinners: winners, roundWinner: winners.length === 1 ? winners[0] : null,
+          roundPool: totalPool, activeMembers: members, lastActivityAt: Date.now(),
         };
       }
 
-      // oyun devam ediyor: elenen oyuncu aktif listeden çıkarılır, sıra
-      // listede onun yerini alan (bir sonraki) oyuncuya geçer
-      const elimIdx = activeMembers.indexOf(actingPlayer);
-      const newTurnIndex = remaining.length ? (elimIdx % remaining.length) : 0;
+      if (ok) {
+        // doğru cevap: zincir aynı kelimenin son harfinden devam eder,
+        // sıradaki oyuncuya geç (çark yeniden çevrilmez)
+        return {
+          ...current, wordChain: nextChain, turnIndex: nextTurnIndex,
+          currentLetter: lastLetter(trimmed, current.lang), activeMembers: members,
+          lastActivityAt: Date.now(),
+        };
+      }
+
+      // yanlış/geçersiz kelime ya da süre doldu: kimse elenmez, sadece 0
+      // puan alır; sıra bir sonraki oyuncuya geçer ve onun için çark
+      // yeniden çevrilip yeni bir harfle oyun sürer
+      const letters = ALPHABETS[current.lang].filter(l => current.lang === "tr" ? l !== "Ğ" : true);
+      const pick = letters[Math.floor(Math.random() * letters.length)];
       return {
-        ...current, wordChain: nextChain, activeMembers: remaining, turnIndex: newTurnIndex,
-        eliminatedPlayers, lastElimination, elimSeq,
+        ...current, wordChain: nextChain, turnIndex: nextTurnIndex,
+        status: "spinning", currentLetter: pick, spinToken: (current.spinToken || 0) + 1,
+        activeMembers: members, lastActivityAt: Date.now(),
       };
     });
     if (!game) return;
-    if (payout && payout.amount > 0) await addPoints(payout.username, payout.amount);
+    for (const p of payouts) { if (p.amount > 0) await addPoints(p.username, p.amount); }
   }
 
   async function backToWheelScreen(gameId) {
     await transactRecord("games/" + gameId, current => {
       if (!current) return current;
-      return { ...current, status: "lobby" };
+      return { ...current, status: "lobby", lastActivityAt: Date.now() };
     });
   }
 
@@ -1455,7 +1567,7 @@ function App() {
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
           {showBack && (
-            <button onClick={() => setScreen("menu")} className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white">
+            <button onClick={() => setScreen("menu")} className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white border border-white/10 backdrop-blur-sm shadow-lg shadow-black/20">
               <ArrowLeft size={18} />
             </button>
           )}
@@ -1512,7 +1624,7 @@ function App() {
                 onKeyDown={e => e.key === "Enter" && handleAuth()} />
               {authError && <p className="text-red-400 text-sm">{authError}</p>}
               <button onClick={handleAuth} className="w-full py-3 rounded-xl font-bold transition hover:opacity-90"
-                style={{ background: "#f2b705", color: "#1b1030", fontFamily: "Fredoka, sans-serif" }}>
+                style={{ background: "#f2b705", color: "#1b1030", boxShadow: "0 4px 16px rgba(242,183,5,0.35)", fontFamily: "Fredoka, sans-serif" }}>
                 {authMode === "login" ? t.login : t.register}
               </button>
               <button onClick={() => { setAuthMode(m => m === "login" ? "register" : "login"); setAuthError(""); }}
@@ -1602,13 +1714,13 @@ function App() {
         </div>
 
         <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
-          <button onClick={() => setScreen("groups")} className="col-span-2 flex items-center justify-center gap-2 py-5 rounded-2xl font-bold text-lg" style={{ background: "linear-gradient(135deg,#f2b705,#ff8a3d)", color: "#1b1030", fontFamily: "Fredoka, sans-serif" }}>
+          <button onClick={() => setScreen("groups")} className="col-span-2 flex items-center justify-center gap-2 py-5 rounded-2xl font-bold text-lg" style={{ background: "linear-gradient(135deg,#f2b705,#ff8a3d)", color: "#1b1030", fontFamily: "Fredoka, sans-serif", boxShadow: "0 8px 22px rgba(242,183,5,0.3)" }}>
             <Users size={22} /> {t.myGroups} ({myGroups.length})
           </button>
-          <button onClick={() => setScreen("solo")} className="flex flex-col items-center justify-center gap-2 py-6 rounded-2xl bg-white/10 text-white font-semibold hover:bg-white/20">
+          <button onClick={() => setScreen("solo")} className="flex flex-col items-center justify-center gap-2 py-7 rounded-2xl bg-white/10 text-white font-semibold text-lg hover:bg-white/20 border border-white/10">
             <Play size={26} /> {t.soloPlay}
           </button>
-          <button onClick={() => setScreen("leaderboard")} className="flex flex-col items-center justify-center gap-2 py-6 rounded-2xl bg-white/10 text-white font-semibold hover:bg-white/20">
+          <button onClick={() => setScreen("leaderboard")} className="flex flex-col items-center justify-center gap-2 py-7 rounded-2xl bg-white/10 text-white font-semibold text-lg hover:bg-white/20 border border-white/10">
             <Trophy size={26} /> {t.leaderboard}
           </button>
           {me.isAdmin && googleAdminVerified && (
@@ -1641,7 +1753,7 @@ function App() {
               className="w-full px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/40 outline-none mb-3" />
             <div className="flex gap-2">
               <button onClick={() => setShowCreateGroup(false)} className="flex-1 py-2.5 rounded-xl bg-white/10 text-white">{t.cancel}</button>
-              <button onClick={createGroup} className="flex-1 py-2.5 rounded-xl font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>{t.create}</button>
+              <button onClick={createGroup} className="flex-1 py-2.5 rounded-xl font-bold" style={{ background: "#f2b705", color: "#1b1030", boxShadow: "0 4px 16px rgba(242,183,5,0.35)" }}>{t.create}</button>
             </div>
           </Modal>
         )}
@@ -1720,7 +1832,7 @@ function App() {
               className="w-full px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/40 outline-none mb-3" />
             <div className="flex gap-2">
               <button onClick={() => setShowCreateGroup(false)} className="flex-1 py-2.5 rounded-xl bg-white/10 text-white">{t.cancel}</button>
-              <button onClick={createGroup} className="flex-1 py-2.5 rounded-xl font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>{t.create}</button>
+              <button onClick={createGroup} className="flex-1 py-2.5 rounded-xl font-bold" style={{ background: "#f2b705", color: "#1b1030", boxShadow: "0 4px 16px rgba(242,183,5,0.35)" }}>{t.create}</button>
             </div>
           </Modal>
         )}
@@ -1761,14 +1873,14 @@ function App() {
         )}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <button onClick={() => setScreen("groups")} className="p-2 rounded-full bg-white/10 text-white"><ArrowLeft size={18} /></button>
+            <button onClick={() => setScreen("groups")} className="p-2 rounded-full bg-white/10 text-white border border-white/10 backdrop-blur-sm shadow-lg shadow-black/20"><ArrowLeft size={18} /></button>
             <div>
               <p className="text-white font-bold">{grp.name}</p>
               <p className="text-white/40 text-xs">{(grp.members || []).length} {t.members}</p>
             </div>
           </div>
           <div className="flex flex-col items-end gap-1">
-            <button onClick={() => sendGameInvite(activeGroupId)} className="flex items-center gap-1 px-3 py-2 rounded-full text-xs font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>
+            <button onClick={() => sendGameInvite(activeGroupId)} className="flex items-center gap-1 px-3 py-2 rounded-full text-xs font-bold" style={{ background: "#f2b705", color: "#1b1030", boxShadow: "0 4px 16px rgba(242,183,5,0.35)" }}>
               <Swords size={14} /> {t.sendRequest}
             </button>
             {remaining != null && (
@@ -1853,7 +1965,14 @@ function App() {
   if (screen === "lobby" && activeGameId) {
     const game = games[activeGameId];
     if (!game) {
-      return <GoneScreen bg={bg} message={t.groupGone} backLabel={t.back} onBack={() => setScreen("groups")} />;
+      // Oyun kaydı artık yok: çoğunlukla kullanıcı az önce geri tuşuyla
+      // lobiden çıktı (leaveLobby boş kalan lobiyi siler) ya da başka bir
+      // üye lobiyi kapattı. Bu bir hata değil, normal bir durum — o yüzden
+      // "grup mevcut değil" gibi kafa karıştırıcı bir hata ekranı yerine
+      // sessizce sohbete dönüyoruz.
+      setScreen("chat");
+      setActiveGameId(null);
+      return null;
     }
     if (game.status !== "lobby") {
       const activeGrp = groups[game.groupId];
@@ -1861,7 +1980,7 @@ function App() {
       return <GroupGameView game={game} me={me} t={t} onSpinEnd={(token) => finishSpin(activeGameId, token)}
         onSubmitWord={(w, ok, timedOut) => submitWord(activeGameId, w, ok, timedOut)}
         onNextRound={() => backToWheelScreen(activeGameId)}
-        onExitToChat={() => setScreen("chat")} onGameOver={() => setScreen("menu")} lang={game.lang} onlineUsers={onlineUsers}
+        onExitToChat={() => leaveMatch(activeGameId, "chat")} onGameOver={() => leaveMatch(activeGameId, "menu")} lang={game.lang} onlineUsers={onlineUsers}
         budgetRemainingMs={budgetRemainingMs} />;
     }
     const grp = groups[game.groupId];
@@ -1874,12 +1993,12 @@ function App() {
     return (
       <div className="min-h-screen w-full p-5 flex flex-col items-center" style={{ fontFamily: "Inter, sans-serif" }}>
         {bg}
-        <button onClick={() => leaveLobby(activeGameId)} className="absolute top-5 left-5 p-2 rounded-full bg-white/10 text-white">
+        <button onClick={() => leaveLobby(activeGameId)} className="absolute top-5 left-5 p-2 rounded-full bg-white/10 text-white border border-white/10 backdrop-blur-sm shadow-lg shadow-black/20">
           <ArrowLeft size={18} />
         </button>
         <div className="mt-16 text-center mb-6">
           <h2 className="text-xl font-bold text-white" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.lobby}</h2>
-          <p className="text-white/50 text-sm">{(game.members || []).length}/{game.maxMembers} · {t.waitingPlayers}</p>
+          <p className="text-white/50 text-sm">{game.members.length}/{game.maxMembers} · {t.waitingPlayers}</p>
           {remaining != null && (
             <p className="flex items-center justify-center gap-1 text-xs font-semibold mt-2"
               style={{ color: remaining <= 0 ? "#ff8a8a" : remaining < 5 * 60 * 1000 ? "#ffb84d" : "rgba(255,255,255,0.4)" }}>
@@ -1888,7 +2007,7 @@ function App() {
           )}
         </div>
         <div className="flex flex-wrap gap-2 justify-center max-w-md mb-8">
-          {(game.members || []).map(m => (
+          {game.members.map(m => (
             <div key={m} className="px-3 py-2 rounded-full bg-white/10 text-white text-sm flex items-center gap-1">
               {!!grp && m === grp.owner && <Crown size={12} color="#f2b705" />} {m} <OnlineDot online={isOnline(m)} />
             </div>
@@ -1897,8 +2016,8 @@ function App() {
         {limitReached ? (
           <p className="text-center text-sm max-w-xs" style={{ color: "#ffb84d" }}>{t.dailyLimitReachedFull}</p>
         ) : isOwner ? (
-          <button onClick={() => startSpin(activeGameId)} className="px-8 py-4 rounded-full font-bold text-lg flex items-center gap-2" style={{ background: "#f2b705", color: "#1b1030", fontFamily: "Fredoka, sans-serif" }}>
-            <Play size={20} /> {t.startGame}
+          <button onClick={() => startSpin(activeGameId)} className="px-10 py-5 rounded-full font-bold text-xl flex items-center gap-2" style={{ background: "#f2b705", color: "#1b1030", boxShadow: "0 4px 16px rgba(242,183,5,0.35)", fontFamily: "Fredoka, sans-serif" }}>
+            <Play size={24} /> {t.startGame}
           </button>
         ) : (
           <p className="text-white/40 text-sm">{t.onlyOwnerCanSpin}</p>
@@ -1950,7 +2069,7 @@ function App() {
             <div key={n.id} className="px-4 py-3 rounded-2xl bg-white/10">
               <p className="text-white text-sm mb-2 flex items-center gap-1.5 flex-wrap"><b className="flex items-center gap-1">{n.from} <OnlineDot online={isOnline(n.from)} /></b> {t.invitedYouToGroup}: <b>{n.groupName}</b></p>
               <div className="flex gap-2">
-                <button onClick={() => acceptGroupInvite(n)} className="flex-1 py-1.5 rounded-full text-xs font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>{t.accept}</button>
+                <button onClick={() => acceptGroupInvite(n)} className="flex-1 py-1.5 rounded-full text-xs font-bold" style={{ background: "#f2b705", color: "#1b1030", boxShadow: "0 4px 16px rgba(242,183,5,0.35)" }}>{t.accept}</button>
                 <button onClick={() => removeNotification(n.id)} className="flex-1 py-1.5 rounded-full text-xs font-bold bg-white/10 text-white">{t.decline}</button>
               </div>
             </div>
@@ -2052,7 +2171,11 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
   const amEliminated = !isSpectator && !!eliminatedPlayers[me.username];
   const spectatorMode = isSpectator || (amEliminated && watching);
   const isMyTurn = !spectatorMode && !amEliminated && currentPlayer === me.username && game.status === "playing";
-  const requiredLetter = wordChain.length === 0 ? game.currentLetter : lastLetter(wordChain[wordChain.length - 1].word, lang);
+  // Harf artık her zaman game.currentLetter'dan okunur: doğru bir kelimeden
+  // sonra bu, o kelimenin son harfine güncellenir; yanlış/geçersiz bir
+  // kelimeden sonra ise çark yeniden çevrilip yeni rastgele bir harf atanır
+  // (kimse elenmez, sadece harf ve sıra değişir).
+  const requiredLetter = game.currentLetter;
 
   // her yeni tur başladığında (yeniden çark çevrildiğinde) izleme durumu
   // sıfırlanır — kişi tekrar oynayan bir üye olarak başlar
@@ -2119,7 +2242,7 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
     <div className="min-h-screen w-full p-5 flex flex-col items-center" style={{ fontFamily: "Inter, sans-serif" }}>
       <div className="fixed inset-0 -z-10" style={{ background: "radial-gradient(ellipse at 25% 15%, #2d1755 0%, #1c0f38 45%, #0f0a1e 100%)" }} />
       {flash && <FullScreenFlash key={flash.key} ok={flash.ok} onDone={() => setFlash(null)} />}
-      <button onClick={onExitToChat} className="absolute top-5 left-5 p-2 rounded-full bg-white/10 text-white"><ArrowLeft size={18} /></button>
+      <button onClick={onExitToChat} className="absolute top-5 left-5 p-2 rounded-full bg-white/10 text-white border border-white/10 backdrop-blur-sm shadow-lg shadow-black/20"><ArrowLeft size={18} /></button>
       <div className="absolute top-5 right-5 flex flex-col items-end gap-2">
         {budgetRemainingMs != null && (
           <span className="flex items-center gap-1 px-3 py-2 rounded-full bg-black/30 text-xs font-semibold"
@@ -2137,7 +2260,10 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
         <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl text-center font-bold text-sm shadow-lg"
           style={{ background: "#ff6f61", color: "#1b1030", maxWidth: "88vw" }}>
           {elimToast.username}{elimToast.word ? `: "${elimToast.word}" — ` : " "}
-          {elimToast.reason === "timeout" ? t.eliminatedByTimeout : elimToast.reason === "invalid" ? t.eliminatedByInvalid : t.eliminatedByDuplicate}
+          {elimToast.reason === "timeout" ? t.eliminatedByTimeout
+            : elimToast.reason === "invalid" ? t.eliminatedByInvalid
+            : elimToast.reason === "left" ? t.eliminatedByLeft
+            : t.eliminatedByDuplicate}
         </div>
       )}
       <p className="text-white/40 text-xs mt-14 mb-2">{t.roundOf} {game.roundNumber} · {wordChain.length} {t.roundOf.toLowerCase()} · {activeMembers.length} {t.playersLeft}</p>
@@ -2162,10 +2288,10 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
                 : t.eliminatedInvalidMsg}
             </p>
             <div className="flex flex-col gap-2">
-              <button onClick={() => setWatching(true)} className="w-full py-2.5 rounded-full font-bold flex items-center justify-center gap-2" style={{ background: "#f2b705", color: "#1b1030" }}>
+              <button onClick={() => setWatching(true)} className="w-full py-2.5 rounded-full font-bold flex items-center justify-center gap-2" style={{ background: "#f2b705", color: "#1b1030", boxShadow: "0 4px 16px rgba(242,183,5,0.35)" }}>
                 <Shield size={16} /> {t.watchMatch}
               </button>
-              <button onClick={onGameOver} className="w-full py-2.5 rounded-full font-bold" style={{ background: "#ff6f61", color: "#1b1030" }}>
+              <button onClick={onGameOver} className="w-full py-2.5 rounded-full font-bold" style={{ background: "#ff6f61", color: "#1b1030", boxShadow: "0 4px 16px rgba(255,111,97,0.35)" }}>
                 {t.backToMenu}
               </button>
             </div>
@@ -2180,25 +2306,25 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
               const isElim = !!eliminatedPlayers[m];
               const isTurn = !isElim && currentPlayer === m;
               return (
-                <span key={m} className={`px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1 ${isTurn ? "bg-yellow-400 text-[#1b1030]" : isElim ? "bg-white/5 text-white/30 line-through" : "bg-white/10 text-white/60"}`}>{m} <OnlineDot online={!!onlineUsers[m]} /></span>
+                <span key={m} className={`px-3.5 py-2 rounded-full text-base font-semibold flex items-center gap-1 ${isTurn ? "bg-yellow-400 text-[#1b1030]" : isElim ? "bg-white/5 text-white/30 line-through" : "bg-white/10 text-white/60"}`}>{m} <OnlineDot online={!!onlineUsers[m]} /></span>
               );
             })}
           </div>
           {wordChain.length > 0 && (
-            <div className="text-center mb-4 text-white/70 text-sm">
-              {wordChain[wordChain.length - 1].username}: <b className="text-white">{wordChain[wordChain.length - 1].word || "—"}</b>
+            <div className="text-center mb-4 text-white/70 text-lg px-2 break-words">
+              {wordChain[wordChain.length - 1].username}: <b className="text-white text-2xl">{wordChain[wordChain.length - 1].word || "—"}</b>
             </div>
           )}
-          <div className="text-center mb-3">
-            <p className="text-white/50 text-sm">{isMyTurn ? t.yourTurn : `${currentPlayer}...`}</p>
-            <p className="text-white text-lg"><b className="text-yellow-400 text-2xl">{requiredLetter}</b> {t.writeWordStartingWith}</p>
+          <div className="text-center mb-3 px-2">
+            <p className="text-white/60 text-lg font-semibold break-words">{isMyTurn ? t.yourTurn : `${currentPlayer}...`}</p>
+            <p className="text-white text-2xl break-words"><b className="text-yellow-400 text-4xl">{requiredLetter}</b> {t.writeWordStartingWith}</p>
           </div>
           <div className="mb-3 min-h-[44px] flex items-center justify-center">
             <WordFeedbackBadge feedback={feedback} t={t} />
           </div>
           {isMyTurn && (
             <>
-              <div className="flex items-center justify-center gap-1 text-white/60 text-sm mb-2"><Clock size={14} /> {timeLeft}s</div>
+              <div className="flex items-center justify-center gap-1 text-white/60 text-base mb-2"><Clock size={16} /> {timeLeft}s</div>
               <div className="flex gap-2">
                 <input ref={wordInputRef} autoFocus value={wordInput}
                   onChange={e => {
@@ -2211,9 +2337,9 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
                   }}
                   onKeyDown={e => e.key === "Enter" && handleSubmit(false)}
                   enterKeyHint="send" inputMode="text"
-                  disabled={checking} className="flex-1 px-4 py-3 rounded-full bg-white/10 text-white outline-none border-2 border-yellow-400/40"
+                  disabled={checking} className="flex-1 px-5 py-4 text-lg rounded-full bg-white/10 text-white outline-none border-2 border-yellow-400/40"
                   style={{ animation: shake ? "inputShake 420ms ease" : "none" }} />
-                <button onClick={() => handleSubmit(false)} disabled={checking} className="px-5 py-3 rounded-full font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>
+                <button onClick={() => handleSubmit(false)} disabled={checking} className="px-7 py-4 text-lg rounded-full font-bold" style={{ background: "#f2b705", color: "#1b1030", boxShadow: "0 4px 16px rgba(242,183,5,0.35)" }}>
                   {checking ? t.checking : t.submit}
                 </button>
               </div>
@@ -2227,29 +2353,33 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
           <h3 className="text-white font-bold text-center mb-1" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.roundResults}</h3>
           <p className="text-white/40 text-xs text-center mb-4">{lastResults.length} {t.roundOf.toLowerCase()}</p>
 
-          {lastResults.length > 0 && lastResults.every(r => r.points > 0) && (
-            <div className="mb-4 px-4 py-3 rounded-2xl text-center font-bold text-sm"
-              style={{ background: "#f2b70522", border: "1px solid #f2b70566", color: "#f2b705" }}>
-              🎉 {t.groupAllCorrectMsg}
-            </div>
-          )}
+          {(() => {
+            const winners = game.roundWinners || (game.roundWinner ? [game.roundWinner] : []);
+            if (!winners.length) return null;
+            const pool = game.roundPool || 0;
+            const share = winners.length > 1 ? Math.floor(pool / winners.length) : pool;
+            return (
+              <div className="mb-4 px-4 py-4 rounded-2xl text-center" style={{ background: "#f2b70522", border: "1px solid #f2b70566" }}>
+                <p className="flex items-center justify-center gap-1 font-bold text-lg mb-1" style={{ color: "#f2b705", fontFamily: "Fredoka, sans-serif" }}>
+                  <Crown size={18} color="#f2b705" /> {t.roundWinnerLabel}: {winners.join(", ")}
+                </p>
+                <p className="text-white/70 text-xs mb-2">{t.roundWinnerDesc}</p>
+                <p className="text-yellow-400 font-black text-2xl">
+                  +{share} {t.points}{winners.length > 1 ? ` ${t.each}` : ""}
+                </p>
+                {winners.length > 1 && (
+                  <p className="text-white/50 text-xs mt-1">{t.splitPoolLabel} {pool} {t.points}</p>
+                )}
+              </div>
+            );
+          })()}
 
-          {game.roundWinner && (
-            <div className="mb-4 px-4 py-4 rounded-2xl text-center" style={{ background: "#f2b70522", border: "1px solid #f2b70566" }}>
-              <p className="flex items-center justify-center gap-1 font-bold text-lg mb-1" style={{ color: "#f2b705", fontFamily: "Fredoka, sans-serif" }}>
-                <Crown size={18} color="#f2b705" /> {t.roundWinnerLabel}: {game.roundWinner}
-              </p>
-              <p className="text-white/70 text-xs mb-2">{t.roundWinnerDesc}</p>
-              <p className="text-yellow-400 font-black text-2xl">+{game.roundPool || 0} {t.points}</p>
-            </div>
-          )}
-
-          {/* bu turdaki doğru/yanlış sayıları — puanların tamamı yukarıdaki galibe verildi */}
+          {/* bu turdaki doğru/yanlış sayıları — puanlar galip(ler)e verildi */}
           <div className="flex flex-wrap gap-2 justify-center mb-4">
             {members.map(m => {
               const correct = lastResults.filter(r => r.username === m && r.points > 0).length;
               const wrong = lastResults.filter(r => r.username === m && r.points === 0).length;
-              const isWinner = m === game.roundWinner;
+              const isWinner = (game.roundWinners || (game.roundWinner ? [game.roundWinner] : [])).includes(m);
               return (
                 <span key={m} className={`px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1 ${isWinner ? "text-[#1b1030]" : "bg-white/10 text-white"}`}
                   style={isWinner ? { background: "#f2b705" } : undefined}>
@@ -2267,7 +2397,7 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
               </div>
             ))}
           </div>
-          <button onClick={spectatorMode ? onExitToChat : onNextRound} className="w-full py-3 rounded-full font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>{spectatorMode ? t.spectateBack : t.back}</button>
+          <button onClick={spectatorMode ? onExitToChat : onNextRound} className="w-full py-3 rounded-full font-bold" style={{ background: "#f2b705", color: "#1b1030", boxShadow: "0 4px 16px rgba(242,183,5,0.35)" }}>{spectatorMode ? t.spectateBack : t.back}</button>
         </div>
       )}
     </div>
@@ -2380,7 +2510,7 @@ function SoloGameView({ t, lang, me, onAddPoints, onExit }) {
     <div className="min-h-screen w-full p-5 flex flex-col items-center" style={{ fontFamily: "Inter, sans-serif" }}>
       <div className="fixed inset-0 -z-10" style={{ background: "radial-gradient(ellipse at 25% 15%, #2d1755 0%, #1c0f38 45%, #0f0a1e 100%)" }} />
       {flash && <FullScreenFlash key={flash.key} ok={flash.ok} onDone={() => setFlash(null)} />}
-      <button onClick={onExit} className="absolute top-5 left-5 p-2 rounded-full bg-white/10 text-white"><ArrowLeft size={18} /></button>
+      <button onClick={onExit} className="absolute top-5 left-5 p-2 rounded-full bg-white/10 text-white border border-white/10 backdrop-blur-sm shadow-lg shadow-black/20"><ArrowLeft size={18} /></button>
       {allCorrectMsg && (
         <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl text-center font-bold text-sm shadow-lg"
           style={{ background: "#f2b705", color: "#1b1030", maxWidth: "88vw" }}>
@@ -2396,7 +2526,7 @@ function SoloGameView({ t, lang, me, onAddPoints, onExit }) {
             <h2 className="text-xl font-bold text-white mb-2" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.duplicateWordTitle}</h2>
             <p className="text-white/80 mb-1"><b className="text-yellow-400">"{gameOverWord}"</b></p>
             <p className="text-white/70 text-sm mb-5">{t.duplicateWordMsg}</p>
-            <button onClick={onExit} className="w-full py-2.5 rounded-full font-bold" style={{ background: "#ff6f61", color: "#1b1030" }}>
+            <button onClick={onExit} className="w-full py-2.5 rounded-full font-bold" style={{ background: "#ff6f61", color: "#1b1030", boxShadow: "0 4px 16px rgba(255,111,97,0.35)" }}>
               {t.backToMenu}
             </button>
           </div>
@@ -2408,8 +2538,8 @@ function SoloGameView({ t, lang, me, onAddPoints, onExit }) {
           <Wheel lang={lang} spinning={status === "spinning"} resultLetter={letter} excludeFirst={lang === "tr" ? "Ğ" : null}
             onSpinEnd={() => setStatus("playing")} />
           {status === "wheel" && (
-            <button onClick={spin} className="mt-8 px-8 py-4 rounded-full font-bold text-lg flex items-center gap-2" style={{ background: "#f2b705", color: "#1b1030", fontFamily: "Fredoka, sans-serif" }}>
-              <Play size={20} /> {t.spinWheel}
+            <button onClick={spin} className="mt-8 px-10 py-5 rounded-full font-bold text-xl flex items-center gap-2" style={{ background: "#f2b705", color: "#1b1030", boxShadow: "0 4px 16px rgba(242,183,5,0.35)", fontFamily: "Fredoka, sans-serif" }}>
+              <Play size={24} /> {t.spinWheel}
             </button>
           )}
         </div>
@@ -2417,11 +2547,11 @@ function SoloGameView({ t, lang, me, onAddPoints, onExit }) {
 
       {!gameOverWord && status === "playing" && (
         <div className="w-full max-w-sm mt-6">
-          <div className="text-center mb-4">
-            <p className="text-white text-lg"><b className="text-yellow-400 text-2xl">{required}</b> {t.writeWordStartingWith}</p>
+          <div className="text-center mb-4 px-2">
+            <p className="text-white text-2xl break-words"><b className="text-yellow-400 text-4xl">{required}</b> {t.writeWordStartingWith}</p>
           </div>
-          <div className="flex items-center justify-center gap-1 text-sm mb-2" style={{ color: timeLeft <= 5 ? "#ff6f61" : "rgba(255,255,255,0.6)" }}>
-            <Clock size={14} /> {timeLeft}s
+          <div className="flex items-center justify-center gap-1 text-base mb-2" style={{ color: timeLeft <= 5 ? "#ff6f61" : "rgba(255,255,255,0.6)" }}>
+            <Clock size={16} /> {timeLeft}s
           </div>
           <div className="flex gap-2 mb-4">
             <input ref={wordInputRef} autoFocus value={wordInput}
@@ -2432,9 +2562,9 @@ function SoloGameView({ t, lang, me, onAddPoints, onExit }) {
               }}
               onKeyDown={e => e.key === "Enter" && submit(false)}
               enterKeyHint="send" inputMode="text"
-              disabled={checking} className="flex-1 px-4 py-3 rounded-full bg-white/10 text-white outline-none border-2 border-yellow-400/40"
+              disabled={checking} className="flex-1 px-5 py-4 text-lg rounded-full bg-white/10 text-white outline-none border-2 border-yellow-400/40"
               style={{ animation: shake ? "inputShake 420ms ease" : "none" }} />
-            <button onClick={() => submit(false)} disabled={checking} className="px-5 py-3 rounded-full font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>
+            <button onClick={() => submit(false)} disabled={checking} className="px-7 py-4 text-lg rounded-full font-bold" style={{ background: "#f2b705", color: "#1b1030", boxShadow: "0 4px 16px rgba(242,183,5,0.35)" }}>
               {checking ? t.checking : t.submit}
             </button>
           </div>
@@ -2443,7 +2573,7 @@ function SoloGameView({ t, lang, me, onAddPoints, onExit }) {
           </div>
           <div className="mt-4 flex flex-wrap gap-1 justify-center">
             {chain.slice(-10).map((c, i) => (
-              <span key={i} className={`px-2 py-1 rounded-full text-xs ${c.points > 0 ? "bg-green-500/20 text-green-300" : "bg-red-500/20 text-red-300"}`}>{c.word || "—"}</span>
+              <span key={i} className={`px-2.5 py-1.5 rounded-full text-sm ${c.points > 0 ? "bg-green-500/20 text-green-300" : "bg-red-500/20 text-red-300"}`}>{c.word || "—"}</span>
             ))}
           </div>
         </div>
@@ -2496,7 +2626,7 @@ class ErrorBoundary extends React.Component {
               {String(this.state.err && (this.state.err.stack || this.state.err.message || this.state.err))}
             </pre>
           )}
-          <button onClick={() => window.location.reload()} className="px-6 py-3 rounded-full font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>
+          <button onClick={() => window.location.reload()} className="px-6 py-3 rounded-full font-bold" style={{ background: "#f2b705", color: "#1b1030", boxShadow: "0 4px 16px rgba(242,183,5,0.35)" }}>
             Sayfayı Yenile
           </button>
         </div>
