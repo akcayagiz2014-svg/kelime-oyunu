@@ -2211,17 +2211,27 @@ function App() {
     );
   }
 
+  // ---- lobi kaydı aniden kaybolursa (başka bir üye lobiyi kapattı, ya da
+  // kullanıcı geri tuşuyla zaten çıktı) sessizce sohbete dön. Bunu render
+  // SIRASINDA (component fonksiyonunun gövdesinde) değil, ayrı bir effect
+  // içinde yapıyoruz — render anında state güncellemek kırılgan bir
+  // desendi ve bazı React sürümlerinde/koşullarında "Cannot read
+  // properties of undefined" hatasına yol açan yarış durumlarına neden
+  // olabiliyordu. Effect, gerçek commit'ten SONRA çalıştığı için bu
+  // yarış durumunu tamamen ortadan kaldırıyor.
+  useEffect(() => {
+    if (screen !== "lobby" || !activeGameId) return;
+    if (games[activeGameId]) return; // lobi hâlâ mevcut, yapılacak bir şey yok
+    setScreen("chat");
+    setActiveGameId(null);
+  }, [screen, activeGameId, games]);
+
   // ---------------- LOBBY ----------------
   if (screen === "lobby" && activeGameId) {
     const game = games[activeGameId];
     if (!game) {
-      // Oyun kaydı artık yok: çoğunlukla kullanıcı az önce geri tuşuyla
-      // lobiden çıktı (leaveLobby boş kalan lobiyi siler) ya da başka bir
-      // üye lobiyi kapattı. Bu bir hata değil, normal bir durum — o yüzden
-      // "grup mevcut değil" gibi kafa karıştırıcı bir hata ekranı yerine
-      // sessizce sohbete dönüyoruz.
-      setScreen("chat");
-      setActiveGameId(null);
+      // Yukarıdaki effect zaten bir sonraki tick'te sohbete yönlendirecek;
+      // o ana kadar hiçbir şey render etmiyoruz.
       return null;
     }
     if (game.status !== "lobby") {
@@ -2234,6 +2244,7 @@ function App() {
         budgetRemainingMs={budgetRemainingMs} />;
     }
     const grp = groups[game.groupId];
+    const members = game.members || [];
     // Çarkı sadece grubu kuran kişi çevirebilir (host değil, grup sahibi) —
     // böylece çark kimsenin beklemediği bir anda "rastgele" dönmez, yalnızca
     // grubun kurucusu bilerek bastığında döner.
@@ -2248,7 +2259,7 @@ function App() {
         </button>
         <div className="mt-16 text-center mb-6">
           <h2 className="text-xl font-bold text-white" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.lobby}</h2>
-          <p className="text-white/50 text-sm">{game.members.length}/{game.maxMembers} · {t.waitingPlayers}</p>
+          <p className="text-white/50 text-sm">{members.length}/{game.maxMembers} · {t.waitingPlayers}</p>
           {remaining != null && (
             <p className="flex items-center justify-center gap-1 text-xs font-semibold mt-2"
               style={{ color: remaining <= 0 ? "#ff8a8a" : remaining < 5 * 60 * 1000 ? "#ffb84d" : "rgba(255,255,255,0.4)" }}>
@@ -2257,7 +2268,7 @@ function App() {
           )}
         </div>
         <div className="flex flex-wrap gap-2 justify-center max-w-md mb-8">
-          {game.members.map(m => (
+          {members.map(m => (
             <div key={m} className="px-3 py-2 rounded-full bg-white/10 text-white text-sm flex items-center gap-1">
               {!!grp && m === grp.owner && <Crown size={12} color="#f2b705" />} {m} <OnlineDot online={isOnline(m)} />
             </div>
