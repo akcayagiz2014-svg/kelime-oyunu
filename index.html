@@ -43,8 +43,8 @@
 <style>
 
   @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Inter:wght@400;500;600;700&display=swap');
-  html, body { margin:0; padding:0; background:#0f0a1e; overflow-x: hidden; }
-  #root { overflow-x: hidden; }
+  html, body { margin:0; padding:0; background:#0f0a1e; overflow: hidden; height: 100%; overscroll-behavior: none; }
+  #root { overflow: hidden; height: 100%; }
 
   /* ---- uygulama genelinde (ana menü dahil) tüm yazıları bir tık
      büyütür; clamp() ekran genişliğine göre üst sınır koyduğu için
@@ -467,35 +467,181 @@ async function fetchWithTimeout(url, ms) {
   }
 }
 
+// TDK'nin sözlük API'si olarak kullanılan https://sozluk.gov.tr/gts uç
+// noktası yalnızca Güncel Türkçe Sözlük'ü (GTS) sorgular; bu, sıradan
+// SÖZCÜKLERİN sözlüğüdür. Kişi adları (Esra, Ela, Deniz, Mehmet, vb.)
+// TDK'de ayrı bir sözlükte (Kişi Adları Sözlüğü) yer alır ve GTS
+// aramasında hiçbir zaman sonuç dönmez — bu yüzden "Esra" gibi çok
+// yaygın isimler bile GTS'ye göre "sözlükte yok" sayılıp reddediliyordu.
+// Ayrı bir kişi adları API'si güvenilir/CORS-uyumlu şekilde bulunamadığı
+// için, en sık kullanılan Türkçe kişi adlarından oluşan bu yerel listeyi
+// TDK'ye ek bir GEÇERLİ KELİME kaynağı olarak kullanıyoruz: GTS'de
+// bulunamayan bir aday, bu listede varsa yine de kabul edilir.
+const TR_PERSON_NAMES = new Set([
+  "esra","ela","elif","zeynep","ayşe","fatma","emine","hatice","meryem","havva",
+  "emel","hülya","songül","sultan","nur","nurdan","nurcan","nuray","gül","gülsüm",
+  "gülcan","gülay","gülten","gülşah","gonca","sevgi","sevil","sevim","sema","selin",
+  "selma","seda","sena","senem","simge","sibel","suna","şeyma","şule","şirin",
+  "tuğba","tuba","derya","deniz","damla","dilek","duygu","buse","burcu","betül",
+  "berna","beste","beren","ceren","ceyda","cansu","canan","aslı","asuman","aylin",
+  "ayşegül","ayten","azra","bahar","banu","berrin","berfin","büşra","ebru","ecrin",
+  "ecem","ekin","eda","ege","ezgi","feride","filiz","funda","gamze","gizem",
+  "görkem","hazal","iclal","idil","ipek","ışıl","kader","kübra","leyla","lale",
+  "melek","melis","melisa","merve","mine","müge","neslihan","nesrin","nihal",
+  "nilay","nilüfer","nazan","nazlı","oya","özge","özlem","pelin","pınar","rabia",
+  "rukiye","semra","sıla","şevval","tülay","vildan","yağmur","yasemin","yeliz",
+  "yıldız","zehra","zerrin","zeliha","zuhal",
+  "mehmet","mustafa","ahmet","ali","hüseyin","hasan","ibrahim","osman","yusuf",
+  "murat","ömer","emre","burak","can","cem","cengiz","doğan","ercan","erdem",
+  "erhan","erkan","ersin","ertan","fatih","ferhat","furkan","gökhan","hakan",
+  "halil","kaan","kadir","kemal","kerem","levent","mert","metin","onur","orhan",
+  "ozan","recep","sami","selim","serdar","serkan","taner","tarık","tolga",
+  "tuncay","uğur","ümit","volkan","yasin","yavuz","yiğit","zafer","berkay",
+  "barış","bora","efe","eren","kaya","koray","oğuz","rıza","salih","sinan",
+  "tayfun","turgay","yağız","adem","aziz","bahadır","bekir","bilal","cahit",
+  "celal","cevat","coşkun","erol","faruk","galip","hamdi","ihsan","ismail",
+  "kamil","necati","nihat","nuri","reşat","sabri","sadık","şahin","tahir",
+  "vedat","ziya","gökçe","rüzgar","ata","alp","kuzey","toprak","umut",
+  // ek adlar: aile/arkadaş çevresinde sık geçen, TDK GTS'de bulunmayan
+  // daha fazla yaygın Türkçe kişi adı
+  "elifnur","zeynepnur","fatmanur","ayşenur","hümeyra","kevser","rana","reyhan",
+  "rüveyda","şeyma","sümeyye","tuana","yıldız","zöhre","aynur","behiye","bircan",
+  "birgül","cemile","dilara","dilan","doğa","ecrin","esin","güneş","günay",
+  "hilal","huriye","ilknur","inci","kevser","lalezar","mahperi","naciye","nalan",
+  "necla","nurhan","nurgül","reyyan","saadet","safiye","saliha","selvi","serap",
+  "seray","sevda","şükran","tomris","türkan","ülkü","yasemen","zübeyde","adnan",
+  "akif","alper","arda","aras","arif","asaf","atilla","aydın","aykut","bartu",
+  "berat","berk","berkant","bertan","bilge","cahide","celil","cesur","cevdet",
+  "çağatay","çağlar","doruk","ediz","egemen","ekrem","emir","enes","erdal",
+  "eray","ergün","ersan","esat","evren","eyüp","ferit","fikret","göktuğ",
+  "gürkan","haldun","harun","hikmet","ilker","inan","ilhan","kaya","kutay",
+  "kürşat","lokman","mahmut","mert","mesut","muhammed","musa","müslüm","naim",
+  "necati","necmi","niyazi","nurettin","oktay","orkun","özkan","poyraz","rasim",
+  "reha","rıdvan","riza","said","selçuk","semih","serhat","şükrü","talat",
+  "taylan","temel","tuncer","ulaş","utku","vural","yalçın","yener","yücel",
+  "zeki","zülfü","aleyna","asel","asya","begüm","beyza","biricik","büşra",
+  "cemre","defne","doğukan","ecem","hira","ipek","jale","kayra","lina",
+  "mila","miray","nehir","nil","perihan","rüya","sude","şiir","yağız",
+]);
+
+// İngilizce ve Almanca'da da aynı sorun var: dictionaryapi.dev ve
+// openthesaurus.de TEK kaynak, ve openthesaurus özellikle bir SÖZLÜK değil
+// bir EŞ ANLAMLILAR sözlüğü olduğu için pek çok sıradan Almanca kelimenin
+// (özellikle özel isimlerin) hiç synset'i yok ve "bulunamadı" dönüyor.
+// Bunu telafi etmek için: (1) en sık kullanılan İngilizce/Almanca kişi
+// adlarından oluşan yerel bir liste hızlı bir ilk kontrol olarak kullanılıyor,
+// (2) ana kaynak başarısız/sonuçsuz kalırsa, çok daha kapsamlı olan
+// Wiktionary REST API'si ikinci bir kaynak olarak deneniyor.
+const EN_PERSON_NAMES = new Set([
+  "james","john","robert","michael","william","david","richard","joseph","thomas","charles",
+  "christopher","daniel","matthew","anthony","mark","donald","steven","paul","andrew","joshua",
+  "kenneth","kevin","brian","george","edward","ronald","timothy","jason","jeffrey","ryan",
+  "jacob","gary","nicholas","eric","jonathan","stephen","larry","justin","scott","brandon",
+  "benjamin","samuel","frank","gregory","raymond","alexander","patrick","jack","dennis","jerry",
+  "tyler","aaron","henry","adam","douglas","nathan","peter","zachary","walter","noah",
+  "mary","patricia","jennifer","linda","elizabeth","barbara","susan","jessica","sarah","karen",
+  "nancy","lisa","margaret","betty","sandra","ashley","dorothy","kimberly","emily","donna",
+  "michelle","carol","amanda","melissa","deborah","stephanie","rebecca","laura","sharon","cynthia",
+  "kathleen","amy","angela","shirley","anna","brenda","pamela","emma","nicole","helen",
+  "samantha","katherine","christine","debra","rachel","catherine","carolyn","janet","ruth","maria",
+  "heather","diane","olivia","julie","joyce","victoria","lauren","kelly","christina","joan",
+  "evelyn","judith","megan","andrea","cheryl","hannah","jacqueline","martha","gloria","teresa",
+  "ann","sara","madison","frances","kathryn","janice","jean","abigail","alice","julia",
+  "grace","amber","natalie","sophia","isabella","charlotte","mia","harper","ava","ella",
+  "liam","mason","ethan","logan","lucas","jack","owen","luke","gabriel","carter",
+  "wyatt","julian","levi","isaac","dylan","luke","adrian","eli","cole","hunter",
+]);
+const DE_PERSON_NAMES = new Set([
+  "hans","peter","michael","thomas","andreas","stefan","klaus","werner","günther","wolfgang",
+  "jürgen","dieter","helmut","manfred","horst","gerhard","heinz","walter","friedrich","kurt",
+  "karl","otto","erwin","rudolf","josef","franz","alexander","christian","daniel","florian",
+  "sebastian","tobias","matthias","markus","martin","frank","jan","lukas","felix","maximilian",
+  "leon","paul","finn","noah","elias","ben","jonas","luca","tim","niklas",
+  "maria","anna","ursula","erika","monika","petra","sabine","gabriele","susanne","birgit",
+  "karin","brigitte","elisabeth","ingrid","renate","gisela","helga","christa","ute","angelika",
+  "andrea","claudia","sandra","nicole","julia","laura","lisa","lena","sophie","emma",
+  "hannah","mia","lea","marie","johanna","charlotte","emilia","clara","leonie","frieda",
+  "gerda","edith","ilse","irmgard","waltraud","margarete","gertrud","annemarie","hildegard","dorothea",
+]);
+
+async function wordExistsInDictionaryFallback(lang, candidate) {
+  // Wiktionary REST API: hem İngilizce hem Almanca kapsamı çok geniş olan,
+  // özel isimler dahil çoğu maddeyi barındıran ikincil bir kaynak.
+  try {
+    const site = lang === "en" ? "en.wiktionary.org" : "de.wiktionary.org";
+    const res = await fetchWithTimeout(`https://${site}/api/rest_v1/page/definition/${encodeURIComponent(candidate)}`, 6000);
+    if (!res.ok) return false;
+    const data = await res.json();
+    return !!data && typeof data === "object" && Object.keys(data).length > 0;
+  } catch (e) {
+    return false;
+  }
+}
+
 async function wordExistsInDictionary(lang, candidate) {
   try {
     if (lang === "tr") {
+      if (TR_PERSON_NAMES.has(candidate.toLocaleLowerCase("tr-TR"))) return true;
       const directUrl = `https://sozluk.gov.tr/gts?ara=${encodeURIComponent(candidate)}`;
-      let res;
+      // Tek bir CORS proxy'sine güvenmek riskli: o proxy o an yavaş/kapalıysa
+      // (sık görülen bir durum) TAMAMEN GEÇERLİ bir kelime (bitki, eşya,
+      // sıradan bir isim vb.) bile "sözlükte yok" diye reddediliyordu.
+      // Bu yüzden doğrudan istekten sonra, biri çalışana kadar birkaç farklı
+      // ücretsiz CORS proxy'si sırayla deneniyor; ilk başarılı yanıt kabul
+      // edilir, tamamı başarısız olursa kelime doğrulanamamış sayılır.
+      const proxies = [
+        (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+        (u) => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+        (u) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+        (u) => `https://thingproxy.freeboard.io/fetch/${u}`,
+      ];
+      let res = null;
       try {
         res = await fetchWithTimeout(directUrl, 6000);
       } catch (e) {
-        res = null; // CORS/ağ hatası: proxy ile tekrar denenecek
+        res = null; // CORS/ağ hatası: proxy zincirine geçilecek
       }
       if (!res || !res.ok) {
-        // CORS engeli ya da geçici bir hata olabilir: herkese açık bir CORS
-        // proxy'si üzerinden tekrar dene, tamamen pes etmeden önce.
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(directUrl)}`;
-        res = await fetchWithTimeout(proxyUrl, 8000);
+        for (const makeProxyUrl of proxies) {
+          try {
+            const r = await fetchWithTimeout(makeProxyUrl(directUrl), 7000);
+            if (r && r.ok) { res = r; break; }
+          } catch (e) {
+            // bu proxy başarısız oldu, bir sonrakini dene
+          }
+        }
       }
-      if (!res.ok) return false;
+      if (!res || !res.ok) return false;
       const data = await res.json();
       return Array.isArray(data) && data.length > 0;
     } else if (lang === "en") {
-      const res = await fetchWithTimeout(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(candidate)}`, 6000);
-      if (!res.ok) return false;
-      const data = await res.json();
-      return Array.isArray(data) && data.length > 0;
+      if (EN_PERSON_NAMES.has(candidate.toLowerCase())) return true;
+      let ok = false;
+      try {
+        const res = await fetchWithTimeout(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(candidate)}`, 6000);
+        if (res.ok) {
+          const data = await res.json();
+          ok = Array.isArray(data) && data.length > 0;
+        }
+      } catch (e) {
+        ok = false;
+      }
+      if (!ok) ok = await wordExistsInDictionaryFallback("en", candidate);
+      return ok;
     } else {
-      const res = await fetchWithTimeout(`https://www.openthesaurus.de/synonyme/search?q=${encodeURIComponent(candidate)}&format=application/json`, 6000);
-      if (!res.ok) return false;
-      const data = await res.json();
-      return !!(data && Array.isArray(data.synsets) && data.synsets.length > 0);
+      if (DE_PERSON_NAMES.has(candidate.toLowerCase())) return true;
+      let ok = false;
+      try {
+        const res = await fetchWithTimeout(`https://www.openthesaurus.de/synonyme/search?q=${encodeURIComponent(candidate)}&format=application/json`, 6000);
+        if (res.ok) {
+          const data = await res.json();
+          ok = !!(data && Array.isArray(data.synsets) && data.synsets.length > 0);
+        }
+      } catch (e) {
+        ok = false;
+      }
+      if (!ok) ok = await wordExistsInDictionaryFallback("de", candidate);
+      return ok;
     }
   } catch (e) {
     // Zaman aşımı, ağ tamamen kopuk ya da proxy de başarısız: bu kelime
@@ -670,7 +816,7 @@ function OnlineDot({ online }) {
 
 function GoneScreen({ bg, message, backLabel, onBack }) {
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center gap-4 p-6" style={{ fontFamily: "Inter, sans-serif" }}>
+    <div className="h-screen overflow-hidden w-full flex flex-col items-center justify-center gap-4 p-6" style={{ fontFamily: "Inter, sans-serif" }}>
       {bg}
       <p className="text-white/60 text-center">{message}</p>
       <button onClick={onBack} className="px-6 py-3 rounded-full font-bold" style={{ background: "#f2b705", color: "#1b1030", boxShadow: "0 4px 16px rgba(242,183,5,0.35)" }}>{backLabel}</button>
@@ -1595,7 +1741,7 @@ function App() {
   // ---------------- AUTH SCREEN ----------------
   if (!sessionChecked) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center" style={{ background: "#0f0a1e" }}>
+      <div className="h-screen overflow-hidden w-full flex items-center justify-center" style={{ background: "#0f0a1e" }}>
         <div className="fixed inset-0 -z-10" style={{ background: "radial-gradient(ellipse at 25% 15%, #2d1755 0%, #1c0f38 45%, #0f0a1e 100%)" }} />
       </div>
     );
@@ -1603,7 +1749,7 @@ function App() {
 
   if (screen === "auth" || !me) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center p-6" style={{ fontFamily: "Inter, sans-serif" }}>
+      <div className="h-screen overflow-hidden w-full flex items-center justify-center p-6" style={{ fontFamily: "Inter, sans-serif" }}>
         {bg}
         <div className="absolute top-4 right-4">{TopLangSwitch}</div>
         <div className="w-full max-w-sm rounded-3xl p-7" style={{ background: "rgba(36,21,66,0.85)", backdropFilter: "blur(12px)", boxShadow: "0 20px 60px rgba(0,0,0,.5)", border: "1px solid rgba(255,255,255,0.08)" }}>
@@ -1669,7 +1815,7 @@ function App() {
   // ---------------- MAIN MENU ----------------
   if (screen === "menu") {
     return (
-      <div className="min-h-screen w-full p-5" style={{ fontFamily: "Inter, sans-serif" }}>
+      <div className="h-screen overflow-hidden w-full p-5" style={{ fontFamily: "Inter, sans-serif" }}>
         {bg}
         <div className="flex items-center justify-between mb-6">
           <button onClick={() => setShowCreateGroup(true)} className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-white text-sm font-semibold hover:bg-white/20">
@@ -1807,14 +1953,14 @@ function App() {
   // ---------------- GROUPS LIST ----------------
   if (screen === "groups") {
     return (
-      <div className="min-h-screen w-full p-5" style={{ fontFamily: "Inter, sans-serif" }}>
+      <div className="h-screen overflow-hidden w-full p-5 flex flex-col" style={{ fontFamily: "Inter, sans-serif" }}>
         {bg}
         {Header(t.myGroups)}
         <button onClick={() => setShowCreateGroup(true)} className="mb-4 flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-white text-sm font-semibold hover:bg-white/20">
           <Plus size={16} /> {t.createGroup}
         </button>
         {myGroups.length === 0 && <p className="text-white/50 text-center mt-10">{t.noGroups}</p>}
-        <div className="space-y-2 max-w-md mx-auto">
+        <div className="space-y-2 max-w-md mx-auto w-full flex-1 min-h-0 overflow-y-auto pb-20">
           {myGroups.map(g => {
             const remaining = groupRemainingMs(g, games, tick);
             return (
@@ -1864,7 +2010,7 @@ function App() {
     const isOwner = grp.owner === me.username;
     const filteredUsers = Object.keys(users).filter(u => u !== me.username && u.toLocaleLowerCase(lang === "tr" ? "tr-TR" : undefined).includes(groupInviteSearch.trim().toLocaleLowerCase(lang === "tr" ? "tr-TR" : undefined)));
     return (
-      <div className="min-h-screen w-full p-5 flex flex-col" style={{ fontFamily: "Inter, sans-serif" }}>
+      <div className="h-screen overflow-hidden w-full p-5 flex flex-col" style={{ fontFamily: "Inter, sans-serif" }}>
         {bg}
         {isOwner ? (
           <div className="max-w-md w-full mx-auto mb-2 flex justify-center gap-2">
@@ -2005,7 +2151,7 @@ function App() {
     const remaining = grp ? groupRemainingMs(grp, games, tick) : null;
     const limitReached = grp ? groupLimitReached(grp, games, tick) : false;
     return (
-      <div className="min-h-screen w-full p-5 flex flex-col items-center" style={{ fontFamily: "Inter, sans-serif" }}>
+      <div className="h-screen overflow-hidden w-full p-5 flex flex-col items-center" style={{ fontFamily: "Inter, sans-serif" }}>
         {bg}
         <button onClick={() => leaveLobby(activeGameId)} className="absolute top-5 left-5 p-2 rounded-full bg-white/10 text-white border border-white/10 backdrop-blur-sm shadow-lg shadow-black/20">
           <ArrowLeft size={18} />
@@ -2049,10 +2195,10 @@ function App() {
   if (screen === "leaderboard") {
     const sorted = Object.entries(users).sort((a, b) => (b[1].score || 0) - (a[1].score || 0));
     return (
-      <div className="min-h-screen w-full p-5" style={{ fontFamily: "Inter, sans-serif" }}>
+      <div className="h-screen overflow-hidden w-full p-5 flex flex-col" style={{ fontFamily: "Inter, sans-serif" }}>
         {bg}
         {Header(t.worldLeaderboard, true)}
-        <div className="max-w-md mx-auto space-y-2">
+        <div className="max-w-md mx-auto w-full space-y-2 flex-1 min-h-0 overflow-y-auto pb-4">
           {sorted.map(([name, rec], i) => {
             const mkeys = medalsForScore(rec.score || 0);
             return (
@@ -2074,10 +2220,10 @@ function App() {
   // ---------------- NOTIFICATIONS ----------------
   if (screen === "notifications") {
     return (
-      <div className="min-h-screen w-full p-5" style={{ fontFamily: "Inter, sans-serif" }}>
+      <div className="h-screen overflow-hidden w-full p-5 flex flex-col" style={{ fontFamily: "Inter, sans-serif" }}>
         {bg}
         {Header(t.notifications, true)}
-        <div className="max-w-md mx-auto space-y-2">
+        <div className="max-w-md mx-auto w-full space-y-2 flex-1 min-h-0 overflow-y-auto pb-4">
           {myNotifs.length === 0 && <p className="text-white/40 text-center mt-10">{t.noNotifications}</p>}
           {myNotifs.map(n => (
             <div key={n.id} className="px-4 py-3 rounded-2xl bg-white/10">
@@ -2096,11 +2242,11 @@ function App() {
   // ---------------- ADMIN ----------------
   if (screen === "admin" && me.isAdmin && googleAdminVerified) {
     return (
-      <div className="min-h-screen w-full p-5" style={{ fontFamily: "Inter, sans-serif" }}>
+      <div className="h-screen overflow-hidden w-full p-5 flex flex-col" style={{ fontFamily: "Inter, sans-serif" }}>
         {bg}
         {Header(t.admin, true)}
         <p className="text-white/50 text-sm mb-4 max-w-md mx-auto">{t.adminPanelDesc}</p>
-        <div className="max-w-md mx-auto space-y-2">
+        <div className="max-w-md mx-auto w-full space-y-2 flex-1 min-h-0 overflow-y-auto pb-4">
           {Object.entries(users).map(([name, rec]) => {
             return (
               <div key={name} className="flex items-center justify-between px-4 py-3 rounded-2xl bg-white/10">
@@ -2253,7 +2399,7 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
   }
 
   return (
-    <div className="min-h-screen w-full p-5 flex flex-col items-center" style={{ fontFamily: "Inter, sans-serif" }}>
+    <div className="h-screen overflow-hidden w-full p-5 flex flex-col items-center" style={{ fontFamily: "Inter, sans-serif" }}>
       <div className="fixed inset-0 -z-10" style={{ background: "radial-gradient(ellipse at 25% 15%, #2d1755 0%, #1c0f38 45%, #0f0a1e 100%)" }} />
       {flash && <FullScreenFlash key={flash.key} ok={flash.ok} onDone={() => setFlash(null)} />}
       <button onClick={onExitToChat} className="absolute top-5 left-5 p-2 rounded-full bg-white/10 text-white border border-white/10 backdrop-blur-sm shadow-lg shadow-black/20"><ArrowLeft size={18} /></button>
@@ -2523,7 +2669,7 @@ function SoloGameView({ t, lang, me, onAddPoints, onExit }) {
   }
 
   return (
-    <div className="min-h-screen w-full p-5 flex flex-col items-center" style={{ fontFamily: "Inter, sans-serif" }}>
+    <div className="h-screen overflow-hidden w-full p-5 flex flex-col items-center" style={{ fontFamily: "Inter, sans-serif" }}>
       <div className="fixed inset-0 -z-10" style={{ background: "radial-gradient(ellipse at 25% 15%, #2d1755 0%, #1c0f38 45%, #0f0a1e 100%)" }} />
       {flash && <FullScreenFlash key={flash.key} ok={flash.ok} onDone={() => setFlash(null)} />}
       <button onClick={onExit} className="absolute top-5 left-5 p-2 rounded-full bg-white/10 text-white border border-white/10 backdrop-blur-sm shadow-lg shadow-black/20"><ArrowLeft size={18} /></button>
@@ -2637,7 +2783,7 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen w-full flex flex-col items-center justify-center p-6 text-center" style={{ background: "#0f0a1e" }}>
+        <div className="h-screen overflow-hidden w-full flex flex-col items-center justify-center p-6 text-center" style={{ background: "#0f0a1e" }}>
           <p className="text-white font-bold mb-4">Bir şeyler ters gitti. Devam etmek için sayfayı yenile.</p>
           {this.state.err && (
             <pre className="text-red-300 text-xs text-left max-w-lg overflow-auto mb-4 p-3 rounded-lg bg-white/5" style={{ whiteSpace: "pre-wrap" }}>
