@@ -522,6 +522,91 @@ const TR_PERSON_NAMES = new Set([
   "zeki","zülfü","aleyna","asel","asya","begüm","beyza","biricik","büşra",
   "cemre","defne","doğukan","ecem","hira","ipek","jale","kayra","lina",
   "mila","miray","nehir","nil","perihan","rüya","sude","şiir","yağız",
+  "irem","irmak","ilayda","ilgın","ada","alya","alara","masal","doğa",
+  "dilnaz","gökçen","gökçenur","selen","selis","zeynel","poyraz","umay",
+]);
+
+// Ülke/millet adları da tıpkı kişi adları gibi ÖZEL İSİM sayıldığından
+// TDK GTS'de (ve İngilizce/Almanca sözlük API'lerinde) genelde yer almaz
+// ("Türkiye", "Japonya", "Fransa" vb. sözlük maddesi değil, ansiklopedik
+// bir bilgidir). Bu yüzden dünya ülkelerinin tamamına yakınını her üç dil
+// için de ayrı bir yerel liste olarak ekliyoruz.
+const TR_COUNTRIES = new Set([
+  "türkiye","almanya","fransa","ingiltere","italya","ispanya","portekiz","yunanistan",
+  "bulgaristan","romanya","macaristan","polonya","çekya","slovakya","avusturya","isviçre",
+  "hollanda","belçika","lüksemburg","danimarka","norveç","isveç","finlandiya","izlanda",
+  "irlanda","rusya","ukrayna","belarus","litvanya","letonya","estonya","moldova",
+  "sırbistan","hırvatistan","slovenya","bosna","karadağ","kosova","makedonya","malta",
+  "arnavutluk","monako","andorra","lihtenştayn","vatikan","san marino",
+  "amerika","kanada","meksika","brezilya","arjantin","şili","peru","kolombiya",
+  "venezuela","ekvador","bolivya","paraguay","uruguay","küba","haiti","jamaika",
+  "panama","kosta rika","honduras","guatemala","nikaragua","el salvador",
+  "çin","japonya","kore","hindistan","pakistan","bangladeş","endonezya","malezya",
+  "singapur","tayland","vietnam","filipinler","myanmar","kamboçya","laos","moğolistan",
+  "nepal","butan","sri lanka","maldivler","afganistan","özbekistan","kazakistan",
+  "türkmenistan","kırgızistan","tacikistan","azerbaycan","gürcistan","ermenistan",
+  "iran","irak","suriye","lübnan","ürdün","israil","filistin","suudi arabistan",
+  "birleşik arap emirlikleri","katar","kuveyt","bahreyn","umman","yemen",
+  "mısır","libya","tunus","cezayir","fas","sudan","etiyopya","kenya",
+  "tanzanya","uganda","nijerya","gana","fildişi sahili","senegal","mali",
+  "nijer","çad","somali","güney afrika","zimbabve","zambiya","angola","mozambik",
+  "namibya","botsvana","madagaskar","kamerun","kongo","gabon","ruanda","burundi",
+  "avustralya","yeni zelanda","fiji","papua yeni gine",
+  "abd","kıbrıs",
+]);
+const EN_COUNTRIES = new Set([
+  "turkey","germany","france","england","britain","italy","spain","portugal","greece",
+  "bulgaria","romania","hungary","poland","austria","switzerland","netherlands","belgium",
+  "denmark","norway","sweden","finland","iceland","ireland","russia","ukraine","belarus",
+  "lithuania","latvia","estonia","moldova","serbia","croatia","slovenia","bosnia",
+  "montenegro","kosovo","malta","albania","monaco","andorra","america","canada","mexico",
+  "brazil","argentina","chile","peru","colombia","venezuela","ecuador","bolivia","paraguay",
+  "uruguay","cuba","haiti","jamaica","panama","china","japan","korea","india","pakistan",
+  "bangladesh","indonesia","malaysia","singapore","thailand","vietnam","philippines",
+  "myanmar","cambodia","laos","mongolia","nepal","bhutan","afghanistan","kazakhstan",
+  "uzbekistan","azerbaijan","georgia","armenia","iran","iraq","syria","lebanon","jordan",
+  "israel","palestine","egypt","libya","tunisia","algeria","morocco","sudan","ethiopia",
+  "kenya","tanzania","uganda","nigeria","ghana","senegal","somalia","zimbabwe","zambia",
+  "angola","namibia","botswana","madagascar","cameroon","rwanda","australia","fiji",
+]);
+const DE_COUNTRIES = new Set([
+  "deutschland","frankreich","england","italien","spanien","portugal","griechenland",
+  "polen","österreich","schweiz","niederlande","belgien","dänemark","norwegen","schweden",
+  "finnland","island","irland","russland","ukraine","türkei","china","japan","indien",
+  "brasilien","argentinien","kanada","mexiko","ägypten","marokko","kenia","nigeria",
+  "australien","neuseeland","israel","jordanien","syrien","libanon","iran","irak",
+]);
+
+// Kişi adlarında olduğu gibi, bazı sıradan ama nadir kullanılan hayvan/eşya
+// kelimeleri de sözlük API'lerinde (özellikle zaman aşımı/proxy hatası
+// durumunda) "bulunamadı" dönebiliyor. Ek güvence olarak sık karşılaşılan
+// ama unutulması muhtemel hayvan ve eşya adlarından oluşan küçük bir yerel
+// liste daha ekliyoruz — bu, ana sözlük kontrolüne EK bir güvenlik ağıdır,
+// onun yerine geçmez.
+const TR_EXTRA_WORDS = new Set([
+  // hayvanlar
+  "zürafa","fil","aslan","kaplan","leopar","panter","çita","sırtlan","gergedan","zebra",
+  "goril","şempanze","orangutan","panda","koala","kanguru","vaşak","porsuk","kokarca",
+  "tilki","kurt","çakal","ayı","kunduz","samur","sansar","gelincik","tavşan","kirpi",
+  "yarasa","köstebek","fare","sıçan","sincap","denizatı","ahtapot","mürekkep balığı",
+  "yunus","balina","fok","mors","denizanası","yengeç","istakoz","karides","midye","salyangoz",
+  "solucan","örümcek","akrep","kelebek","yusufçuk","cırcır böceği","çekirge","karınca","arı",
+  "eşek arısı","sinek","sivrisinek","böcek","uğur böceği","kertenkele","bukalemun","iguana",
+  "timsah","yılan","kaplumbağa","kurbağa","semender","penguen","flamingo","leylek","turna",
+  "balıkçıl","baykuş","kartal","şahin","atmaca","akbaba","karga","saksağan","serçe",
+  "bülbül","kanarya","papağan","tavuskuşu","tavus","güvercin","bıldırcın","sülün","keklik",
+  "deve","lama","alpaka","antilop","ceylan","geyik","karaca","dağ keçisi","yaban domuzu",
+  "manda","bizon","porsuk domuzu",
+  // eşyalar
+  "makas","iğne","yüksük","şemsiye","baston","gözlük","dürbün","büyüteç","pusula","fener",
+  "mum","kibrit","çakmak","cımbız","tornavida","çekiç","testere","matkap","pense","kerpeten",
+  "vida","çivi","somun","cıvata","zımba","raptiye","cetvel","gönye","pergel","silgi",
+  "kalemtıraş","mürekkep","damga","mühür","zarf","pul","kartpostal","ajanda",
+  "termos","tencere","tava","süzgeç","kevgir","oklava","kepçe","spatula","rende","havan",
+  "leğen","kova","fırça","süpürge","paspas","ütü","dikiş makinesi","örgü şişi","tığ",
+  "vazo","abajur","avize","perde","halı","kilim","yastık","yorgan","battaniye","çarşaf",
+  "sandık","dolap","raf","askı","çengel","kanca","zincir","kilit","anahtar","kayış",
+  "kemer","cüzdan","çanta","valiz","sırt çantası","şapka","atkı","eldiven","bere","fular",
 ]);
 
 // İngilizce ve Almanca'da da aynı sorun var: dictionaryapi.dev ve
@@ -581,7 +666,10 @@ async function wordExistsInDictionaryFallback(lang, candidate) {
 async function wordExistsInDictionary(lang, candidate) {
   try {
     if (lang === "tr") {
-      if (TR_PERSON_NAMES.has(candidate.toLocaleLowerCase("tr-TR"))) return true;
+      const trLower = candidate.toLocaleLowerCase("tr-TR");
+      if (TR_PERSON_NAMES.has(trLower)) return true;
+      if (TR_COUNTRIES.has(trLower)) return true;
+      if (TR_EXTRA_WORDS.has(trLower)) return true;
       const directUrl = `https://sozluk.gov.tr/gts?ara=${encodeURIComponent(candidate)}`;
       // Tek bir CORS proxy'sine güvenmek riskli: o proxy o an yavaş/kapalıysa
       // (sık görülen bir durum) TAMAMEN GEÇERLİ bir kelime (bitki, eşya,
@@ -616,6 +704,7 @@ async function wordExistsInDictionary(lang, candidate) {
       return Array.isArray(data) && data.length > 0;
     } else if (lang === "en") {
       if (EN_PERSON_NAMES.has(candidate.toLowerCase())) return true;
+      if (EN_COUNTRIES.has(candidate.toLowerCase())) return true;
       let ok = false;
       try {
         const res = await fetchWithTimeout(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(candidate)}`, 6000);
@@ -630,6 +719,7 @@ async function wordExistsInDictionary(lang, candidate) {
       return ok;
     } else {
       if (DE_PERSON_NAMES.has(candidate.toLowerCase())) return true;
+      if (DE_COUNTRIES.has(candidate.toLowerCase())) return true;
       let ok = false;
       try {
         const res = await fetchWithTimeout(`https://www.openthesaurus.de/synonyme/search?q=${encodeURIComponent(candidate)}&format=application/json`, 6000);
