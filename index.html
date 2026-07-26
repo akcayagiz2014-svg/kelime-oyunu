@@ -43,7 +43,21 @@
 <style>
 
   @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Inter:wght@400;500;600;700&display=swap');
-  html, body { margin:0; padding:0; background:#0f0a1e; }
+  html, body { margin:0; padding:0; background:#0f0a1e; overflow-x: hidden; }
+  #root { overflow-x: hidden; }
+
+  /* ---- uygulama genelinde (ana menü dahil) tüm yazıları bir tık
+     büyütür; clamp() ekran genişliğine göre üst sınır koyduğu için
+     hiçbir zaman taşmaya yol açmaz — dar ekranlarda ölçek küçülür,
+     geniş ekranlarda öncekinden belirgin şekilde büyür. ---- */
+  .text-xs   { font-size: clamp(0.75rem, 2.3vw, 0.9rem)   !important; }
+  .text-sm   { font-size: clamp(0.85rem, 2.8vw, 1.05rem)  !important; }
+  .text-base { font-size: clamp(1rem, 3.2vw, 1.2rem)      !important; }
+  .text-lg   { font-size: clamp(1.1rem, 3.8vw, 1.35rem)   !important; }
+  .text-xl   { font-size: clamp(1.2rem, 4.4vw, 1.5rem)    !important; }
+  .text-2xl  { font-size: clamp(1.4rem, 5.4vw, 1.85rem)   !important; }
+  .text-3xl  { font-size: clamp(1.65rem, 6.6vw, 2.2rem)   !important; }
+  .text-4xl  { font-size: clamp(1.95rem, 8vw, 2.7rem)     !important; }
 
   /* ---- modern button feel, applied globally so every button in the app
      gets a tactile press + subtle lift, without needing per-button edits ---- */
@@ -1595,7 +1609,7 @@ function App() {
         <div className="w-full max-w-sm rounded-3xl p-7" style={{ background: "rgba(36,21,66,0.85)", backdropFilter: "blur(12px)", boxShadow: "0 20px 60px rgba(0,0,0,.5)", border: "1px solid rgba(255,255,255,0.08)" }}>
           <div className="text-center mb-6">
             <div className="mx-auto mb-3 flex items-center justify-center" style={{ filter: "drop-shadow(0 8px 20px rgba(242,183,5,0.25))" }}>
-              <Wheel lang={lang} spinning={false} resultLetter={null} size={84} excludeFirst={lang === "tr" ? "Ğ" : null} />
+              <Wheel lang={lang} spinning={false} resultLetter={null} size={100} excludeFirst={lang === "tr" ? "Ğ" : null} />
             </div>
             <h1 className="text-2xl font-bold" style={{ fontFamily: "Fredoka, sans-serif", color: "#f5f0ff" }}>{t.appName}</h1>
           </div>
@@ -2270,7 +2284,7 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
 
       {game.status === "spinning" && (
         <div className="flex flex-col items-center mt-4">
-          <Wheel lang={lang} spinning resultLetter={game.currentLetter} onSpinEnd={() => onSpinEnd(game.spinToken)} excludeFirst={lang === "tr" ? "Ğ" : null} />
+          <Wheel lang={lang} spinning resultLetter={game.currentLetter} onSpinEnd={() => onSpinEnd(game.spinToken)} excludeFirst={lang === "tr" ? "Ğ" : null} size="min(82vw, 300px)" />
         </div>
       )}
 
@@ -2311,13 +2325,15 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
             })}
           </div>
           {wordChain.length > 0 && (
-            <div className="text-center mb-4 text-white/70 text-lg px-2 break-words">
-              {wordChain[wordChain.length - 1].username}: <b className="text-white text-2xl">{wordChain[wordChain.length - 1].word || "—"}</b>
+            <div className="text-center mb-4 text-white/70 px-2 break-words max-w-full" style={{ fontSize: "clamp(1.05rem, 4.4vw, 1.3rem)" }}>
+              {wordChain[wordChain.length - 1].username}: <b className="text-white" style={{ fontSize: "clamp(1.4rem, 6.6vw, 2.05rem)" }}>{wordChain[wordChain.length - 1].word || "—"}</b>
             </div>
           )}
           <div className="text-center mb-3 px-2">
             <p className="text-white/60 text-lg font-semibold break-words">{isMyTurn ? t.yourTurn : `${currentPlayer}...`}</p>
-            <p className="text-white text-2xl break-words"><b className="text-yellow-400 text-4xl">{requiredLetter}</b> {t.writeWordStartingWith}</p>
+            <p className="text-white break-words max-w-full" style={{ fontSize: "clamp(1.3rem, 6vw, 1.95rem)" }}>
+              <b className="text-yellow-400" style={{ fontSize: "clamp(2.15rem, 11vw, 3.6rem)" }}>{requiredLetter}</b> {t.writeWordStartingWith}
+            </p>
           </div>
           <div className="mb-3 min-h-[44px] flex items-center justify-center">
             <WordFeedbackBadge feedback={feedback} t={t} />
@@ -2325,7 +2341,7 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
           {isMyTurn && (
             <>
               <div className="flex items-center justify-center gap-1 text-white/60 text-base mb-2"><Clock size={16} /> {timeLeft}s</div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 w-full">
                 <input ref={wordInputRef} autoFocus value={wordInput}
                   onChange={e => {
                     const v = e.target.value;
@@ -2337,9 +2353,9 @@ function GroupGameView({ game, me, t, onSpinEnd, onSubmitWord, onNextRound, onEx
                   }}
                   onKeyDown={e => e.key === "Enter" && handleSubmit(false)}
                   enterKeyHint="send" inputMode="text"
-                  disabled={checking} className="flex-1 px-5 py-4 text-lg rounded-full bg-white/10 text-white outline-none border-2 border-yellow-400/40"
+                  disabled={checking} className="flex-1 min-w-0 px-4 py-4 text-xl rounded-full bg-white/10 text-white outline-none border-2 border-yellow-400/40"
                   style={{ animation: shake ? "inputShake 420ms ease" : "none" }} />
-                <button onClick={() => handleSubmit(false)} disabled={checking} className="px-7 py-4 text-lg rounded-full font-bold" style={{ background: "#f2b705", color: "#1b1030", boxShadow: "0 4px 16px rgba(242,183,5,0.35)" }}>
+                <button onClick={() => handleSubmit(false)} disabled={checking} className="shrink-0 whitespace-nowrap px-5 py-4 text-xl rounded-full font-bold" style={{ background: "#f2b705", color: "#1b1030", boxShadow: "0 4px 16px rgba(242,183,5,0.35)" }}>
                   {checking ? t.checking : t.submit}
                 </button>
               </div>
@@ -2536,7 +2552,7 @@ function SoloGameView({ t, lang, me, onAddPoints, onExit }) {
       {!gameOverWord && status !== "playing" && (
         <div className="flex flex-col items-center mt-4">
           <Wheel lang={lang} spinning={status === "spinning"} resultLetter={letter} excludeFirst={lang === "tr" ? "Ğ" : null}
-            onSpinEnd={() => setStatus("playing")} />
+            size="min(82vw, 300px)" onSpinEnd={() => setStatus("playing")} />
           {status === "wheel" && (
             <button onClick={spin} className="mt-8 px-10 py-5 rounded-full font-bold text-xl flex items-center gap-2" style={{ background: "#f2b705", color: "#1b1030", boxShadow: "0 4px 16px rgba(242,183,5,0.35)", fontFamily: "Fredoka, sans-serif" }}>
               <Play size={24} /> {t.spinWheel}
@@ -2548,12 +2564,14 @@ function SoloGameView({ t, lang, me, onAddPoints, onExit }) {
       {!gameOverWord && status === "playing" && (
         <div className="w-full max-w-sm mt-6">
           <div className="text-center mb-4 px-2">
-            <p className="text-white text-2xl break-words"><b className="text-yellow-400 text-4xl">{required}</b> {t.writeWordStartingWith}</p>
+            <p className="text-white break-words max-w-full" style={{ fontSize: "clamp(1.3rem, 6vw, 1.95rem)" }}>
+              <b className="text-yellow-400" style={{ fontSize: "clamp(2.15rem, 11vw, 3.6rem)" }}>{required}</b> {t.writeWordStartingWith}
+            </p>
           </div>
           <div className="flex items-center justify-center gap-1 text-base mb-2" style={{ color: timeLeft <= 5 ? "#ff6f61" : "rgba(255,255,255,0.6)" }}>
             <Clock size={16} /> {timeLeft}s
           </div>
-          <div className="flex gap-2 mb-4">
+          <div className="flex gap-2 mb-4 w-full">
             <input ref={wordInputRef} autoFocus value={wordInput}
               onChange={e => {
                 const v = e.target.value;
@@ -2562,9 +2580,9 @@ function SoloGameView({ t, lang, me, onAddPoints, onExit }) {
               }}
               onKeyDown={e => e.key === "Enter" && submit(false)}
               enterKeyHint="send" inputMode="text"
-              disabled={checking} className="flex-1 px-5 py-4 text-lg rounded-full bg-white/10 text-white outline-none border-2 border-yellow-400/40"
+              disabled={checking} className="flex-1 min-w-0 px-4 py-4 text-xl rounded-full bg-white/10 text-white outline-none border-2 border-yellow-400/40"
               style={{ animation: shake ? "inputShake 420ms ease" : "none" }} />
-            <button onClick={() => submit(false)} disabled={checking} className="px-7 py-4 text-lg rounded-full font-bold" style={{ background: "#f2b705", color: "#1b1030", boxShadow: "0 4px 16px rgba(242,183,5,0.35)" }}>
+            <button onClick={() => submit(false)} disabled={checking} className="shrink-0 whitespace-nowrap px-5 py-4 text-xl rounded-full font-bold" style={{ background: "#f2b705", color: "#1b1030", boxShadow: "0 4px 16px rgba(242,183,5,0.35)" }}>
               {checking ? t.checking : t.submit}
             </button>
           </div>
