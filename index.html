@@ -1246,6 +1246,22 @@ function App() {
   const gamesRef = useRef(games);
   useEffect(() => { groupsRef.current = groups; }, [groups]);
   useEffect(() => { gamesRef.current = games; }, [games]);
+
+  // ---- lobi kaydı aniden kaybolursa (başka bir üye lobiyi kapattı, ya da
+  // kullanıcı geri tuşuyla zaten çıktı) sessizce sohbete dön. Bunu render
+  // SIRASINDA değil, ayrı bir effect içinde yapıyoruz. ÖNEMLİ: bu hook,
+  // aşağıdaki "if (screen === ...) return" bloklarından ÖNCE, yani HER
+  // render'da (hangi ekranda olunursa olsun) aynı sırada çağrılmalı —
+  // aksi halde React'in "hook sayısı/sırası her render'da aynı olmalı"
+  // kuralı bozulur ve "Minified React error #310" ile uygulama çöker
+  // (bir önceki denemede tam olarak bu hataya yol açmıştı).
+  useEffect(() => {
+    if (screen !== "lobby" || !activeGameId) return;
+    if (games[activeGameId]) return; // lobi hâlâ mevcut, yapılacak bir şey yok
+    setScreen("chat");
+    setActiveGameId(null);
+  }, [screen, activeGameId, games]);
+
   useEffect(() => {
     const iv = setInterval(async () => {
       const { groupUpdates, gameUpdates } = cleanExpiredGroups(groupsRef.current, gamesRef.current);
@@ -2210,21 +2226,6 @@ function App() {
       </div>
     );
   }
-
-  // ---- lobi kaydı aniden kaybolursa (başka bir üye lobiyi kapattı, ya da
-  // kullanıcı geri tuşuyla zaten çıktı) sessizce sohbete dön. Bunu render
-  // SIRASINDA (component fonksiyonunun gövdesinde) değil, ayrı bir effect
-  // içinde yapıyoruz — render anında state güncellemek kırılgan bir
-  // desendi ve bazı React sürümlerinde/koşullarında "Cannot read
-  // properties of undefined" hatasına yol açan yarış durumlarına neden
-  // olabiliyordu. Effect, gerçek commit'ten SONRA çalıştığı için bu
-  // yarış durumunu tamamen ortadan kaldırıyor.
-  useEffect(() => {
-    if (screen !== "lobby" || !activeGameId) return;
-    if (games[activeGameId]) return; // lobi hâlâ mevcut, yapılacak bir şey yok
-    setScreen("chat");
-    setActiveGameId(null);
-  }, [screen, activeGameId, games]);
 
   // ---------------- LOBBY ----------------
   if (screen === "lobby" && activeGameId) {
