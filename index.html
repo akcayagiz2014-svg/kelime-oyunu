@@ -123,10 +123,13 @@ const ADMIN_PASS = "030714yagiz";
 const ADMIN_GOOGLE_EMAIL = "akca.yagiz2014@gmail.com";
 const WORD_TIME_SECONDS = 10;
 const ROUND_WORD_LIMIT = 25;
-// Grup maçlarında artık kimse elenmiyor: yanlış/geçersiz kelime yazan ya da
-// süresini geçiren oyuncu oyunda kalır, sıra sıradaki oyuncuya geçer ve
-// çark o oyuncu için yeniden çevrilir. Tur, toplam 55 kelime yazılınca
-// biter; en çok puanı toplayan (ya da eşitlik varsa toplayanlar) kazanır.
+// Grup maçlarında yanlış/geçersiz kelime yazan ya da süresini geçiren
+// oyuncu oyunda kalır, sıra sıradaki oyuncuya geçer ve çark o oyuncu için
+// yeniden çevrilir — kimse bu yüzden elenmez. Ancak "hafıza" kuralı
+// gereği, bu turda DAHA ÖNCE (kendisi ya da başka biri tarafından)
+// kullanılmış bir kelimeyi tekrar yazan oyuncu ELENİR (bkz. submitWord).
+// Tur, toplam 55 kelime yazılınca biter; en çok puanı toplayan (ya da
+// eşitlik varsa toplayanlar) kazanır.
 const GROUP_ROUND_WORD_LIMIT = 55;
 const POINTS_PER_WORD = 1;
 // Grubun 2 saatlik hakkı, oluşturulduktan sonra geçen duvar-saati değil,
@@ -159,7 +162,7 @@ function nextDailyResetTime(fromTs) {
   if (d.getTime() <= fromTs) d.setDate(d.getDate() + 1);
   return d.getTime();
 }
-const STREAK_BONUS = 5; // tur limitine kadar hiç kaçırmadan gidenin alacağı ekstra puan
+const STREAK_BONUS = 5; // tur limitine kadar hiç kaçırmadan gidenin alacağı ekstra puan (sadece Tek Başına modda)
 
 const ALPHABETS = {
   tr: ["A","B","C","Ç","D","E","F","G","H","I","İ","J","K","L","M","N","O","Ö","P","R","S","Ş","T","U","Ü","V","Y","Z"],
@@ -172,6 +175,18 @@ const T = {
     appName: "Kelime Türet", login: "Giriş Yap", register: "Kaydol", username: "Kullanıcı adı", password: "Şifre",
     noAccount: "Hesabın yok mu? Kaydol", haveAccount: "Zaten hesabın var mı? Giriş yap", wrongLogin: "Kullanıcı adı veya şifre hatalı",
     userExists: "Bu kullanıcı adı zaten alınmış", fillFields: "Lütfen tüm alanları doldur",
+    emailPlaceholder: "E-posta adresi", emailRequired: "Geçerli bir e-posta adresi gir — şifreni unutursan hesabına erişebilmenin TEK yolu bu.",
+    emailWarningTitle: "E-posta adresinizi doğru ve gerçek yazmalısınız!",
+    emailWarningBody: "Şifreni unutursan hesabına geri dönmenin başka hiçbir yolu yok — sadece bu e-postaya gönderilecek sıfırlama bağlantısıyla şifreni değiştirebilirsin. Yanlış ya da kendine ait olmayan bir e-posta yazarsan, şifreni unuttuğunda hesabını kalıcı olarak kaybedersin.",
+    forgotPassword: "Şifremi unuttum", forgotDesc: "Kullanıcı adını yaz, kayıtlı e-postana bir şifre sıfırlama bağlantısı gönderelim.",
+    forgotEnterUsername: "Kullanıcı adını gir", forgotNoEmail: "Bu hesapta kayıtlı bir e-posta bulunamadı.",
+    forgotSuccess: "Kayıtlı e-postana bir şifre sıfırlama bağlantısı gönderildi. Gelen kutunu (ve spam klasörünü) kontrol et.",
+    forgotFailed: "E-posta gönderilemedi, lütfen daha sonra tekrar dene.", forgotSending: "Gönderiliyor...", forgotSend: "Gönder",
+    resetPasswordTitle: "Yeni Şifre Belirle", resetPasswordChecking: "Bağlantı doğrulanıyor...",
+    resetPasswordInvalid: "Bu şifre sıfırlama bağlantısının süresi dolmuş ya da geçersiz. Lütfen tekrar 'Şifremi Unuttum' ile yeni bir bağlantı iste.",
+    resetPasswordNewPlaceholder: "Yeni şifre", resetPasswordTooShort: "Şifre en az 4 karakter olmalı",
+    resetPasswordSaving: "Kaydediliyor...", resetPasswordSave: "Şifreyi Kaydet", resetPasswordFailed: "Şifre güncellenemedi, lütfen tekrar dene.",
+    resetPasswordDone: "Şifren başarıyla güncellendi! Şimdi yeni şifrenle giriş yapabilirsin.", resetPasswordGoLogin: "Girişe Dön",
     mainMenu: "Ana Menü", createGroup: "Grup Oluştur", myGroups: "Gruplarım", soloPlay: "Tek Başına Oyna",
     leaderboard: "Puan Sıralaması", notifications: "Bildirimler", admin: "Admin Paneli", logout: "Çıkış Yap",
     groupName: "Grup adı", create: "Oluştur", cancel: "Vazgeç", noGroups: "Henüz bir grubun yok",
@@ -187,8 +202,8 @@ const T = {
     userNotFound: "Bu kullanıcı adı bulunamadı", top10: "İlk 10", loadingLeaderboard: "Sıralama yükleniyor...",
     accept: "Kabul Et", decline: "Reddet", adminPanelDesc: "Kullanıcı puanlarını düzenle", increase: "Artır", decrease: "Azalt", setScore: "Puanı Ayarla",
     congrats: "Tebrikler!", earnedMedal: "madalyası kazandınız!", close: "Kapat", invalidWord: "Bu kelime geçerli değil, 0 puan",
-    soloAllCorrectMsg: "Tebrikler, hepsini doğru yaptığınız için +5 puan aldınız!",
-    groupAllCorrectMsg: "Tebrikler, hepsini doğru yaptığınız için tur puanına +5 bonus eklendi!",
+    soloAllCorrectMsg: "Tebrikler, hepsini doğru yaptığınız için +20 puan aldınız!",
+    groupAllCorrectMsg: "Tebrikler, hepsini doğru yaptığınız için tur puanına +20 bonus eklendi!",
     roundWinnerLabel: "Turun Galibi", roundWinnerDesc: "Tur boyunca en çok puanı topladı ve toplanan tüm puanları kazandı:",
     each: "her biri", splitPoolLabel: "Toplam",
     validWord: "Geçerli kelime!", checking: "Kontrol ediliyor...", groupLimitReached: "En fazla 50 gruba katılabilirsin",
@@ -234,31 +249,23 @@ const T = {
     eliminatedByTimeout: "süresini doldurdu ve elendi!",
     eliminatedByLeft: "maçtan çıktı ve elendi!",
     onlyOwnerCanSpin: "Çarkı sadece grubu kuran kişi çevirebilir",
-    rulesButton: "Oyun Kuralları", rulesTitle: "Oyun Kuralları",
-    rulesGoalTitle: "🎯 Amaç",
-    rulesGoalText: "Çarkın belirlediği harfle başlayan kelimeler yazarak puan topla, madalya kazan ve dünya sıralamasında yüksel.",
-    rulesHowTitle: "▶ Nasıl Oynanır",
-    rulesHowText: "Çarkı çevir, ekrana gelen harfle başlayan bir kelime yaz ve süre bitmeden gönder. Doğru kelime puan kazandırır, süre dolar ya da kelime geçersizse 0 puan alırsın ve sıradaki tura geçilir.",
-    rulesMemoryTitle: "🧠 En Önemli Kural: Hafıza",
-    rulesMemoryText: "Bir tur boyunca yazdığın (veya grup maçında herhangi bir oyuncunun yazdığı) her kelime hafızada tutulur. Aynı kelimeyi tur içinde bir daha yazarsan oyunu kaybedersin! Bu yüzden kelime türetirken önceki kelimeleri aklında tutup onlardan farklı, yeni kelimeler bulmaya çalışmalısın. Tam olarak bu mecburiyet zihnini çalıştırır: hem kelime dağarcığını hem de kısa süreli hafızanı güçlendirir.",
-    rulesButtonsTitle: "🔘 Butonlar Ne İşe Yarar",
-    rulesSoloDesc1: "Tek Başına Oyna: Rakipsiz, kendi hızında pratik yaparsın. Her doğru kelime ",
-    rulesSoloDesc2: " puan kazandırır; ", rulesSoloDesc3: " kelimeyi hiç hata yapmadan bitirirsen +", rulesSoloDesc4: " bonus puan kazanırsın.",
-    rulesGroupDesc1: "Gruplarım: Arkadaşlarınla grup kurup birlikte maç yaparsın. Grup maçında kimse elenmez; yanlış yazan ya da süresini geçiren oyuncunun sırası sıradaki oyuncuya geçer. Her doğru kelime ",
-    rulesGroupDesc2: " puan kazandırır, toplam ", rulesGroupDesc3: " kelime yazılınca tur biter; hepsi doğruysa tur puanına +", rulesGroupDesc4: " bonus eklenir ve en çok puan toplayan kazanır.",
-    rulesLeaderboardDesc: "Puan Sıralaması: Dünya genelinde ya da grup içinde kimin en yüksek puana sahip olduğunu görürsün.",
-    rulesNotificationsDesc: "Bildirimler: Grup davetlerini ve oyun çağrılarını buradan görüp kabul edersin.",
-    rulesRankTitle: "🏅 Nasıl Yükselinir",
-    rulesRankDesc1: "Her doğru kelime ", rulesRankDesc2: " puan kazandırır; bir turu hiç hata yapmadan bitirirsen +",
-    rulesRankDesc3: " bonus puan alırsın. Bu, hem tek başına oyunda hem de grup maçlarında geçerlidir. Toplam puanın arttıkça sırayla madalyalar kazanır, dünya sıralamasında yükselirsin.",
-    rulesLangTitle: "🌍 Ekstra Fayda: Yabancı Dil Pratiği",
-    rulesLangText: "Oyun İngilizce ve Almanca dil desteği de sunuyor. Uygulamayı bu dillerde oynayarak hem kelime haznenizi geliştirir hem de eğlenerek yabancı dil pratiği yapma fırsatı bulursunuz.",
-    gotIt: "Anladım",
   },
   en: {
     appName: "Word Derivation", login: "Log In", register: "Sign Up", username: "Username", password: "Password",
     noAccount: "No account? Sign up", haveAccount: "Already have an account? Log in", wrongLogin: "Wrong username or password",
     userExists: "Username already taken", fillFields: "Please fill in all fields",
+    emailPlaceholder: "Email address", emailRequired: "Enter a valid email address — it's the ONLY way to recover your account if you forget your password.",
+    emailWarningTitle: "Enter a real, correct email address!",
+    emailWarningBody: "If you forget your password, there is no other way back into your account — you can only reset it via a link sent to this email. If you enter a wrong or someone else's email, you will permanently lose access to your account if you ever forget your password.",
+    forgotPassword: "Forgot password", forgotDesc: "Enter your username and we'll email a password reset link to your registered address.",
+    forgotEnterUsername: "Enter your username", forgotNoEmail: "No email address is registered for this account.",
+    forgotSuccess: "A password reset link has been emailed to your registered address. Check your inbox (and spam folder).",
+    forgotFailed: "Couldn't send the email, please try again later.", forgotSending: "Sending...", forgotSend: "Send",
+    resetPasswordTitle: "Set a New Password", resetPasswordChecking: "Verifying link...",
+    resetPasswordInvalid: "This password reset link has expired or is invalid. Please request a new one via 'Forgot password'.",
+    resetPasswordNewPlaceholder: "New password", resetPasswordTooShort: "Password must be at least 4 characters",
+    resetPasswordSaving: "Saving...", resetPasswordSave: "Save Password", resetPasswordFailed: "Couldn't update the password, please try again.",
+    resetPasswordDone: "Your password has been updated! You can now log in with your new password.", resetPasswordGoLogin: "Back to Login",
     mainMenu: "Main Menu", createGroup: "Create Group", myGroups: "My Groups", soloPlay: "Play Solo",
     leaderboard: "Leaderboard", notifications: "Notifications", admin: "Admin Panel", logout: "Log Out",
     groupName: "Group name", create: "Create", cancel: "Cancel", noGroups: "You have no groups yet",
@@ -274,8 +281,8 @@ const T = {
     userNotFound: "No user found with that name", top10: "Top 10", loadingLeaderboard: "Loading leaderboard...",
     accept: "Accept", decline: "Decline", adminPanelDesc: "Adjust user scores", increase: "Increase", decrease: "Decrease", setScore: "Set Score",
     congrats: "Congratulations!", earnedMedal: "medal earned!", close: "Close", invalidWord: "Not a valid word, 0 points",
-    soloAllCorrectMsg: "Congratulations, you earned +5 points for getting them all right!",
-    groupAllCorrectMsg: "Congratulations, +5 bonus points were added to the round pool for getting them all right!",
+    soloAllCorrectMsg: "Congratulations, you earned +20 points for getting them all right!",
+    groupAllCorrectMsg: "Congratulations, +20 bonus points were added to the round pool for getting them all right!",
     roundWinnerLabel: "Round Winner", roundWinnerDesc: "Scored the most points and won all the points collected during the round:",
     each: "each", splitPoolLabel: "Total",
     validWord: "Valid word!", checking: "Checking...", groupLimitReached: "You can join at most 50 groups",
@@ -321,31 +328,23 @@ const T = {
     eliminatedByTimeout: "ran out of time and was eliminated!",
     eliminatedByLeft: "left the match and was eliminated!",
     onlyOwnerCanSpin: "Only the group's creator can spin the wheel",
-    rulesButton: "How to Play", rulesTitle: "How to Play",
-    rulesGoalTitle: "🎯 Goal",
-    rulesGoalText: "Score points by writing words that start with the letter the wheel lands on, earn medals, and climb the world leaderboard.",
-    rulesHowTitle: "▶ How It Works",
-    rulesHowText: "Spin the wheel, write a word starting with the letter shown, and submit it before time runs out. A correct word earns points; if time runs out or the word is invalid, you get 0 points and move on to the next round.",
-    rulesMemoryTitle: "🧠 The Most Important Rule: Memory",
-    rulesMemoryText: "Every word you write during a round (or that any player writes in a group match) is remembered. If you write the same word again in that round, you lose the game! So while coming up with words, keep the previous ones in mind and try to think of new, different words. This requirement is exactly what exercises your mind: it strengthens both your vocabulary and your short-term memory.",
-    rulesButtonsTitle: "🔘 What the Buttons Do",
-    rulesSoloDesc1: "Play Solo: Practice at your own pace with no opponents. Every correct word earns ",
-    rulesSoloDesc2: " point(s); if you finish ", rulesSoloDesc3: " words without a single mistake, you earn a +", rulesSoloDesc4: " bonus.",
-    rulesGroupDesc1: "My Groups: Form a group with friends and play matches together. No one is eliminated in a group match; a player who writes a wrong word or runs out of time simply passes the turn to the next player. Every correct word earns ",
-    rulesGroupDesc2: " point(s); the round ends once ", rulesGroupDesc3: " words have been written in total. If all of them were correct, a +", rulesGroupDesc4: " bonus is added to the round score, and whoever scored the most wins.",
-    rulesLeaderboardDesc: "Leaderboard: See who has the highest score, worldwide or within your group.",
-    rulesNotificationsDesc: "Notifications: View and accept group invites and game invites here.",
-    rulesRankTitle: "🏅 How to Rank Up",
-    rulesRankDesc1: "Every correct word earns ", rulesRankDesc2: " point(s); finishing a round without a single mistake earns you a +",
-    rulesRankDesc3: " bonus. This applies both in solo play and in group matches. As your total score grows you earn medals in order and climb the world leaderboard.",
-    rulesLangTitle: "🌍 Bonus: Foreign Language Practice",
-    rulesLangText: "The game also supports English and German. Playing in these languages helps you build vocabulary while getting some fun foreign-language practice.",
-    gotIt: "Got it",
   },
   de: {
     appName: "Wortkette", login: "Anmelden", register: "Registrieren", username: "Benutzername", password: "Passwort",
     noAccount: "Kein Konto? Registrieren", haveAccount: "Schon ein Konto? Anmelden", wrongLogin: "Falscher Benutzername oder Passwort",
     userExists: "Benutzername bereits vergeben", fillFields: "Bitte alle Felder ausfüllen",
+    emailPlaceholder: "E-Mail-Adresse", emailRequired: "Gib eine gültige E-Mail-Adresse ein — sie ist der EINZIGE Weg, dein Konto wiederherzustellen, falls du dein Passwort vergisst.",
+    emailWarningTitle: "Gib eine echte, korrekte E-Mail-Adresse ein!",
+    emailWarningBody: "Wenn du dein Passwort vergisst, gibt es keinen anderen Weg zurück in dein Konto — du kannst es nur über einen an diese E-Mail gesendeten Link zurücksetzen. Wenn du eine falsche oder fremde E-Mail-Adresse eingibst, verlierst du den Zugriff auf dein Konto dauerhaft, sobald du dein Passwort vergisst.",
+    forgotPassword: "Passwort vergessen", forgotDesc: "Gib deinen Benutzernamen ein, wir senden einen Link zum Zurücksetzen des Passworts an deine registrierte E-Mail-Adresse.",
+    forgotEnterUsername: "Gib deinen Benutzernamen ein", forgotNoEmail: "Für dieses Konto ist keine E-Mail-Adresse registriert.",
+    forgotSuccess: "Ein Link zum Zurücksetzen des Passworts wurde an deine registrierte E-Mail-Adresse gesendet. Prüfe dein Postfach (und den Spam-Ordner).",
+    forgotFailed: "E-Mail konnte nicht gesendet werden, bitte versuche es später erneut.", forgotSending: "Wird gesendet...", forgotSend: "Senden",
+    resetPasswordTitle: "Neues Passwort festlegen", resetPasswordChecking: "Link wird überprüft...",
+    resetPasswordInvalid: "Dieser Link zum Zurücksetzen des Passworts ist abgelaufen oder ungültig. Bitte fordere über 'Passwort vergessen' einen neuen an.",
+    resetPasswordNewPlaceholder: "Neues Passwort", resetPasswordTooShort: "Das Passwort muss mindestens 4 Zeichen lang sein",
+    resetPasswordSaving: "Wird gespeichert...", resetPasswordSave: "Passwort speichern", resetPasswordFailed: "Passwort konnte nicht aktualisiert werden, bitte versuche es erneut.",
+    resetPasswordDone: "Dein Passwort wurde erfolgreich aktualisiert! Du kannst dich jetzt mit deinem neuen Passwort anmelden.", resetPasswordGoLogin: "Zurück zum Login",
     mainMenu: "Hauptmenü", createGroup: "Gruppe erstellen", myGroups: "Meine Gruppen", soloPlay: "Alleine spielen",
     leaderboard: "Rangliste", notifications: "Benachrichtigungen", admin: "Admin-Bereich", logout: "Abmelden",
     groupName: "Gruppenname", create: "Erstellen", cancel: "Abbrechen", noGroups: "Noch keine Gruppen",
@@ -361,8 +360,8 @@ const T = {
     userNotFound: "Kein Benutzer mit diesem Namen gefunden", top10: "Top 10", loadingLeaderboard: "Rangliste wird geladen...",
     accept: "Annehmen", decline: "Ablehnen", adminPanelDesc: "Punkte der Nutzer anpassen", increase: "Erhöhen", decrease: "Verringern", setScore: "Punkte setzen",
     congrats: "Glückwunsch!", earnedMedal: "Medaille erhalten!", close: "Schließen", invalidWord: "Ungültiges Wort, 0 Punkte",
-    soloAllCorrectMsg: "Glückwunsch, du hast +5 Punkte für alles richtig erhalten!",
-    groupAllCorrectMsg: "Glückwunsch, dem Rundentopf wurden +5 Bonuspunkte hinzugefügt, weil alles richtig war!",
+    soloAllCorrectMsg: "Glückwunsch, du hast +20 Punkte für alles richtig erhalten!",
+    groupAllCorrectMsg: "Glückwunsch, dem Rundentopf wurden +20 Bonuspunkte hinzugefügt, weil alles richtig war!",
     roundWinnerLabel: "Rundensieger", roundWinnerDesc: "Hat die meisten Punkte gesammelt und alle in dieser Runde gesammelten Punkte gewonnen:",
     each: "je", splitPoolLabel: "Gesamt",
     validWord: "Gültiges Wort!", checking: "Wird geprüft...", groupLimitReached: "Maximal 50 Gruppen möglich",
@@ -408,26 +407,6 @@ const T = {
     eliminatedByTimeout: "hat die Zeit überschritten und ist ausgeschieden!",
     eliminatedByLeft: "hat das Spiel verlassen und ist ausgeschieden!",
     onlyOwnerCanSpin: "Nur der Gründer der Gruppe kann das Rad drehen",
-    rulesButton: "Spielregeln", rulesTitle: "Spielregeln",
-    rulesGoalTitle: "🎯 Ziel",
-    rulesGoalText: "Sammle Punkte, indem du Wörter schreibst, die mit dem vom Rad angezeigten Buchstaben beginnen, verdiene Medaillen und steige in der Weltrangliste auf.",
-    rulesHowTitle: "▶ Spielablauf",
-    rulesHowText: "Dreh das Rad, schreib ein Wort, das mit dem angezeigten Buchstaben beginnt, und sende es ab, bevor die Zeit abläuft. Ein richtiges Wort bringt Punkte; läuft die Zeit ab oder ist das Wort ungültig, bekommst du 0 Punkte und es geht zur nächsten Runde weiter.",
-    rulesMemoryTitle: "🧠 Die wichtigste Regel: Gedächtnis",
-    rulesMemoryText: "Jedes Wort, das du während einer Runde schreibst (oder das im Gruppenspiel irgendein Spieler schreibt), wird sich gemerkt. Schreibst du dasselbe Wort in derselben Runde noch einmal, verlierst du das Spiel! Behalte deshalb beim Wörterbilden die vorherigen Wörter im Kopf und versuche, neue, andere Wörter zu finden. Genau diese Notwendigkeit trainiert deinen Geist: Sie stärkt sowohl deinen Wortschatz als auch dein Kurzzeitgedächtnis.",
-    rulesButtonsTitle: "🔘 Was die Buttons bewirken",
-    rulesSoloDesc1: "Alleine spielen: Übe ohne Gegner in deinem eigenen Tempo. Jedes richtige Wort bringt ",
-    rulesSoloDesc2: " Punkt(e); wenn du ", rulesSoloDesc3: " Wörter ohne einen einzigen Fehler beendest, erhältst du +", rulesSoloDesc4: " Bonuspunkte.",
-    rulesGroupDesc1: "Meine Gruppen: Bilde mit Freunden eine Gruppe und spielt gemeinsam Runden. Im Gruppenspiel scheidet niemand aus; ein Spieler, der ein falsches Wort schreibt oder die Zeit überschreitet, gibt einfach den Zug an den nächsten Spieler weiter. Jedes richtige Wort bringt ",
-    rulesGroupDesc2: " Punkt(e); die Runde endet, sobald insgesamt ", rulesGroupDesc3: " Wörter geschrieben wurden. Sind alle richtig, werden der Rundenpunktzahl +", rulesGroupDesc4: " Bonuspunkte hinzugefügt, und wer die meisten Punkte gesammelt hat, gewinnt.",
-    rulesLeaderboardDesc: "Rangliste: Sieh, wer weltweit oder innerhalb deiner Gruppe die höchste Punktzahl hat.",
-    rulesNotificationsDesc: "Benachrichtigungen: Hier siehst und bestätigst du Gruppen- und Spieleinladungen.",
-    rulesRankTitle: "🏅 Wie du aufsteigst",
-    rulesRankDesc1: "Jedes richtige Wort bringt ", rulesRankDesc2: " Punkt(e); eine Runde ohne einen einzigen Fehler zu beenden bringt dir +",
-    rulesRankDesc3: " Bonuspunkte. Das gilt sowohl im Einzelspiel als auch in Gruppenspielen. Mit steigender Gesamtpunktzahl gewinnst du nacheinander Medaillen und steigst in der Weltrangliste auf.",
-    rulesLangTitle: "🌍 Extra-Vorteil: Fremdsprachenpraxis",
-    rulesLangText: "Das Spiel unterstützt auch Englisch und Deutsch. Wenn du in diesen Sprachen spielst, erweiterst du deinen Wortschatz und übst nebenbei spielerisch eine Fremdsprache.",
-    gotIt: "Verstanden",
   },
 };
 
@@ -593,6 +572,21 @@ function identifyNativePurchaseUser(username) {
   } catch (e) {
     console.error("identifyNativePurchaseUser köprü hatası:", e);
   }
+}
+
+// ---- uygulama (Android WebView) mı, yoksa normal web tarayıcısı mı? ----
+// PurchaseBridge (window.AndroidPurchaseNative) sadece MainActivity.kt
+// tarafından, uygulamanın kendi WebView'ine eklenir — normal bir web
+// tarayıcısında bu asla var olmaz. Bu yüzden mevcudiyeti, "uygulama
+// içindeyiz" tespiti için güvenilir bir sinyaldir. Zorunlu Google girişi
+// (süper admin girişi) SADECE web'de (bu obje yokken) isteniyor; uygulama
+// içinde bu adım tamamen atlanır.
+function isRunningInApp() {
+  return !!(window.AndroidPurchaseNative);
+}
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((email || "").trim());
 }
 
 // ---------- storage helpers (Firebase Realtime Database-backed shared state) ----------
@@ -1271,7 +1265,24 @@ function App() {
   const t = T[lang];
   const [screen, setScreen] = useState("auth"); // auth, menu, groups, chat, lobby, game, solo, leaderboard, notifications, admin
   const [authMode, setAuthMode] = useState("login");
-  const [authForm, setAuthForm] = useState({ username: "", password: "" });
+  const [authForm, setAuthForm] = useState({ username: "", password: "", email: "" });
+  const [showForgotForm, setShowForgotForm] = useState(false);
+  const [forgotUsername, setForgotUsername] = useState("");
+  // Firebase'in şifre sıfırlama e-postasındaki bağlantı, kullanıcıyı
+  // ?mode=resetPassword&oobCode=... parametreleriyle bu sayfaya geri
+  // getirir. Sadece SAYFA İLK YÜKLENİRKEN (mount) okunur — sonraki
+  // yeniden render'larda URL değişmiş olsa bile bu değer sabit kalır.
+  const [resetOobCode] = useState(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("mode") === "resetPassword" ? params.get("oobCode") : null;
+    } catch (e) { return null; }
+  });
+  const [resetStatus, setResetStatus] = useState("checking"); // checking | ready | invalid | done
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetNewPassword, setResetNewPassword] = useState("");
+  const [resetError, setResetError] = useState("");
+  const [resetBusy, setResetBusy] = useState(false);
   const [authError, setAuthError] = useState("");
   const [me, setMe] = useState(null); // {username, isAdmin, score, medals}
   const [googleAdminVerified, setGoogleAdminVerified] = useState(false);
@@ -1288,7 +1299,6 @@ function App() {
   const [showGroupInvite, setShowGroupInvite] = useState(false);
   const [groupInviteSearch, setGroupInviteSearch] = useState("");
   const [showMedalInfo, setShowMedalInfo] = useState(false);
-  const [showRules, setShowRules] = useState(false);
   const [adminSpectateGameId, setAdminSpectateGameId] = useState(null);
   const [medalPopup, setMedalPopup] = useState(null);
   const [scoreInputs, setScoreInputs] = useState({}); // admin panel: per-user typed score value
@@ -1470,7 +1480,47 @@ function App() {
 
   useEffect(() => { refreshAll(); }, [refreshAll]);
 
-  // ---- "remember this phone": once someone logs in successfully on this
+  // ---- Şifre sıfırlama bağlantısı doğrulaması: sayfa ?mode=resetPassword
+  // &oobCode=... ile açıldıysa, bu kodun hâlâ geçerli olup olmadığını ve
+  // hangi e-postaya ait olduğunu Firebase'e sorar. ----
+  useEffect(() => {
+    if (!resetOobCode) return;
+    (async () => {
+      try {
+        const email = await window.__fbauth.verifyPasswordResetCode(resetOobCode);
+        setResetEmail(email);
+        setResetStatus("ready");
+      } catch (e) {
+        console.error("Geçersiz/süresi dolmuş şifre sıfırlama bağlantısı:", e);
+        setResetStatus("invalid");
+      }
+    })();
+  }, [resetOobCode]);
+
+  async function confirmPasswordResetSubmit() {
+    setResetError("");
+    if (!resetNewPassword || resetNewPassword.length < 4) { setResetError(t.resetPasswordTooShort); return; }
+    setResetBusy(true);
+    try {
+      await window.__fbauth.confirmPasswordReset(resetOobCode, resetNewPassword);
+      // Firebase Auth tarafı güncellendi; şimdi bizim rumuz tabanlı
+      // veritabanımızda bu e-postaya sahip hesab(ları)ın şifresini de
+      // aynı değere eşitliyoruz (bir e-posta birden fazla rumuza bağlıysa
+      // hepsi güncellenir).
+      const { u } = await refreshAll();
+      const matches = Object.entries(u).filter(([, rec]) => (rec.email || "").toLowerCase() === (resetEmail || "").toLowerCase());
+      for (const [uname] of matches) {
+        await transactRecord("users/" + uname, current => current ? { ...current, password: resetNewPassword } : current);
+      }
+      setResetStatus("done");
+    } catch (e) {
+      console.error("Şifre sıfırlama tamamlanamadı:", e);
+      setResetError(t.resetPasswordFailed);
+    }
+    setResetBusy(false);
+  }
+
+
   // device, we save a small session marker in localStorage. On the next
   // visit from the same phone/browser we skip the Google + username/password
   // screen entirely and log the same account back in automatically. ----
@@ -1649,30 +1699,78 @@ function App() {
     const uname = authForm.username.trim();
     const pass = authForm.password;
     if (!uname || !pass) { setAuthError(t.fillFields); return; }
-    // Safety net: the UI already hides this form until Google sign-in is
-    // done, but double-check here too.
-    if (!googleAdminVerified) { setAuthError(t.googleAdminRequired); return; }
-    const isAdminGoogle = (googleAdminEmail || "") === ADMIN_GOOGLE_EMAIL.toLowerCase();
+    // Zorunlu Google doğrulaması SADECE web'de (uygulama dışında) istenir —
+    // uygulama (WebView) içindeyken bu adım tamamen atlanır.
+    const inApp = isRunningInApp();
+    if (!inApp && !googleAdminVerified) { setAuthError(t.googleAdminRequired); return; }
+    const isAdminGoogle = googleAdminVerified && (googleAdminEmail || "") === ADMIN_GOOGLE_EMAIL.toLowerCase();
     const { u } = await refreshAll();
     if (authMode === "login") {
       const rec = u[uname];
       if (!rec || rec.password !== pass) { setAuthError(t.wrongLogin); return; }
-      // Admin panel visibility is driven purely by which Google account was
-      // used above, so we always resync it to the current Google identity.
-      const nu = { ...u, [uname]: { ...rec, isAdmin: isAdminGoogle } };
+      // Admin durumu SADECE web üzerinden Google doğrulaması yapıldıysa
+      // güncellenir; uygulama içi girişte mevcut admin hakkı olduğu gibi
+      // korunur (aksi halde uygulamadan giriş yapan bir admin, hakkını
+      // kaybederdi).
+      const nextIsAdmin = googleAdminVerified ? isAdminGoogle : !!rec.isAdmin;
+      const nu = { ...u, [uname]: { ...rec, isAdmin: nextIsAdmin } };
       await saveShared("users", nu); setUsers(nu);
-      setMe({ username: uname, isAdmin: isAdminGoogle, score: rec.score || 0, medals: medalsForScore(rec.score || 0) });
+      setMe({ username: uname, isAdmin: nextIsAdmin, score: rec.score || 0, medals: medalsForScore(rec.score || 0) });
       setScreen("menu");
       localStorage.setItem("kt_session", JSON.stringify({ username: uname, googleAdminEmail }));
     } else {
       if (u[uname]) { setAuthError(t.userExists); return; }
-      const rec = { password: pass, score: 0, isAdmin: isAdminGoogle };
+      if (!isValidEmail(authForm.email)) { setAuthError(t.emailRequired); return; }
+      const email = authForm.email.trim().toLowerCase();
+      const rec = { password: pass, email, score: 0, isAdmin: isAdminGoogle };
       const nu = { ...u, [uname]: rec };
       await saveShared("users", nu); setUsers(nu);
+      // "Şifremi Unuttum" akışının çalışabilmesi için, bu e-posta/şifre
+      // ile Firebase Authentication'da da gerçek bir hesap oluşturuyoruz
+      // (Realtime Database'deki rumuz tabanlı hesabımızdan bağımsız olarak
+      // sadece şifre sıfırlama e-postası gönderebilmek için). Oluşturduktan
+      // hemen sonra çıkış yapıyoruz çünkü oturumu bu hesaba geçirmek
+      // istemiyoruz — asıl oturumumuz rumuz tabanlı, Firebase Auth'a değil.
+      try {
+        await window.__fbauth.createUserWithEmailAndPassword(email, pass);
+        await window.__fbauth.signOut();
+      } catch (e) {
+        // Aynı e-posta başka bir rumuz için zaten kayıtlıysa (auth/email-already-in-use)
+        // ya da başka bir sebeple bu adım başarısız olursa, kayıt işlemine
+        // engel olmuyoruz — sadece "Şifremi Unuttum" o hesap için farklı
+        // davranabilir.
+        console.error("Firebase Auth hesabı oluşturulamadı:", e);
+      }
       setMe({ username: uname, isAdmin: isAdminGoogle, score: 0, medals: [] });
       setScreen("menu");
       localStorage.setItem("kt_session", JSON.stringify({ username: uname, googleAdminEmail }));
     }
+  }
+
+  // ---- Şifremi Unuttum: kullanıcı adına kayıtlı e-postaya, Firebase
+  // Authentication'ın KENDİ (hazır, gerçek) şifre sıfırlama e-postasını
+  // gönderir. Kullanıcı e-postadaki bağlantıya tıklayınca bu SPA'nın
+  // resetPassword ekranına düşer (bkz. aşağıdaki "RESET PASSWORD SCREEN"),
+  // orada yeni şifresini belirler ve bu, hem Firebase Auth hem de bizim
+  // rumuz tabanlı veritabanımızdaki şifreyle eşitlenir. ----
+  const [forgotBusy, setForgotBusy] = useState(false);
+  const [forgotMsg, setForgotMsg] = useState("");
+  async function handleForgotPassword(username) {
+    setForgotMsg("");
+    const uname = (username || "").trim();
+    if (!uname) { setForgotMsg(t.forgotEnterUsername); return; }
+    setForgotBusy(true);
+    try {
+      const { u } = await refreshAll();
+      const rec = u[uname];
+      if (!rec || !rec.email) { setForgotMsg(t.forgotNoEmail); setForgotBusy(false); return; }
+      await window.__fbauth.sendPasswordResetEmail(rec.email);
+      setForgotMsg(t.forgotSuccess);
+    } catch (e) {
+      console.error("Şifre sıfırlama e-postası gönderilemedi:", e);
+      setForgotMsg(t.forgotFailed);
+    }
+    setForgotBusy(false);
   }
 
   function logout() {
@@ -2109,14 +2207,16 @@ function App() {
   }
 
   async function submitWord(gameId, word, isValid, timedOut) {
-    // Grup maçlarında artık kimse elenmiyor: bir oyuncu yanlış/geçersiz bir
-    // kelime yazsa, daha önce kullanılmış bir kelimeyi tekrar yazsa ya da
-    // süresini geçirse bile oyunda kalır — o 0 puan alır, sıra doğrudan bir
-    // sonraki oyuncuya geçer ve çark o oyuncu için yeniden çevrilerek yeni
-    // bir harfle devam edilir. Tur, toplam GROUP_ROUND_WORD_LIMIT kelime
-    // yazılınca biter; en çok puanı toplayan oyuncu tur boyunca toplanan
-    // tüm puanları kazanır. Birden fazla oyuncu aynı (en yüksek) puanda
-    // eşitse, toplam puan aralarında eşit bölüşülür.
+    // Hafıza kuralı: bu tur boyunca (herhangi bir oyuncu tarafından) daha
+    // önce kullanılmış bir kelimeyi tekrar yazan oyuncu ELENİR — oyundan
+    // çıkar, kalan aktif oyuncularla tur devam eder. Yanlış/geçersiz bir
+    // kelime yazmak ya da süreyi geçirmek ise ELEMEZ: oyuncu oyunda kalır,
+    // 0 puan alır, sıra bir sonraki AKTİF oyuncuya geçer ve çark o oyuncu
+    // için yeniden çevrilip yeni bir harfle devam edilir. Tur, toplam
+    // GROUP_ROUND_WORD_LIMIT kelime yazılınca ya da elenmeler sonucu tek
+    // aktif oyuncu kalınca biter; en çok puanı toplayan (ya da tek aktif
+    // oyuncu kalmışsa o kişi) turu kazanır. Eşitlik varsa toplam puan
+    // aralarında eşit bölüşülür.
     let payouts = []; // [{ username, amount }, ...]
     const game = await transactRecord("games/" + gameId, current => {
       if (!current) return current;
@@ -2124,30 +2224,35 @@ function App() {
 
       const members = current.members || [];
       if (members.length === 0) return current;
-      const turnIdx = current.turnIndex % members.length;
-      const actingPlayer = members[turnIdx];
+      const activeMembers = (current.activeMembers && current.activeMembers.length) ? current.activeMembers : members;
+      if (activeMembers.length === 0) return current;
+      const turnIdx = current.turnIndex % activeMembers.length;
+      const actingPlayer = activeMembers[turnIdx];
       const wordChain = current.wordChain || [];
+      const eliminatedPlayers = current.eliminatedPlayers || {};
 
-      let trimmed = "", ok = false;
+      let trimmed = "", isDuplicate = false, ok = false;
       if (!timedOut) {
         trimmed = word.trim();
-        const isDuplicate = trimmed && wordChain.some(
+        isDuplicate = !!(trimmed && wordChain.some(
           w => w.word && normalizeWord(w.word, current.lang) === normalizeWord(trimmed, current.lang)
-        );
+        ));
         ok = !!(isValid && trimmed && !isDuplicate);
       }
       const points = ok ? POINTS_PER_WORD : 0;
       const nextChain = [...wordChain, { username: actingPlayer, word: trimmed, points }];
-      const nextTurnIndex = (turnIdx + 1) % members.length;
 
-      if (nextChain.length >= GROUP_ROUND_WORD_LIMIT) {
-        // tur bitti: en çok puanı toplayan(lar) kazanır
+      function payoutsForFinish(chain, membersForScore, forcedWinner) {
+        const totalPool = chain.reduce((s, w) => s + w.points, 0);
+        if (forcedWinner) {
+          payouts = [{ username: forcedWinner, amount: totalPool }];
+          return { winners: [forcedWinner], totalPool };
+        }
         const scores = {};
-        members.forEach(m => { scores[m] = 0; });
-        nextChain.forEach(entry => { scores[entry.username] = (scores[entry.username] || 0) + entry.points; });
+        membersForScore.forEach(m => { scores[m] = 0; });
+        chain.forEach(entry => { scores[entry.username] = (scores[entry.username] || 0) + entry.points; });
         const maxScore = Math.max(0, ...Object.values(scores));
         const winners = maxScore > 0 ? Object.keys(scores).filter(u => scores[u] === maxScore) : [];
-        const totalPool = nextChain.reduce((s, w) => s + w.points, 0);
         const base = winners.length ? Math.floor(totalPool / winners.length) : 0;
         let remainder = winners.length ? totalPool % winners.length : 0;
         payouts = winners.map(u => {
@@ -2155,32 +2260,71 @@ function App() {
           if (remainder > 0) remainder--;
           return { username: u, amount };
         });
+        return { winners, totalPool };
+      }
+
+      if (isDuplicate) {
+        const nextActive = activeMembers.filter(m => m !== actingPlayer);
+        const nextEliminated = { ...eliminatedPlayers, [actingPlayer]: { reason: "duplicate", word: trimmed } };
+        const elimSeq = (current.elimSeq || 0) + 1;
+        const lastElimination = { username: actingPlayer, reason: "duplicate", word: trimmed, seq: elimSeq };
+
+        if (nextChain.length >= GROUP_ROUND_WORD_LIMIT || nextActive.length <= 1) {
+          // tur bitti: kelime limiti dolduysa normal şekilde puan lideri
+          // kazanır; elenmeler sonucu tek aktif oyuncu kalmışsa (rakipleri
+          // elenerek) o oyuncu turu doğrudan kazanır
+          const { winners } = payoutsForFinish(nextChain, members, nextActive.length === 1 ? nextActive[0] : null);
+          return {
+            ...current, wordChain: nextChain, status: "results", lastResults: nextChain,
+            eliminatedPlayers: nextEliminated, activeMembers: nextActive, lastElimination, elimSeq,
+            roundWinners: winners, roundWinner: winners.length === 1 ? winners[0] : null,
+            roundPool: nextChain.reduce((s, w) => s + w.points, 0), lastActivityAt: Date.now(),
+          };
+        }
+
+        // oyun devam ediyor: elenen oyuncu aktif listeden çıkar, sıra
+        // kalan aktif oyunculardan bir sonrakine geçer, yeni bir harfle
+        // çark yeniden çevrilir
+        const letters = ALPHABETS[current.lang].filter(l => current.lang === "tr" ? l !== "Ğ" : true);
+        const pick = letters[Math.floor(Math.random() * letters.length)];
+        return {
+          ...current, wordChain: nextChain, turnIndex: turnIdx, // nextActive'te aynı indeks = sıradaki oyuncu
+          status: "spinning", currentLetter: pick, spinToken: (current.spinToken || 0) + 1,
+          eliminatedPlayers: nextEliminated, activeMembers: nextActive, lastElimination, elimSeq,
+          lastActivityAt: Date.now(),
+        };
+      }
+
+      const nextTurnIndex = (turnIdx + 1) % activeMembers.length;
+
+      if (nextChain.length >= GROUP_ROUND_WORD_LIMIT) {
+        // tur bitti: en çok puanı toplayan(lar) kazanır
+        const { winners } = payoutsForFinish(nextChain, members, null);
         return {
           ...current, wordChain: nextChain, status: "results", lastResults: nextChain,
           roundWinners: winners, roundWinner: winners.length === 1 ? winners[0] : null,
-          roundPool: totalPool, activeMembers: members, lastActivityAt: Date.now(),
+          roundPool: nextChain.reduce((s, w) => s + w.points, 0), activeMembers, lastActivityAt: Date.now(),
         };
       }
 
       if (ok) {
         // doğru cevap: zincir aynı kelimenin son harfinden devam eder,
-        // sıradaki oyuncuya geç (çark yeniden çevrilmez)
+        // sıradaki aktif oyuncuya geç (çark yeniden çevrilmez)
         return {
           ...current, wordChain: nextChain, turnIndex: nextTurnIndex,
-          currentLetter: lastLetter(trimmed, current.lang), activeMembers: members,
-          lastActivityAt: Date.now(),
+          currentLetter: lastLetter(trimmed, current.lang), activeMembers, lastActivityAt: Date.now(),
         };
       }
 
       // yanlış/geçersiz kelime ya da süre doldu: kimse elenmez, sadece 0
-      // puan alır; sıra bir sonraki oyuncuya geçer ve onun için çark
+      // puan alır; sıra bir sonraki aktif oyuncuya geçer ve onun için çark
       // yeniden çevrilip yeni bir harfle oyun sürer
       const letters = ALPHABETS[current.lang].filter(l => current.lang === "tr" ? l !== "Ğ" : true);
       const pick = letters[Math.floor(Math.random() * letters.length)];
       return {
         ...current, wordChain: nextChain, turnIndex: nextTurnIndex,
         status: "spinning", currentLetter: pick, spinToken: (current.spinToken || 0) + 1,
-        activeMembers: members, lastActivityAt: Date.now(),
+        activeMembers, lastActivityAt: Date.now(),
       };
     });
     if (!game) return;
@@ -2268,6 +2412,43 @@ function App() {
     );
   }
 
+  // ---------------- ŞİFRE SIFIRLAMA EKRANI (Firebase e-postasındaki linkten gelinir) ----------------
+  if (resetOobCode) {
+    return (
+      <div className="h-screen overflow-hidden w-full flex items-center justify-center p-6" style={{ fontFamily: "Inter, sans-serif" }}>
+        {bg}
+        <div className="w-full max-w-sm rounded-3xl p-7 text-center" style={{ background: "rgba(36,21,66,0.85)", backdropFilter: "blur(12px)", boxShadow: "0 20px 60px rgba(0,0,0,.5)", border: "1px solid rgba(255,255,255,0.08)" }}>
+          <h1 className="text-xl font-bold mb-4" style={{ fontFamily: "Fredoka, sans-serif", color: "#f5f0ff" }}>{t.resetPasswordTitle}</h1>
+          {resetStatus === "checking" && <p className="text-white/60 text-sm">{t.resetPasswordChecking}</p>}
+          {resetStatus === "invalid" && <p className="text-red-400 text-sm">{t.resetPasswordInvalid}</p>}
+          {resetStatus === "ready" && (
+            <div className="space-y-3 text-left">
+              <p className="text-white/50 text-xs text-center truncate">{resetEmail}</p>
+              <input value={resetNewPassword} onChange={e => setResetNewPassword(e.target.value)} type="password"
+                placeholder={t.resetPasswordNewPlaceholder}
+                className="w-full px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/40 outline-none focus:ring-2 focus:ring-yellow-500" />
+              {resetError && <p className="text-red-400 text-sm">{resetError}</p>}
+              <button onClick={confirmPasswordResetSubmit} disabled={resetBusy}
+                className="w-full py-3 rounded-xl font-bold transition hover:opacity-90"
+                style={{ background: "#f2b705", color: "#1b1030", boxShadow: "0 4px 16px rgba(242,183,5,0.35)", fontFamily: "Fredoka, sans-serif" }}>
+                {resetBusy ? t.resetPasswordSaving : t.resetPasswordSave}
+              </button>
+            </div>
+          )}
+          {resetStatus === "done" && (
+            <div className="space-y-3">
+              <p className="text-white/80 text-sm">{t.resetPasswordDone}</p>
+              <button onClick={() => { window.history.replaceState({}, "", window.location.pathname); window.location.reload(); }}
+                className="w-full py-2.5 rounded-xl font-semibold" style={{ background: "rgba(255,255,255,0.1)", color: "white" }}>
+                {t.resetPasswordGoLogin}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   // ---------------- AUTH SCREEN ----------------
   if (!sessionChecked) {
     return (
@@ -2278,6 +2459,8 @@ function App() {
   }
 
   if (screen === "auth" || !me) {
+    const inApp = isRunningInApp();
+    const showGoogleGate = !inApp && !googleAdminVerified;
     return (
       <div className="h-screen overflow-hidden w-full flex items-center justify-center p-6" style={{ fontFamily: "Inter, sans-serif" }}>
         {bg}
@@ -2289,8 +2472,10 @@ function App() {
             </div>
             <h1 className="text-2xl font-bold" style={{ fontFamily: "Fredoka, sans-serif", color: "#f5f0ff" }}>{t.appName}</h1>
           </div>
-          {!googleAdminVerified ? (
-            // ---- Step 1: mandatory Google sign-in for everyone (security gate) ----
+          {showGoogleGate ? (
+            // ---- Web'e özel adım: süper admin doğrulaması için zorunlu
+            // Google girişi. Uygulama (WebView) içindeyken bu adım hiç
+            // gösterilmez, doğrudan aşağıdaki normal girişe geçilir. ----
             <div className="space-y-3">
               <p className="text-white/50 text-xs text-center leading-relaxed">{t.googleGateDesc}</p>
               <button onClick={handleGoogleAdminVerify} disabled={googleAdminBusy}
@@ -2302,13 +2487,23 @@ function App() {
               {googleAdminError && <p className="text-red-400 text-xs mt-1.5 text-center">{googleAdminError}</p>}
             </div>
           ) : (
-            // ---- Step 2: the usual username (rumuz) + password login/register ----
+            // ---- Normal rumuz (kullanıcı adı) + şifre girişi/kaydı ----
             <div className="space-y-3">
-              {googleAdminEmail && (
+              {googleAdminVerified && googleAdminEmail && (
                 <p className="text-white/40 text-xs text-center truncate">{t.continueAs}: {googleAdminEmail}</p>
               )}
               <input value={authForm.username} onChange={e => setAuthForm(f => ({ ...f, username: e.target.value }))}
                 placeholder={t.username} className="w-full px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/40 outline-none focus:ring-2 focus:ring-yellow-500" />
+              {authMode === "register" && (
+                <>
+                  <div className="rounded-xl px-3.5 py-2.5" style={{ background: "rgba(242,183,5,0.1)", border: "1px solid rgba(242,183,5,0.35)" }}>
+                    <p className="text-yellow-400 text-xs font-semibold leading-relaxed">⚠️ {t.emailWarningTitle}</p>
+                    <p className="text-white/60 text-xs leading-relaxed mt-0.5">{t.emailWarningBody}</p>
+                  </div>
+                  <input value={authForm.email} onChange={e => setAuthForm(f => ({ ...f, email: e.target.value }))} type="email"
+                    placeholder={t.emailPlaceholder} className="w-full px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/40 outline-none focus:ring-2 focus:ring-yellow-500" />
+                </>
+              )}
               <input value={authForm.password} onChange={e => setAuthForm(f => ({ ...f, password: e.target.value }))} type="password"
                 placeholder={t.password} className="w-full px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/40 outline-none focus:ring-2 focus:ring-yellow-500"
                 onKeyDown={e => e.key === "Enter" && handleAuth()} />
@@ -2321,13 +2516,33 @@ function App() {
                 className="w-full text-center text-sm text-white/60 hover:text-white/90 pt-1">
                 {authMode === "login" ? t.noAccount : t.haveAccount}
               </button>
-              <button onClick={async () => {
-                  setGoogleAdminVerified(false); setGoogleAdminEmail(null); setGoogleAdminError(""); setAuthError("");
-                  if (window.__fbauth.currentUser) await window.__fbauth.signOut().catch(() => {});
-                }}
-                className="w-full text-center text-xs text-white/35 hover:text-white/60 pt-1">
-                {t.switchGoogleAccount}
-              </button>
+              {authMode === "login" && (
+                <button onClick={() => { setShowForgotForm(v => !v); setForgotMsg(""); }}
+                  className="w-full text-center text-xs text-white/40 hover:text-white/70">
+                  {t.forgotPassword}
+                </button>
+              )}
+              {showForgotForm && authMode === "login" && (
+                <div className="pt-2 space-y-2 border-t border-white/10 mt-1">
+                  <p className="text-white/50 text-xs text-center leading-relaxed">{t.forgotDesc}</p>
+                  <input value={forgotUsername} onChange={e => setForgotUsername(e.target.value)}
+                    placeholder={t.username} className="w-full px-4 py-2.5 rounded-xl bg-white/10 text-white placeholder-white/40 outline-none text-sm" />
+                  <button onClick={() => handleForgotPassword(forgotUsername)} disabled={forgotBusy}
+                    className="w-full py-2.5 rounded-xl font-semibold text-sm" style={{ background: "rgba(255,255,255,0.1)", color: "white" }}>
+                    {forgotBusy ? t.forgotSending : t.forgotSend}
+                  </button>
+                  {forgotMsg && <p className="text-white/70 text-xs text-center">{forgotMsg}</p>}
+                </div>
+              )}
+              {googleAdminVerified && (
+                <button onClick={async () => {
+                    setGoogleAdminVerified(false); setGoogleAdminEmail(null); setGoogleAdminError(""); setAuthError("");
+                    if (window.__fbauth.currentUser) await window.__fbauth.signOut().catch(() => {});
+                  }}
+                  className="w-full text-center text-xs text-white/35 hover:text-white/60 pt-1">
+                  {t.switchGoogleAccount}
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -2351,13 +2566,7 @@ function App() {
           <button onClick={() => setShowCreateGroup(true)} className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-white text-sm font-semibold hover:bg-white/20">
             <Plus size={16} /> {t.createGroup}
           </button>
-          <div className="flex items-center gap-2">
-            <button onClick={() => setShowRules(true)} aria-label={t.rulesButton} title={t.rulesButton}
-              className="flex items-center justify-center w-9 h-9 rounded-full bg-white/10 text-white text-base font-bold hover:bg-white/20">
-              ?
-            </button>
-            {TopLangSwitch}
-          </div>
+          {TopLangSwitch}
         </div>
 
         <div className="max-w-md mx-auto mb-7 rounded-3xl p-5" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02))", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(10px)", boxShadow: "0 20px 40px rgba(0,0,0,0.35)" }}>
@@ -2506,45 +2715,6 @@ function App() {
               })}
             </div>
             <button onClick={() => setShowMedalInfo(false)} className="w-full mt-4 py-2.5 rounded-xl bg-white/10 text-white">{t.close}</button>
-          </Modal>
-        )}
-        {showRules && (
-          <Modal onClose={() => setShowRules(false)}>
-            <div className="max-h-[75vh] overflow-y-auto pr-1 -mr-1">
-              <h3 className="text-white font-bold text-lg mb-3" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.rulesTitle}</h3>
-              <div className="space-y-3.5 text-white/85 text-sm leading-relaxed">
-                <div>
-                  <p className="font-bold text-white mb-1">{t.rulesGoalTitle}</p>
-                  <p>{t.rulesGoalText}</p>
-                </div>
-                <div>
-                  <p className="font-bold text-white mb-1">{t.rulesHowTitle}</p>
-                  <p>{t.rulesHowText}</p>
-                </div>
-                <div>
-                  <p className="font-bold text-white mb-1">{t.rulesMemoryTitle}</p>
-                  <p>{t.rulesMemoryText}</p>
-                </div>
-                <div>
-                  <p className="font-bold text-white mb-1">{t.rulesButtonsTitle}</p>
-                  <ul className="list-disc pl-5 space-y-1.5">
-                    <li>{t.rulesSoloDesc1}{POINTS_PER_WORD}{t.rulesSoloDesc2}{ROUND_WORD_LIMIT}{t.rulesSoloDesc3}{STREAK_BONUS}{t.rulesSoloDesc4}</li>
-                    <li>{t.rulesGroupDesc1}{POINTS_PER_WORD}{t.rulesGroupDesc2}{GROUP_ROUND_WORD_LIMIT}{t.rulesGroupDesc3}{STREAK_BONUS}{t.rulesGroupDesc4}</li>
-                    <li>{t.rulesLeaderboardDesc}</li>
-                    <li>{t.rulesNotificationsDesc}</li>
-                  </ul>
-                </div>
-                <div>
-                  <p className="font-bold text-white mb-1">{t.rulesRankTitle}</p>
-                  <p>{t.rulesRankDesc1}{POINTS_PER_WORD}{t.rulesRankDesc2}{STREAK_BONUS}{t.rulesRankDesc3}</p>
-                </div>
-                <div>
-                  <p className="font-bold text-white mb-1">{t.rulesLangTitle}</p>
-                  <p>{t.rulesLangText}</p>
-                </div>
-              </div>
-            </div>
-            <button onClick={() => setShowRules(false)} className="w-full mt-4 py-2.5 rounded-xl font-bold" style={{ background: "#f2b705", color: "#1b1030", boxShadow: "0 4px 16px rgba(242,183,5,0.35)" }}>{t.gotIt}</button>
           </Modal>
         )}
       </div>
