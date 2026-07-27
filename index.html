@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Kelime Türetmece</title>
+<title>Kelime Türet</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
@@ -169,7 +169,7 @@ const ALPHABETS = {
 
 const T = {
   tr: {
-    appName: "Kelime Türetmece", login: "Giriş Yap", register: "Kaydol", username: "Kullanıcı adı", password: "Şifre",
+    appName: "Kelime Türet", login: "Giriş Yap", register: "Kaydol", username: "Kullanıcı adı", password: "Şifre",
     noAccount: "Hesabın yok mu? Kaydol", haveAccount: "Zaten hesabın var mı? Giriş yap", wrongLogin: "Kullanıcı adı veya şifre hatalı",
     userExists: "Bu kullanıcı adı zaten alınmış", fillFields: "Lütfen tüm alanları doldur",
     mainMenu: "Ana Menü", createGroup: "Grup Oluştur", myGroups: "Gruplarım", soloPlay: "Tek Başına Oyna",
@@ -193,6 +193,17 @@ const T = {
     each: "her biri", splitPoolLabel: "Toplam",
     validWord: "Geçerli kelime!", checking: "Kontrol ediliyor...", groupLimitReached: "En fazla 50 gruba katılabilirsin",
     dailyGroupLimit: "Günde en fazla 3 grup kurabilirsin", dailyLimitReached: "Süre doldu", dailyLimitReachedFull: "Bugünlük 2 saatlik oyun süreniz doldu. Yarın saat 09:00'da tekrar oynayabilirsiniz.", groupGone: "Bu grup artık mevcut değil.",
+    groupLevelCapReached: "Bu seviyede sahip olabileceğin azami grup sayısına ulaştın. Daha fazla grup kurmak için bir üst seviyeye ulaşman gerekir.",
+    groupSlotBuyPrompt: "Bu, mevcut seviyendeki yeni grup hakkını satın almak anlamına gelir.",
+    purchaseFailed: "Satın alma tamamlanamadı.",
+    purchaseSuccess: "Satın alma başarılı!",
+    startLevelTimeLimitReached: "Başlangıç seviyesindeyken günde en fazla 1 saat oynayabilirsin. Bronz seviyeye ulaştığında bu kısıt kalkar.",
+    giftPoints: "Puan Hediye Et", giftPointsRemaining: "Bugün kalan hediye hakkın", giftPointsSearchPlaceholder: "Hediye edilecek oyuncuyu ara...",
+    giftPointsSend: "1.000 Puan Gönder", giftPointsConfirm: "kişisine 1.000 puan hediye etmek istediğine emin misin?",
+    giftPointsNoneLeft: "Bugünlük hediye hakkın kalmadı. Yarın tekrar dene.", giftPointsSuccess: "Puan hediyesi gönderildi!",
+    giftPointsNoStars: "Bu özellik sadece yıldızlı Oyun Kralı oyuncularına açıktır.",
+    buyLevel: "Parayla Seviye Atla", buyLevelConfirm: "seviyesini ve o seviyenin puanını satın almak istediğine emin misin?",
+    buyLevelNotAvailable: "Bu seviye parayla satın alınamaz, puanla hak edilmesi gerekir.",
     closesIn: "kapanıyor", worldRank: "sırada", nextMedal: "Sıradaki madalya",
     lobbyFull: "Lobi dolu (15 kişi)", inviteMember: "Üye Davet Et", invite: "Davet Et", groupChat: "Grup Sohbeti",
     submit: "Gönder", solo: "Tek Oyunculu", roundOf: "Kelime", of: "/", backToWheel: "Çarka Dön",
@@ -249,6 +260,17 @@ const T = {
     each: "each", splitPoolLabel: "Total",
     validWord: "Valid word!", checking: "Checking...", groupLimitReached: "You can join at most 50 groups",
     dailyGroupLimit: "You can create at most 3 groups per day", dailyLimitReached: "Time's up", dailyLimitReachedFull: "You've used today's 2-hour play time for this group. You can play again tomorrow at 09:00.", groupGone: "This group no longer exists.",
+    groupLevelCapReached: "You've reached the maximum number of groups you can own at this level. Reach a higher level to create more groups.",
+    groupSlotBuyPrompt: "This will unlock your next group slot for your current level.",
+    purchaseFailed: "Purchase could not be completed.",
+    purchaseSuccess: "Purchase successful!",
+    startLevelTimeLimitReached: "At the Starter level you can play at most 1 hour per day. This limit is removed once you reach Bronze.",
+    giftPoints: "Gift Points", giftPointsRemaining: "Gifts remaining today", giftPointsSearchPlaceholder: "Search for a player to gift...",
+    giftPointsSend: "Send 1,000 Points", giftPointsConfirm: "gift 1,000 points to this player?",
+    giftPointsNoneLeft: "You have no gifts left for today. Try again tomorrow.", giftPointsSuccess: "Point gift sent!",
+    giftPointsNoStars: "This feature is only available to Game King players with stars.",
+    buyLevel: "Buy Level", buyLevelConfirm: "buy this level and its score for real money?",
+    buyLevelNotAvailable: "This level cannot be purchased, it must be earned with score.",
     closesIn: "closes in", worldRank: "rank", nextMedal: "Next medal",
     lobbyFull: "Lobby full (15 players)", inviteMember: "Invite Member", invite: "Invite", groupChat: "Group Chat",
     submit: "Submit", solo: "Solo", roundOf: "Word", of: "/", backToWheel: "Back to Wheel",
@@ -305,6 +327,17 @@ const T = {
     each: "je", splitPoolLabel: "Gesamt",
     validWord: "Gültiges Wort!", checking: "Wird geprüft...", groupLimitReached: "Maximal 50 Gruppen möglich",
     dailyGroupLimit: "Du kannst höchstens 3 Gruppen pro Tag erstellen", dailyLimitReached: "Zeit abgelaufen", dailyLimitReachedFull: "Die heutige 2-Stunden-Spielzeit dieser Gruppe ist aufgebraucht. Ihr könnt morgen um 09:00 Uhr wieder spielen.", groupGone: "Diese Gruppe existiert nicht mehr.",
+    groupLevelCapReached: "Du hast die maximale Anzahl an Gruppen für dein Level erreicht. Erreiche ein höheres Level, um mehr Gruppen zu erstellen.",
+    groupSlotBuyPrompt: "Damit schaltest du den nächsten Gruppenplatz für dein aktuelles Level frei.",
+    purchaseFailed: "Kauf konnte nicht abgeschlossen werden.",
+    purchaseSuccess: "Kauf erfolgreich!",
+    startLevelTimeLimitReached: "Im Start-Level kannst du höchstens 1 Stunde pro Tag spielen. Diese Begrenzung entfällt ab Bronze.",
+    giftPoints: "Punkte verschenken", giftPointsRemaining: "Heute verbleibende Geschenke", giftPointsSearchPlaceholder: "Spieler zum Verschenken suchen...",
+    giftPointsSend: "1.000 Punkte senden", giftPointsConfirm: "diesem Spieler 1.000 Punkte schenken?",
+    giftPointsNoneLeft: "Du hast heute keine Geschenke mehr übrig. Versuch es morgen wieder.", giftPointsSuccess: "Punktegeschenk gesendet!",
+    giftPointsNoStars: "Diese Funktion steht nur Spielkönigen mit Sternen zur Verfügung.",
+    buyLevel: "Level kaufen", buyLevelConfirm: "dieses Level und dessen Punktzahl für echtes Geld kaufen?",
+    buyLevelNotAvailable: "Dieses Level kann nicht gekauft werden, es muss mit Punkten verdient werden.",
     closesIn: "schließt in", worldRank: "Rang", nextMedal: "Nächste Medaille",
     lobbyFull: "Lobby voll (15 Spieler)", inviteMember: "Mitglied einladen", invite: "Einladen", groupChat: "Gruppenchat",
     submit: "Senden", solo: "Solo", roundOf: "Wort", of: "/", backToWheel: "Zurück zum Rad",
@@ -343,18 +376,163 @@ const MedalSilver = makeIcon("🥈");
 const MedalGold = makeIcon("🥇");
 const MedalStart = makeIcon("🔰");
 const MedalUltra = makeIcon("🎖️");
+// ---- Seviyeler ve puan eşikleri (bkz. YENİ KURALLARIMIZ.txt, bölüm 1) ----
+// "Ultra" ön eki kaldırıldı: "ultra" tier key'i "superplayer" olarak
+// yeniden adlandırıldı (Süper Oyuncu). "king" (Oyun Kralı) seviyesi artık
+// 1.000.000 puanda başlıyor ve üstüne yıldız sistemi biniyor (bölüm 2).
 const MEDAL_TIERS = [
-  { key: "start", threshold: 5000, label: { tr: "Başlangıç", en: "Starter", de: "Start" }, color: "#8fb3ff", icon: MedalStart },
-  { key: "bronze", threshold: 10000, label: { tr: "Bronz", en: "Bronze", de: "Bronze" }, color: "#c17a4a", icon: MedalBronze },
-  { key: "silver", threshold: 20000, label: { tr: "Gümüş", en: "Silver", de: "Silber" }, color: "#b9c2cc", icon: MedalSilver },
-  { key: "gold", threshold: 35000, label: { tr: "Altın", en: "Gold", de: "Gold" }, color: "#f2b705", icon: MedalGold },
-  { key: "diamond", threshold: 60000, label: { tr: "Elmas", en: "Diamond", de: "Diamant" }, color: "#5fd1e0", icon: Gem },
-  { key: "ultra", threshold: 1000000, label: { tr: "Ultra Süper Oyuncu", en: "Ultra Super Player", de: "Ultra-Superspieler" }, color: "#ff2e63", icon: MedalUltra },
-  { key: "king", threshold: 100000000, label: { tr: "Oyunun Kralı", en: "King of the Game", de: "König des Spiels" }, color: "#ff5d8f", icon: Crown },
+  { key: "start", threshold: 0, label: { tr: "Başlangıç", en: "Starter", de: "Start" }, color: "#8fb3ff", icon: MedalStart },
+  { key: "bronze", threshold: 3000, label: { tr: "Bronz", en: "Bronze", de: "Bronze" }, color: "#c17a4a", icon: MedalBronze },
+  { key: "silver", threshold: 10000, label: { tr: "Gümüş", en: "Silver", de: "Silber" }, color: "#b9c2cc", icon: MedalSilver },
+  { key: "gold", threshold: 50000, label: { tr: "Altın", en: "Gold", de: "Gold" }, color: "#f2b705", icon: MedalGold },
+  { key: "diamond", threshold: 100000, label: { tr: "Elmas", en: "Diamond", de: "Diamant" }, color: "#5fd1e0", icon: Gem },
+  { key: "superplayer", threshold: 500000, label: { tr: "Süper Oyuncu", en: "Super Player", de: "Superspieler" }, color: "#ff2e63", icon: MedalUltra },
+  { key: "king", threshold: 1000000, label: { tr: "Oyun Kralı", en: "Game King", de: "Spielkönig" }, color: "#ff5d8f", icon: Crown },
 ];
 
 function medalsForScore(score) {
   return MEDAL_TIERS.filter(m => score >= m.threshold).map(m => m.key);
+}
+
+// Puana göre şu anki (en yüksek erişilmiş) seviye anahtarını döndürür.
+function levelKeyForScore(score) {
+  let lvl = MEDAL_TIERS[0].key;
+  for (const m of MEDAL_TIERS) { if (score >= m.threshold) lvl = m.key; }
+  return lvl;
+}
+
+// ---- Oyun Kralı yıldız sistemi (YENİ_KURALLARIMIZ.txt bölüm 2) ----
+// 1.000.000 puanda yıldızsız Oyun Kralı; her ek 1.000.000 puanda bir yıldız
+// daha eklenir, maksimum 5 yıldız (6.000.000 puan ve üzeri tavan).
+const KING_THRESHOLD = 1000000;
+const STAR_STEP = 1000000;
+const MAX_STARS = 5;
+function starsForScore(score) {
+  if (score < KING_THRESHOLD) return 0;
+  return Math.min(MAX_STARS, Math.floor(score / STAR_STEP) - 1);
+}
+function kingLabelWithStars(score, lang) {
+  const base = MEDAL_TIERS.find(m => m.key === "king").label[lang];
+  const stars = starsForScore(score);
+  return stars > 0 ? `${base} ${"★".repeat(stars)}` : base;
+}
+
+// ---- Yıldızla günlük puan hediye hakkı (bölüm 5) ----
+// Her yıldız, günde 1 kişiye 1.000 puan hediye etme hakkı verir (max 5 hak).
+const GIFT_POINTS_PER_GIFT = 1000;
+function dailyGiftLimitForScore(score) {
+  return starsForScore(score); // 0..5
+}
+
+// ---- Seviyeye göre grup kurma hakları (bölüm 4) ----
+// "start" seviyesi grup kuramaz (0 hak). Bronz'dan itibaren her seviye,
+// bir önceki seviyenin toplam hakkını ücretsiz devralır; o seviyeye özgü
+// SON (yeni) hak ise 1 USD karşılığı satın alınır (grup_slot IAP).
+const LEVEL_GROUP_RIGHTS = {
+  start:       { totalSlots: 0 },
+  bronze:      { totalSlots: 1, freeSlots: 1 },
+  silver:      { totalSlots: 2, freeSlots: 1 },
+  gold:        { totalSlots: 3, freeSlots: 1 },
+  diamond:     { totalSlots: 4, freeSlots: 1 },
+  superplayer: { totalSlots: 5, freeSlots: 1 },
+  king:        { totalSlots: 6, freeSlots: 1 },
+};
+const GROUP_SLOT_PRICE_USD = 1;
+
+// ---- Para ile seviye atlama (bölüm "AYRICA") ----
+// Sadece Bronz/Gümüş/Altın/Elmas parayla doğrudan satın alınabilir; bir
+// üstteki iki seviye (Süper Oyuncu, Oyun Kralı) SADECE puanla hak edilir,
+// parayla atlanamaz.
+const LEVEL_BUY_PRICES_USD = { bronze: 5, silver: 10, gold: 15, diamond: 20 };
+
+// ---- Başlangıç seviyesi günlük oynama süresi kısıtı (bölüm 3) ----
+// Sadece "start" (Başlangıç) seviyesindeki oyuncular günde en fazla 1 saat
+// oynayabilir; Bronz ve üzerinde süre kısıtı yoktur.
+const START_LEVEL_DAILY_PLAY_MS = 60 * 60 * 1000; // 1 saat
+
+// ---- RevenueCat ürün kimlikleri ----
+const PRODUCT_IDS = {
+  // Grup hakkı satın alma — her seviyenin kendi "yeni grup" hakkı ayrı bir
+  // üründür (hepsi 1 USD), böylece RevenueCat'te seviye bazında satış
+  // takibi yapılabilir. Bronz seviyesinin tek hakkı zaten ücretsizdir,
+  // bu yüzden Bronz için ürün yoktur — satın alınan hep BİR SONRAKİ hak
+  // (Gümüş'te 2. grup, Altın'da 3. grup, ...) olur.
+  groupSlotSilver: "group_slot_silver_1usd",       // Gümüş: 2. grup hakkı
+  groupSlotGold: "group_slot_gold_1usd",           // Altın: 3. grup hakkı
+  groupSlotDiamond: "group_slot_diamond_1usd",     // Elmas: 4. grup hakkı
+  groupSlotSuperplayer: "group_slot_superplayer_1usd", // Süper Oyuncu: 5. grup hakkı
+  groupSlotKing: "group_slot_king_1usd",           // Oyun Kralı: 6. grup hakkı
+  levelBronze: "level_unlock_bronze",
+  levelSilver: "level_unlock_silver",
+  levelGold: "level_unlock_gold",
+  levelDiamond: "level_unlock_diamond",
+};
+
+// Bir seviyede satın alınacak "yeni grup hakkı" ürününü döndürür.
+// (Bronz ve Başlangıç'ta satın alma yoktur — Bronz zaten ücretsiz, Başlangıç
+// hiç grup kuramaz — bu yüzden ikisi için de null döner.)
+function groupSlotProductFor(level) {
+  switch (level) {
+    case "silver": return PRODUCT_IDS.groupSlotSilver;
+    case "gold": return PRODUCT_IDS.groupSlotGold;
+    case "diamond": return PRODUCT_IDS.groupSlotDiamond;
+    case "superplayer": return PRODUCT_IDS.groupSlotSuperplayer;
+    case "king": return PRODUCT_IDS.groupSlotKing;
+    default: return null;
+  }
+}
+
+// ---- Satın alma köprüsü ----
+// Native (Android WebView) tarafı, @JavascriptInterface metodları senkron
+// olduğu ve doğrudan bir Promise/dönüş değeri veremediği için, klasik
+// "requestId + callback" köprü deseni kullanılır:
+//   1) JS burada bir Promise oluşturur, resolve fonksiyonunu requestId'ye
+//      göre __purchaseCallbacks içine kaydeder.
+//   2) window.AndroidPurchaseNative.startPurchase(productId, requestId)
+//      çağrılır — bu senkron/fire-and-forget bir çağrıdır, native tarafta
+//      RevenueCat satın alma akışını (Purchases.sharedInstance.purchase)
+//      ASENKRON olarak başlatır.
+//   3) Native taraf işlem bitince webView.evaluateJavascript ile
+//      window.__resolvePurchase(requestId, true/false) çağırır, bu da
+//      kayıtlı Promise'i çözer.
+// Native köprü (window.AndroidPurchaseNative) henüz eklenmediyse, web'de
+// test edebilmek için basit bir onay kutusuna düşer (gerçek ödeme ALINMAZ).
+window.__purchaseCallbacks = window.__purchaseCallbacks || {};
+window.__resolvePurchase = function (requestId, success) {
+  const cb = window.__purchaseCallbacks[requestId];
+  if (cb) { cb(!!success); delete window.__purchaseCallbacks[requestId]; }
+};
+
+async function purchaseProduct(productId) {
+  try {
+    if (window.AndroidPurchaseNative && typeof window.AndroidPurchaseNative.startPurchase === "function") {
+      return await new Promise((resolve) => {
+        const requestId = uid();
+        window.__purchaseCallbacks[requestId] = resolve;
+        window.AndroidPurchaseNative.startPurchase(productId, requestId);
+      });
+    }
+  } catch (e) {
+    console.error("purchaseProduct native köprü hatası:", e);
+    return false;
+  }
+  return window.confirm(`[TEST MODU] "${productId}" ürünü satın alınsın mı? (Gerçek native ödeme köprüsü henüz bağlı değil.)`);
+}
+
+// RevenueCat satın almalarının doğru kullanıcıya (rumuz) bağlanabilmesi
+// (ve farklı bir cihazdan giriş yapıldığında geri yüklenebilmesi) için,
+// oyuncu giriş/kayıt olur olmaz native tarafa "bu kullanıcı bu" diye
+// haber verilir — native taraf bunu Purchases.sharedInstance.logIn(username)
+// ile RevenueCat App User ID'sine bağlar. Köprü yoksa (web testi) sessizce
+// atlanır.
+function identifyNativePurchaseUser(username) {
+  try {
+    if (window.AndroidPurchaseNative && typeof window.AndroidPurchaseNative.identify === "function") {
+      window.AndroidPurchaseNative.identify(username);
+    }
+  } catch (e) {
+    console.error("identifyNativePurchaseUser köprü hatası:", e);
+  }
 }
 
 // ---------- storage helpers (Firebase Realtime Database-backed shared state) ----------
@@ -1064,6 +1242,7 @@ function App() {
   const [leaderboardTop, setLeaderboardTop] = useState([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardSearch, setLeaderboardSearch] = useState("");
+  const [giftSearchTerm, setGiftSearchTerm] = useState("");
   const [leaderboardSearchResult, setLeaderboardSearchResult] = useState(undefined); // undefined: henüz aranmadı, null: bulunamadı, obje: bulundu
   const [leaderboardSearchLoading, setLeaderboardSearchLoading] = useState(false);
   useEffect(() => {
@@ -1136,7 +1315,7 @@ function App() {
         }
       } else if (cur === "chat") {
         setScreen("groups");
-      } else if (["groups", "solo", "leaderboard", "notifications", "admin", "adminSpectate"].includes(cur)) {
+      } else if (["groups", "solo", "leaderboard", "notifications", "admin", "adminSpectate", "giftPoints"].includes(cur)) {
         setScreen("menu");
       }
       // "menu" (ve "auth") ekranında geri tuşu doğal davranışına bırakılır —
@@ -1268,6 +1447,13 @@ function App() {
     return () => { unsubUsers(); unsubGroups(); unsubGames(); unsubPresence(); unsubNotifs(); };
   }, []);
 
+  // ---- native RevenueCat köprüsüne giriş yapan kullanıcıyı bildir ----
+  // (satın almaların doğru rumza bağlanması ve cihaz değişince geri
+  // yüklenebilmesi için gerekli — bkz. identifyNativePurchaseUser)
+  useEffect(() => {
+    if (me && me.username) identifyNativePurchaseUser(me.username);
+  }, [me && me.username]); // eslint-disable-line
+
   // ---- online presence: while logged in, mark this username as online in
   // Firebase and automatically clear it the moment the connection drops
   // (tab closed, network lost, etc.) so the green dot stays accurate ----
@@ -1339,6 +1525,40 @@ function App() {
       setMe({ username: me.username, isAdmin: fresh.isAdmin, score: fresh.score, medals: newMedals });
     }
   }, [users]); // eslint-disable-line
+
+  // ---------------- Başlangıç seviyesi günlük 1 saatlik oynama süresi takibi ----------------
+  // Sadece "start" seviyesindeki oyuncular için sayaç işletilir; solo ekranında
+  // geçirilen süre ile grup maçlarında fiilen oynanan (spinning/playing) süre
+  // birikir. Ağ trafiğini azaltmak için her tick'te değil, ~5 saniyede bir
+  // Firebase'e yazılır; asıl "oynayabilir mi" kontrolü startSpin ve solo'ya
+  // geçiş noktalarında yapılır (bkz. startSpin, soloPlay butonu).
+  const dailyPlayAccumRef = useRef(0);
+  const lastPlayTickRef = useRef(Date.now());
+  useEffect(() => {
+    const now = tick;
+    const elapsed = Math.max(0, now - lastPlayTickRef.current);
+    lastPlayTickRef.current = now;
+    if (!me) return;
+    const myRec = users[me.username];
+    if (!myRec) return;
+    if (levelKeyForScore(myRec.score || 0) !== "start") return; // kısıt sadece Başlangıç'ta
+
+    const activeGame = activeGameId && games[activeGameId];
+    const isActivelyPlayingGroup = screen === "lobby" && activeGame && activeGame.status !== "lobby" && isGameActivelyPlaying(activeGame, now);
+    const isActivelyPlayingSolo = screen === "solo";
+    if (!isActivelyPlayingGroup && !isActivelyPlayingSolo) return;
+
+    dailyPlayAccumRef.current += elapsed;
+    if (dailyPlayAccumRef.current < 5000) return; // 5 sn altında Firebase'e yazmıyoruz
+    const toFlush = dailyPlayAccumRef.current;
+    dailyPlayAccumRef.current = 0;
+    transactRecord("users/" + me.username, current => {
+      const rec = current || { password: "", score: 0, isAdmin: false };
+      const resetAt = rec.dailyPlayResetAt || 0;
+      const usedSoFar = Date.now() >= resetAt ? 0 : (rec.dailyPlayMsUsed || 0);
+      return { ...rec, dailyPlayMsUsed: usedSoFar + toFlush, dailyPlayResetAt: Date.now() >= resetAt ? nextDailyResetTime(Date.now()) : resetAt };
+    }).then(fresh => { if (fresh) setUsers(prev => ({ ...prev, [me.username]: fresh })); });
+  }, [tick]); // eslint-disable-line
 
   // ---------------- AUTH ----------------
   // Google sign-in is now a mandatory first security step for EVERY user,
@@ -1493,25 +1713,111 @@ function App() {
     });
   }
 
+  // ---------------- YILDIZLA GÜNLÜK PUAN HEDİYESİ (bölüm 5) ----------------
+  // Gönderenin kendi puanından DÜŞMEZ; ayrı bir günlük hak sayacı gibi
+  // işler ve her gün (DAILY_RESET_HOUR / 09:00) yeniden dolar.
+  async function giveGiftPoints(toUsername) {
+    if (!toUsername || toUsername === me.username) return;
+    const myRec = users[me.username] || { score: me.score || 0 };
+    const limit = dailyGiftLimitForScore(myRec.score || 0);
+    if (limit <= 0) { alert(t.giftPointsNoStars); return; }
+
+    let blocked = false;
+    const now = Date.now();
+    const freshUserRec = await transactRecord("users/" + me.username, current => {
+      const rec = current || { password: "", score: 0, isAdmin: false };
+      const resetAt = rec.giftBudgetResetAt || 0;
+      let usedToday = rec.giftsUsedToday || 0;
+      if (now >= resetAt) usedToday = 0; // günlük sıfırlama zamanı geçmiş
+      if (usedToday >= limit) { blocked = true; return; }
+      return {
+        ...rec,
+        giftsUsedToday: usedToday + 1,
+        giftBudgetResetAt: now >= resetAt ? nextDailyResetTime(now) : resetAt,
+      };
+    });
+    if (blocked) { alert(t.giftPointsNoneLeft); return; }
+    if (freshUserRec) setUsers(prev => ({ ...prev, [me.username]: freshUserRec }));
+
+    await addPoints(toUsername, GIFT_POINTS_PER_GIFT);
+    alert(t.giftPointsSuccess);
+  }
+
+  function giftsRemainingToday(userRec) {
+    const limit = dailyGiftLimitForScore(userRec.score || 0);
+    const resetAt = userRec.giftBudgetResetAt || 0;
+    const usedToday = Date.now() >= resetAt ? 0 : (userRec.giftsUsedToday || 0);
+    return { limit, remaining: Math.max(0, limit - usedToday) };
+  }
+
+  // ---------------- BAŞLANGIÇ SEVİYESİ GÜNLÜK OYNAMA SÜRESİ KISITI (bölüm 3) ----------------
+  // Sadece "start" seviyesindeki oyuncular için geçerli; Bronz ve üzerinde
+  // hiçbir kısıt yoktur. dailyPlayMsUsed alanı 09:00'da otomatik sıfırlanır
+  // (dailyPlayResetAt zaman damgası geçildiğinde).
+  function dailyPlayMsUsedFor(userRec) {
+    const resetAt = userRec.dailyPlayResetAt || 0;
+    return Date.now() >= resetAt ? 0 : (userRec.dailyPlayMsUsed || 0);
+  }
+  function startLevelTimeLimitReachedFor(userRec) {
+    if (levelKeyForScore(userRec.score || 0) !== "start") return false; // kısıt sadece Başlangıç'ta
+    return dailyPlayMsUsedFor(userRec) >= START_LEVEL_DAILY_PLAY_MS;
+  }
+
+  // ---------------- PARAYLA SEVİYE ATLAMA (bölüm "AYRICA") ----------------
+  // Sadece Bronz/Gümüş/Altın/Elmas satın alınabilir; puanı en az o
+  // seviyenin eşiğine yükseltir (zaten üzerindeyse dokunmaz).
+  async function buyLevelWithMoney(levelKey) {
+    const price = LEVEL_BUY_PRICES_USD[levelKey];
+    if (!price) { alert(t.buyLevelNotAvailable); return; }
+    const tier = MEDAL_TIERS.find(m => m.key === levelKey);
+    if (!tier) return;
+    const confirmBuy = window.confirm(`${tier.label[lang]} ${t.buyLevelConfirm} ($${price})`);
+    if (!confirmBuy) return;
+    const productId = PRODUCT_IDS["level" + levelKey.charAt(0).toUpperCase() + levelKey.slice(1)];
+    const purchased = await purchaseProduct(productId);
+    if (!purchased) { alert(t.purchaseFailed); return; }
+    const freshUserRec = await transactRecord("users/" + me.username, current => {
+      const rec = current || { password: "", score: 0, isAdmin: false };
+      return { ...rec, score: Math.max(rec.score || 0, tier.threshold) };
+    });
+    if (freshUserRec) setUsers(prev => ({ ...prev, [me.username]: freshUserRec }));
+    alert(t.purchaseSuccess);
+  }
+
   // ---------------- GROUPS ----------------
+  // Seviyeye göre grup KURMA (owner olma) hakkı — bkz. LEVEL_GROUP_RIGHTS.
+  // "start" seviyesi hiç grup kuramaz; Bronz'dan itibaren her seviyenin
+  // devraldığı ücretsiz hakkın üstündeki her yeni hak 1 USD karşılığı
+  // satın alınır (purchasedGroupSlots alanında birikir, kalıcıdır).
   async function createGroup() {
     if (!newGroupName.trim()) return;
     const myGroupCount = Object.values(groups).filter(g => g.members.includes(me.username)).length;
     if (myGroupCount >= 50) { alert(t.groupLimitReached); return; }
 
-    const today = new Date().toISOString().slice(0, 10);
-    // atomic per-user check-and-increment: two "create group" taps landing
-    // in the same instant no longer race on a shared read of the whole
-    // "users" tree
-    let limitHit = false;
-    const freshUserRec = await transactRecord("users/" + me.username, current => {
-      const rec = current || { password: "", score: 0, isAdmin: false };
-      const countToday = rec.groupsCreatedDate === today ? (rec.groupsCreatedCount || 0) : 0;
-      if (countToday >= 3) { limitHit = true; return; } // abort
-      return { ...rec, groupsCreatedDate: today, groupsCreatedCount: countToday + 1 };
-    });
-    if (limitHit) { alert(t.dailyGroupLimit); return; }
-    if (freshUserRec) setUsers(prev => ({ ...prev, [me.username]: freshUserRec }));
+    const myRec = users[me.username] || { score: me.score || 0, purchasedGroupSlots: 0 };
+    const myOwnedCount = Object.values(groups).filter(g => g.owner === me.username).length;
+    const level = levelKeyForScore(myRec.score || 0);
+    const rights = LEVEL_GROUP_RIGHTS[level] || { totalSlots: 0, freeSlots: 0 };
+
+    if (rights.totalSlots === 0 || myOwnedCount >= rights.totalSlots) {
+      alert(t.groupLevelCapReached);
+      return;
+    }
+
+    const unlockedSlots = Math.min(rights.totalSlots, (rights.freeSlots || 0) + (myRec.purchasedGroupSlots || 0));
+    if (myOwnedCount >= unlockedSlots) {
+      // Bu seviyede daha yüksek bir hak var ama henüz satın alınmamış (1 USD).
+      const confirmBuy = window.confirm(`${t.groupSlotBuyPrompt} ($${GROUP_SLOT_PRICE_USD})`);
+      if (!confirmBuy) return;
+      const productId = groupSlotProductFor(level);
+      const purchased = productId ? await purchaseProduct(productId) : false;
+      if (!purchased) { alert(t.purchaseFailed); return; }
+      const freshUserRec = await transactRecord("users/" + me.username, current => {
+        const rec = current || { password: "", score: 0, isAdmin: false };
+        return { ...rec, purchasedGroupSlots: (rec.purchasedGroupSlots || 0) + 1 };
+      });
+      if (freshUserRec) setUsers(prev => ({ ...prev, [me.username]: freshUserRec }));
+    }
 
     const id = uid();
     const now = Date.now();
@@ -1705,6 +2011,8 @@ function App() {
     const game0 = games[gameId];
     const grp0 = game0 && groups[game0.groupId];
     if (grp0 && groupLimitReached(grp0, games, Date.now())) return; // günlük 2 saatlik hak tükendi
+    const myRec0 = users[me.username] || { score: me.score || 0 };
+    if (startLevelTimeLimitReachedFor(myRec0)) { alert(t.startLevelTimeLimitReached); return; }
     await transactRecord("games/" + gameId, current => {
       if (!current) return current;
       const letters = ALPHABETS[current.lang].filter(l => current.lang === "tr" ? l !== "Ğ" : true);
@@ -2038,7 +2346,11 @@ function App() {
           <button onClick={() => setScreen("groups")} className="col-span-2 flex items-center justify-center gap-2 py-5 rounded-2xl font-bold text-lg" style={{ background: "linear-gradient(135deg,#f2b705,#ff8a3d)", color: "#1b1030", fontFamily: "Fredoka, sans-serif", boxShadow: "0 8px 22px rgba(242,183,5,0.3)" }}>
             <Users size={22} /> {t.myGroups} ({myGroups.length})
           </button>
-          <button onClick={() => setScreen("solo")} className="flex flex-col items-center justify-center gap-2 py-7 rounded-2xl bg-white/10 text-white font-semibold text-lg hover:bg-white/20 border border-white/10">
+          <button onClick={() => {
+            const myRec = users[me.username] || { score: me.score || 0 };
+            if (startLevelTimeLimitReachedFor(myRec)) { alert(t.startLevelTimeLimitReached); return; }
+            setScreen("solo");
+          }} className="flex flex-col items-center justify-center gap-2 py-7 rounded-2xl bg-white/10 text-white font-semibold text-lg hover:bg-white/20 border border-white/10">
             <Play size={26} /> {t.soloPlay}
           </button>
           <button onClick={() => setScreen("leaderboard")} className="flex flex-col items-center justify-center gap-2 py-7 rounded-2xl bg-white/10 text-white font-semibold text-lg hover:bg-white/20 border border-white/10">
@@ -2087,20 +2399,42 @@ function App() {
               {MEDAL_TIERS.map(tier => {
                 const Icon = tier.icon;
                 const earned = me.score >= tier.threshold;
+                const isKing = tier.key === "king";
+                const myStars = isKing ? starsForScore(me.score) : 0;
+                const buyPrice = LEVEL_BUY_PRICES_USD[tier.key];
+                const canBuy = !earned && buyPrice;
                 return (
-                  <div key={tier.key} className="flex items-center justify-between px-3 py-2.5 rounded-xl"
-                    style={{ background: earned ? `${tier.color}1a` : "rgba(255,255,255,0.05)", border: `1px solid ${earned ? tier.color + "66" : "rgba(255,255,255,0.08)"}` }}>
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: `${tier.color}22` }}>
-                        <Icon size={16} color={tier.color} />
+                  <React.Fragment key={tier.key}>
+                    <div className="flex items-center justify-between px-3 py-2.5 rounded-xl"
+                      style={{ background: earned ? `${tier.color}1a` : "rgba(255,255,255,0.05)", border: `1px solid ${earned ? tier.color + "66" : "rgba(255,255,255,0.08)"}` }}>
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: `${tier.color}22` }}>
+                          <Icon size={16} color={tier.color} />
+                        </div>
+                        <span className={`font-semibold text-sm ${earned ? "text-white" : "text-white/50"}`}>
+                          {isKing ? kingLabelWithStars(me.score, lang) : tier.label[lang]}
+                        </span>
                       </div>
-                      <span className={`font-semibold text-sm ${earned ? "text-white" : "text-white/50"}`}>{tier.label[lang]}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold" style={{ color: earned ? tier.color : "rgba(255,255,255,0.4)" }}>{tier.threshold.toLocaleString(lang === "tr" ? "tr-TR" : undefined)}</span>
+                        {earned && <Check size={14} color={tier.color} />}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold" style={{ color: earned ? tier.color : "rgba(255,255,255,0.4)" }}>{tier.threshold.toLocaleString(lang === "tr" ? "tr-TR" : undefined)}</span>
-                      {earned && <Check size={14} color={tier.color} />}
-                    </div>
-                  </div>
+                    {canBuy && (
+                      <button onClick={() => buyLevelWithMoney(tier.key)}
+                        className="w-full -mt-1 mb-1 py-1.5 rounded-lg text-xs font-semibold bg-white/5 hover:bg-white/10 border border-white/10"
+                        style={{ color: tier.color }}>
+                        {t.buyLevel} — ${buyPrice}
+                      </button>
+                    )}
+                    {isKing && myStars > 0 && (
+                      <button onClick={() => { setShowMedalInfo(false); setScreen("giftPoints"); }}
+                        className="w-full -mt-1 mb-1 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5"
+                        style={{ background: `${tier.color}22`, color: tier.color, border: `1px solid ${tier.color}55` }}>
+                        <Star size={12} color={tier.color} /> {t.giftPoints}
+                      </button>
+                    )}
+                  </React.Fragment>
                 );
               })}
             </div>
@@ -2401,6 +2735,50 @@ function App() {
               </div>
             );
           })}
+        </div>
+      </div>
+    );
+  }
+
+  // ---------------- PUAN HEDİYE ET (yıldızla kazanılan günlük hak) ----------------
+  if (screen === "giftPoints") {
+    const myRec = users[me.username] || { score: me.score || 0 };
+    const { limit, remaining } = giftsRemainingToday(myRec);
+    const results = giftSearchTerm.trim()
+      ? Object.entries(users).filter(([name]) => name !== me.username && name.toLocaleLowerCase(lang === "tr" ? "tr-TR" : undefined).includes(giftSearchTerm.trim().toLocaleLowerCase(lang === "tr" ? "tr-TR" : undefined))).slice(0, 20)
+      : [];
+    return (
+      <div className="h-screen overflow-hidden w-full p-5 flex flex-col" style={{ fontFamily: "Inter, sans-serif" }}>
+        {bg}
+        {Header(t.giftPoints, true)}
+        <div className="max-w-md mx-auto w-full mb-3 shrink-0 flex items-center justify-between px-4 py-3 rounded-2xl bg-white/10 border border-white/10">
+          <span className="text-white/60 text-xs font-semibold">{t.giftPointsRemaining}</span>
+          <span className="text-yellow-400 font-bold text-sm">{remaining}/{limit}</span>
+        </div>
+        <div className="max-w-md mx-auto w-full mb-3 shrink-0">
+          <div className="flex gap-2">
+            <input
+              value={giftSearchTerm}
+              onChange={e => setGiftSearchTerm(e.target.value)}
+              placeholder={t.giftPointsSearchPlaceholder}
+              className="flex-1 min-w-0 px-4 py-2.5 rounded-xl bg-white/10 text-white placeholder-white/40 outline-none text-sm"
+            />
+            <div className="p-2.5 rounded-xl bg-white/10 text-white shrink-0"><Search size={16} /></div>
+          </div>
+        </div>
+        <div className="max-w-md mx-auto w-full space-y-2 flex-1 min-h-0 overflow-y-auto pb-4">
+          {results.map(([name, rec]) => (
+            <div key={name} className="flex items-center justify-between px-4 py-3 rounded-2xl bg-white/10">
+              <span className="text-white font-semibold flex items-center gap-1.5">{name} <OnlineDot online={isOnline(name)} /></span>
+              <button
+                disabled={remaining <= 0}
+                onClick={() => { if (window.confirm(`${name} ${t.giftPointsConfirm}`)) giveGiftPoints(name); }}
+                className="px-3 py-1.5 rounded-lg text-xs font-bold"
+                style={{ background: remaining > 0 ? "#f2b705" : "rgba(255,255,255,0.1)", color: remaining > 0 ? "#1b1030" : "rgba(255,255,255,0.35)" }}>
+                {t.giftPointsSend}
+              </button>
+            </div>
+          ))}
         </div>
       </div>
     );
