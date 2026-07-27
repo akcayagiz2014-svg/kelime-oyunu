@@ -99,6 +99,7 @@ const Gem = makeIcon("💎");
 const Star = makeIcon("⭐");
 const Check = makeIcon("✓");
 const Clock = makeIcon("⏱");
+const Search = makeIcon("🔍");
 const Trash = makeIcon("🗑️");
 
 /* ---------------------------------------------------------
@@ -182,6 +183,8 @@ const T = {
     back: "Geri", points: "puan", noWord: "Kelime yazılmadı", nextRound: "Sıradaki Turu Başlat",
     worldLeaderboard: "Dünya Geneli Sıralama", groupLeaderboard: "Grup Sıralaması", rank: "Sıra",
     score: "Puan", medals: "Madalyalar", noNotifications: "Bildirim yok", invitedYouToGroup: "seni gruba davet etti",
+    leaderboardSearchPlaceholder: "Bir kullanıcı adı yazıp puanını sorgula...", searching: "Aranıyor...",
+    userNotFound: "Bu kullanıcı adı bulunamadı", top10: "İlk 10", loadingLeaderboard: "Sıralama yükleniyor...",
     accept: "Kabul Et", decline: "Reddet", adminPanelDesc: "Kullanıcı puanlarını düzenle", increase: "Artır", decrease: "Azalt", setScore: "Puanı Ayarla",
     congrats: "Tebrikler!", earnedMedal: "madalyası kazandınız!", close: "Kapat", invalidWord: "Bu kelime geçerli değil, 0 puan",
     soloAllCorrectMsg: "Tebrikler, hepsini doğru yaptığınız için +20 puan aldınız!",
@@ -236,6 +239,8 @@ const T = {
     back: "Back", points: "pts", noWord: "No word submitted", nextRound: "Start Next Round",
     worldLeaderboard: "World Leaderboard", groupLeaderboard: "Group Leaderboard", rank: "Rank",
     score: "Score", medals: "Medals", noNotifications: "No notifications", invitedYouToGroup: "invited you to a group",
+    leaderboardSearchPlaceholder: "Type a username to look up their score...", searching: "Searching...",
+    userNotFound: "No user found with that name", top10: "Top 10", loadingLeaderboard: "Loading leaderboard...",
     accept: "Accept", decline: "Decline", adminPanelDesc: "Adjust user scores", increase: "Increase", decrease: "Decrease", setScore: "Set Score",
     congrats: "Congratulations!", earnedMedal: "medal earned!", close: "Close", invalidWord: "Not a valid word, 0 points",
     soloAllCorrectMsg: "Congratulations, you earned +20 points for getting them all right!",
@@ -290,6 +295,8 @@ const T = {
     back: "Zurück", points: "Pkt", noWord: "Kein Wort eingegeben", nextRound: "Nächste Runde starten",
     worldLeaderboard: "Weltweite Rangliste", groupLeaderboard: "Gruppenrangliste", rank: "Rang",
     score: "Punkte", medals: "Medaillen", noNotifications: "Keine Benachrichtigungen", invitedYouToGroup: "hat dich zu einer Gruppe eingeladen",
+    leaderboardSearchPlaceholder: "Benutzernamen eingeben, um die Punktzahl zu sehen...", searching: "Suche läuft...",
+    userNotFound: "Kein Benutzer mit diesem Namen gefunden", top10: "Top 10", loadingLeaderboard: "Rangliste wird geladen...",
     accept: "Annehmen", decline: "Ablehnen", adminPanelDesc: "Punkte der Nutzer anpassen", increase: "Erhöhen", decrease: "Verringern", setScore: "Punkte setzen",
     congrats: "Glückwunsch!", earnedMedal: "Medaille erhalten!", close: "Schließen", invalidWord: "Ungültiges Wort, 0 Punkte",
     soloAllCorrectMsg: "Glückwunsch, du hast +20 Punkte für alles richtig erhalten!",
@@ -650,10 +657,11 @@ const DE_PERSON_NAMES = new Set([
 ]);
 
 async function wordExistsInDictionaryFallback(lang, candidate) {
-  // Wiktionary REST API: hem İngilizce hem Almanca kapsamı çok geniş olan,
-  // özel isimler dahil çoğu maddeyi barındıran ikincil bir kaynak.
+  // Wiktionary REST API: İngilizce, Almanca ve Türkçe sürümleri aynı uç
+  // noktayı kullanıyor; özel isimler dahil çoğu maddeyi barındıran
+  // ikincil/son çare bir kaynak.
   try {
-    const site = lang === "en" ? "en.wiktionary.org" : "de.wiktionary.org";
+    const site = lang === "en" ? "en.wiktionary.org" : lang === "tr" ? "tr.wiktionary.org" : "de.wiktionary.org";
     const res = await fetchWithTimeout(`https://${site}/api/rest_v1/page/definition/${encodeURIComponent(candidate)}`, 6000);
     if (!res.ok) return false;
     const data = await res.json();
@@ -699,9 +707,13 @@ async function wordExistsInDictionary(lang, candidate) {
           }
         }
       }
-      if (!res || !res.ok) return false;
+      if (!res || !res.ok) return await wordExistsInDictionaryFallback("tr", candidate);
       const data = await res.json();
-      return Array.isArray(data) && data.length > 0;
+      if (Array.isArray(data) && data.length > 0) return true;
+      // TDK + proxy zinciri de bulamadıysa son çare olarak tr.wiktionary.org
+      // (Vikisözlük) deneniyor — TDK'nin kapsamadığı argo/bölgesel kelimeler
+      // orada bulunabiliyor.
+      return await wordExistsInDictionaryFallback("tr", candidate);
     } else if (lang === "en") {
       if (EN_PERSON_NAMES.has(candidate.toLowerCase())) return true;
       if (EN_COUNTRIES.has(candidate.toLowerCase())) return true;
@@ -1043,6 +1055,49 @@ function App() {
   const [scoreInputs, setScoreInputs] = useState({}); // admin panel: per-user typed score value
   const [sessionChecked, setSessionChecked] = useState(false); // "remember this phone" auto-login check
   const [tick, setTick] = useState(Date.now());
+  // ---- dünya sıralaması: tüm "users" tablosunu çekmek yerine (maliyet) sadece
+  // en yüksek puanlı 10 kaydı Firebase sorgusuyla (orderByChild+limitToLast)
+  // çekiyoruz; isim aratıldığında ise sadece o kullanıcının kaydını (tek path)
+  // getiriyoruz. Bunun verimli çalışması için Firebase kurallarında
+  // "users" düğümüne ".indexOn": ["score"] eklenmiş olmalı — aksi halde
+  // sunucu sıralama yapabilmek için yine tüm tabloyu okur. ----
+  const [leaderboardTop, setLeaderboardTop] = useState([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [leaderboardSearch, setLeaderboardSearch] = useState("");
+  const [leaderboardSearchResult, setLeaderboardSearchResult] = useState(undefined); // undefined: henüz aranmadı, null: bulunamadı, obje: bulundu
+  const [leaderboardSearchLoading, setLeaderboardSearchLoading] = useState(false);
+  useEffect(() => {
+    if (screen !== "leaderboard") return;
+    let cancelled = false;
+    setLeaderboardLoading(true);
+    waitForFbdb()
+      .then(db => db.ref("users").orderByChild("score").limitToLast(10).get())
+      .then(snap => {
+        if (cancelled) return;
+        const arr = [];
+        snap.forEach(child => { arr.push([child.key, child.val()]); });
+        arr.reverse(); // limitToLast artan sırada döner, en yükseği en üste almak için ters çeviriyoruz
+        setLeaderboardTop(arr);
+      })
+      .catch(e => console.error("leaderboard top10 fetch failed", e))
+      .finally(() => { if (!cancelled) setLeaderboardLoading(false); });
+    return () => { cancelled = true; };
+  }, [screen]);
+  async function searchLeaderboardUser(rawName) {
+    const name = rawName.trim();
+    if (!name) { setLeaderboardSearchResult(undefined); return; }
+    setLeaderboardSearchLoading(true);
+    try {
+      const db = await waitForFbdb();
+      const snap = await db.ref("users/" + name).get(); // tek kayıt — tüm tabloyu çekmez
+      setLeaderboardSearchResult(snap.exists() ? { name, ...snap.val() } : null);
+    } catch (e) {
+      console.error("leaderboard search failed", e);
+      setLeaderboardSearchResult(null);
+    } finally {
+      setLeaderboardSearchLoading(false);
+    }
+  }
   useEffect(() => {
     const iv = setInterval(() => setTick(Date.now()), 1000);
     return () => clearInterval(iv);
@@ -2066,7 +2121,7 @@ function App() {
           <Plus size={16} /> {t.createGroup}
         </button>
         {myGroups.length === 0 && <p className="text-white/50 text-center mt-10">{t.noGroups}</p>}
-        <div className="space-y-2 max-w-md mx-auto w-full flex-1 min-h-0 overflow-y-auto pb-20">
+        <div className="space-y-2 max-w-md mx-auto w-full flex-1 min-h-0 overflow-y-auto">
           {myGroups.map(g => {
             const remaining = groupRemainingMs(g, games, tick);
             return (
@@ -2088,9 +2143,11 @@ function App() {
             );
           })}
         </div>
-        <button onClick={() => setScreen("menu")} className="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-6 py-3 rounded-full bg-black/40 backdrop-blur text-white font-semibold border border-white/10">
-          <ArrowLeft size={16} /> {t.back}
-        </button>
+        <div className="shrink-0 flex justify-center pt-4">
+          <button onClick={() => setScreen("menu")} className="flex items-center gap-2 px-6 py-3 rounded-full bg-black/40 backdrop-blur text-white font-semibold border border-white/10">
+            <ArrowLeft size={16} /> {t.back}
+          </button>
+        </div>
         {showCreateGroup && (
           <Modal onClose={() => setShowCreateGroup(false)}>
             <h3 className="text-white font-bold mb-3">{t.createGroup}</h3>
@@ -2295,13 +2352,43 @@ function App() {
 
   // ---------------- LEADERBOARD ----------------
   if (screen === "leaderboard") {
-    const sorted = Object.entries(users).sort((a, b) => (b[1].score || 0) - (a[1].score || 0));
     return (
       <div className="h-screen overflow-hidden w-full p-5 flex flex-col" style={{ fontFamily: "Inter, sans-serif" }}>
         {bg}
         {Header(t.worldLeaderboard, true)}
+
+        <div className="max-w-md mx-auto w-full mb-3 shrink-0">
+          <div className="flex gap-2">
+            <input
+              value={leaderboardSearch}
+              onChange={e => { setLeaderboardSearch(e.target.value); if (!e.target.value.trim()) setLeaderboardSearchResult(undefined); }}
+              onKeyDown={e => { if (e.key === "Enter") searchLeaderboardUser(leaderboardSearch); }}
+              placeholder={t.leaderboardSearchPlaceholder}
+              className="flex-1 min-w-0 px-4 py-2.5 rounded-xl bg-white/10 text-white placeholder-white/40 outline-none text-sm"
+            />
+            <button onClick={() => searchLeaderboardUser(leaderboardSearch)} className="p-2.5 rounded-xl bg-white/10 text-white hover:bg-white/20 shrink-0">
+              <Search size={16} />
+            </button>
+          </div>
+          {leaderboardSearchLoading && <p className="text-white/40 text-xs mt-2">{t.searching}</p>}
+          {!leaderboardSearchLoading && leaderboardSearchResult === null && (
+            <p className="text-white/40 text-xs mt-2">{t.userNotFound}</p>
+          )}
+          {!leaderboardSearchLoading && leaderboardSearchResult && (
+            <div className="mt-2 flex items-center justify-between px-4 py-3 rounded-2xl bg-white/15 border border-white/20">
+              <span className="text-white font-semibold flex items-center gap-1.5">
+                {leaderboardSearchResult.name} <OnlineDot online={isOnline(leaderboardSearchResult.name)} />
+                {medalsForScore(leaderboardSearchResult.score || 0).map(mk => { const tier = MEDAL_TIERS.find(x => x.key === mk); const Icon = tier.icon; return <Icon key={mk} size={14} color={tier.color} />; })}
+              </span>
+              <span className="text-yellow-400 font-bold">{leaderboardSearchResult.score || 0}</span>
+            </div>
+          )}
+        </div>
+
+        <p className="text-white/40 text-xs font-semibold uppercase tracking-wide mb-2 max-w-md mx-auto w-full shrink-0">{t.top10}</p>
         <div className="max-w-md mx-auto w-full space-y-2 flex-1 min-h-0 overflow-y-auto pb-4">
-          {sorted.map(([name, rec], i) => {
+          {leaderboardLoading && <p className="text-white/40 text-center mt-6">{t.loadingLeaderboard}</p>}
+          {!leaderboardLoading && leaderboardTop.map(([name, rec], i) => {
             const mkeys = medalsForScore(rec.score || 0);
             return (
               <div key={name} className="flex items-center justify-between px-4 py-3 rounded-2xl bg-white/10">
