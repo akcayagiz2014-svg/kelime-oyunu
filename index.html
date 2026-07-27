@@ -182,6 +182,8 @@ const T = {
     forgotEnterUsername: "Kullanıcı adını gir", forgotNoEmail: "Bu hesapta kayıtlı bir e-posta bulunamadı.",
     forgotSuccess: "Kayıtlı e-postana bir şifre sıfırlama bağlantısı gönderildi. Gelen kutunu (ve spam klasörünü) kontrol et.",
     forgotFailed: "E-posta gönderilemedi, lütfen daha sonra tekrar dene.", forgotSending: "Gönderiliyor...", forgotSend: "Gönder",
+    disclaimerLinkText: "Gizlilik Politikası ve Sorumluluk Reddi Beyanı'nı", disclaimerAgreeText: "okudum, uygulama içi satın almalara (Ömür Boyu paket dahil) ilişkin şartlar dahil tüm içeriğini kabul ediyorum.",
+    disclaimerRequired: "Devam etmek için Gizlilik Politikası ve Sorumluluk Reddi Beyanı'nı kabul etmelisin.",
     resetPasswordTitle: "Yeni Şifre Belirle", resetPasswordChecking: "Bağlantı doğrulanıyor...",
     resetPasswordInvalid: "Bu şifre sıfırlama bağlantısının süresi dolmuş ya da geçersiz. Lütfen tekrar 'Şifremi Unuttum' ile yeni bir bağlantı iste.",
     resetPasswordNewPlaceholder: "Yeni şifre", resetPasswordTooShort: "Şifre en az 4 karakter olmalı",
@@ -261,6 +263,8 @@ const T = {
     forgotEnterUsername: "Enter your username", forgotNoEmail: "No email address is registered for this account.",
     forgotSuccess: "A password reset link has been emailed to your registered address. Check your inbox (and spam folder).",
     forgotFailed: "Couldn't send the email, please try again later.", forgotSending: "Sending...", forgotSend: "Send",
+    disclaimerLinkText: "the Privacy Policy and Liability Disclaimer", disclaimerAgreeText: "I have read and accept its full content, including the terms for in-app purchases (including the Lifetime package).",
+    disclaimerRequired: "You must accept the Privacy Policy and Liability Disclaimer to continue.",
     resetPasswordTitle: "Set a New Password", resetPasswordChecking: "Verifying link...",
     resetPasswordInvalid: "This password reset link has expired or is invalid. Please request a new one via 'Forgot password'.",
     resetPasswordNewPlaceholder: "New password", resetPasswordTooShort: "Password must be at least 4 characters",
@@ -340,6 +344,8 @@ const T = {
     forgotEnterUsername: "Gib deinen Benutzernamen ein", forgotNoEmail: "Für dieses Konto ist keine E-Mail-Adresse registriert.",
     forgotSuccess: "Ein Link zum Zurücksetzen des Passworts wurde an deine registrierte E-Mail-Adresse gesendet. Prüfe dein Postfach (und den Spam-Ordner).",
     forgotFailed: "E-Mail konnte nicht gesendet werden, bitte versuche es später erneut.", forgotSending: "Wird gesendet...", forgotSend: "Senden",
+    disclaimerLinkText: "die Datenschutzrichtlinie und den Haftungsausschluss", disclaimerAgreeText: "gelesen und akzeptiere den gesamten Inhalt, einschließlich der Bedingungen für In-App-Käufe (einschließlich des Lifetime-Pakets).",
+    disclaimerRequired: "Du musst die Datenschutzrichtlinie und den Haftungsausschluss akzeptieren, um fortzufahren.",
     resetPasswordTitle: "Neues Passwort festlegen", resetPasswordChecking: "Link wird überprüft...",
     resetPasswordInvalid: "Dieser Link zum Zurücksetzen des Passworts ist abgelaufen oder ungültig. Bitte fordere über 'Passwort vergessen' einen neuen an.",
     resetPasswordNewPlaceholder: "Neues Passwort", resetPasswordTooShort: "Das Passwort muss mindestens 4 Zeichen lang sein",
@@ -1266,6 +1272,7 @@ function App() {
   const [screen, setScreen] = useState("auth"); // auth, menu, groups, chat, lobby, game, solo, leaderboard, notifications, admin
   const [authMode, setAuthMode] = useState("login");
   const [authForm, setAuthForm] = useState({ username: "", password: "", email: "" });
+  const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
   const [showForgotForm, setShowForgotForm] = useState(false);
   const [forgotUsername, setForgotUsername] = useState("");
   // Firebase'in şifre sıfırlama e-postasındaki bağlantı, kullanıcıyı
@@ -1719,6 +1726,7 @@ function App() {
       setScreen("menu");
       localStorage.setItem("kt_session", JSON.stringify({ username: uname, googleAdminEmail }));
     } else {
+      if (!disclaimerAccepted) { setAuthError(t.disclaimerRequired); return; }
       if (u[uname]) { setAuthError(t.userExists); return; }
       if (!isValidEmail(authForm.email)) { setAuthError(t.emailRequired); return; }
       const email = authForm.email.trim().toLowerCase();
@@ -2502,13 +2510,23 @@ function App() {
                   </div>
                   <input value={authForm.email} onChange={e => setAuthForm(f => ({ ...f, email: e.target.value }))} type="email"
                     placeholder={t.emailPlaceholder} className="w-full px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/40 outline-none focus:ring-2 focus:ring-yellow-500" />
+                  <label className="flex items-start gap-2 text-xs leading-relaxed cursor-pointer" style={{ color: "rgba(255,255,255,0.7)" }}>
+                    <input type="checkbox" checked={disclaimerAccepted} onChange={e => setDisclaimerAccepted(e.target.checked)}
+                      style={{ width: 16, height: 16, marginTop: 2, flexShrink: 0, accentColor: "#f2b705" }} />
+                    <span>
+                      <a href="gizlilik.html" target="_blank" rel="noopener" style={{ color: "#f2b705", textDecoration: "underline" }}>
+                        {t.disclaimerLinkText}
+                      </a>{" "}{t.disclaimerAgreeText}
+                    </span>
+                  </label>
                 </>
               )}
               <input value={authForm.password} onChange={e => setAuthForm(f => ({ ...f, password: e.target.value }))} type="password"
                 placeholder={t.password} className="w-full px-4 py-3 rounded-xl bg-white/10 text-white placeholder-white/40 outline-none focus:ring-2 focus:ring-yellow-500"
                 onKeyDown={e => e.key === "Enter" && handleAuth()} />
               {authError && <p className="text-red-400 text-sm">{authError}</p>}
-              <button onClick={handleAuth} className="w-full py-3 rounded-xl font-bold transition hover:opacity-90"
+              <button onClick={handleAuth} disabled={authMode === "register" && !disclaimerAccepted}
+                className="w-full py-3 rounded-xl font-bold transition hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{ background: "#f2b705", color: "#1b1030", boxShadow: "0 4px 16px rgba(242,183,5,0.35)", fontFamily: "Fredoka, sans-serif" }}>
                 {authMode === "login" ? t.login : t.register}
               </button>
