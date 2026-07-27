@@ -128,7 +128,7 @@ const ROUND_WORD_LIMIT = 25;
 // çark o oyuncu için yeniden çevrilir. Tur, toplam 55 kelime yazılınca
 // biter; en çok puanı toplayan (ya da eşitlik varsa toplayanlar) kazanır.
 const GROUP_ROUND_WORD_LIMIT = 55;
-const POINTS_PER_WORD = 10;
+const POINTS_PER_WORD = 1;
 // Grubun 2 saatlik hakkı, oluşturulduktan sonra geçen duvar-saati değil,
 // içinde fiilen oyun oynanan (spinning/playing) toplam süredir. Grup hiç
 // oynanmazsa bu süre hiç azalmaz ve grup süresiz açık kalır. Bu hak, grubu
@@ -159,7 +159,7 @@ function nextDailyResetTime(fromTs) {
   if (d.getTime() <= fromTs) d.setDate(d.getDate() + 1);
   return d.getTime();
 }
-const STREAK_BONUS = 20; // tur limitine kadar hiç kaçırmadan gidenin alacağı ekstra puan
+const STREAK_BONUS = 5; // tur limitine kadar hiç kaçırmadan gidenin alacağı ekstra puan
 
 const ALPHABETS = {
   tr: ["A","B","C","Ç","D","E","F","G","H","I","İ","J","K","L","M","N","O","Ö","P","R","S","Ş","T","U","Ü","V","Y","Z"],
@@ -187,8 +187,8 @@ const T = {
     userNotFound: "Bu kullanıcı adı bulunamadı", top10: "İlk 10", loadingLeaderboard: "Sıralama yükleniyor...",
     accept: "Kabul Et", decline: "Reddet", adminPanelDesc: "Kullanıcı puanlarını düzenle", increase: "Artır", decrease: "Azalt", setScore: "Puanı Ayarla",
     congrats: "Tebrikler!", earnedMedal: "madalyası kazandınız!", close: "Kapat", invalidWord: "Bu kelime geçerli değil, 0 puan",
-    soloAllCorrectMsg: "Tebrikler, hepsini doğru yaptığınız için +20 puan aldınız!",
-    groupAllCorrectMsg: "Tebrikler, hepsini doğru yaptığınız için tur puanına +20 bonus eklendi!",
+    soloAllCorrectMsg: "Tebrikler, hepsini doğru yaptığınız için +5 puan aldınız!",
+    groupAllCorrectMsg: "Tebrikler, hepsini doğru yaptığınız için tur puanına +5 bonus eklendi!",
     roundWinnerLabel: "Turun Galibi", roundWinnerDesc: "Tur boyunca en çok puanı topladı ve toplanan tüm puanları kazandı:",
     each: "her biri", splitPoolLabel: "Toplam",
     validWord: "Geçerli kelime!", checking: "Kontrol ediliyor...", groupLimitReached: "En fazla 50 gruba katılabilirsin",
@@ -234,6 +234,26 @@ const T = {
     eliminatedByTimeout: "süresini doldurdu ve elendi!",
     eliminatedByLeft: "maçtan çıktı ve elendi!",
     onlyOwnerCanSpin: "Çarkı sadece grubu kuran kişi çevirebilir",
+    rulesButton: "Oyun Kuralları", rulesTitle: "Oyun Kuralları",
+    rulesGoalTitle: "🎯 Amaç",
+    rulesGoalText: "Çarkın belirlediği harfle başlayan kelimeler yazarak puan topla, madalya kazan ve dünya sıralamasında yüksel.",
+    rulesHowTitle: "▶ Nasıl Oynanır",
+    rulesHowText: "Çarkı çevir, ekrana gelen harfle başlayan bir kelime yaz ve süre bitmeden gönder. Doğru kelime puan kazandırır, süre dolar ya da kelime geçersizse 0 puan alırsın ve sıradaki tura geçilir.",
+    rulesMemoryTitle: "🧠 En Önemli Kural: Hafıza",
+    rulesMemoryText: "Bir tur boyunca yazdığın (veya grup maçında herhangi bir oyuncunun yazdığı) her kelime hafızada tutulur. Aynı kelimeyi tur içinde bir daha yazarsan oyunu kaybedersin! Bu yüzden kelime türetirken önceki kelimeleri aklında tutup onlardan farklı, yeni kelimeler bulmaya çalışmalısın. Tam olarak bu mecburiyet zihnini çalıştırır: hem kelime dağarcığını hem de kısa süreli hafızanı güçlendirir.",
+    rulesButtonsTitle: "🔘 Butonlar Ne İşe Yarar",
+    rulesSoloDesc1: "Tek Başına Oyna: Rakipsiz, kendi hızında pratik yaparsın. Her doğru kelime ",
+    rulesSoloDesc2: " puan kazandırır; ", rulesSoloDesc3: " kelimeyi hiç hata yapmadan bitirirsen +", rulesSoloDesc4: " bonus puan kazanırsın.",
+    rulesGroupDesc1: "Gruplarım: Arkadaşlarınla grup kurup birlikte maç yaparsın. Grup maçında kimse elenmez; yanlış yazan ya da süresini geçiren oyuncunun sırası sıradaki oyuncuya geçer. Her doğru kelime ",
+    rulesGroupDesc2: " puan kazandırır, toplam ", rulesGroupDesc3: " kelime yazılınca tur biter; hepsi doğruysa tur puanına +", rulesGroupDesc4: " bonus eklenir ve en çok puan toplayan kazanır.",
+    rulesLeaderboardDesc: "Puan Sıralaması: Dünya genelinde ya da grup içinde kimin en yüksek puana sahip olduğunu görürsün.",
+    rulesNotificationsDesc: "Bildirimler: Grup davetlerini ve oyun çağrılarını buradan görüp kabul edersin.",
+    rulesRankTitle: "🏅 Nasıl Yükselinir",
+    rulesRankDesc1: "Her doğru kelime ", rulesRankDesc2: " puan kazandırır; bir turu hiç hata yapmadan bitirirsen +",
+    rulesRankDesc3: " bonus puan alırsın. Bu, hem tek başına oyunda hem de grup maçlarında geçerlidir. Toplam puanın arttıkça sırayla madalyalar kazanır, dünya sıralamasında yükselirsin.",
+    rulesLangTitle: "🌍 Ekstra Fayda: Yabancı Dil Pratiği",
+    rulesLangText: "Oyun İngilizce ve Almanca dil desteği de sunuyor. Uygulamayı bu dillerde oynayarak hem kelime haznenizi geliştirir hem de eğlenerek yabancı dil pratiği yapma fırsatı bulursunuz.",
+    gotIt: "Anladım",
   },
   en: {
     appName: "Word Derivation", login: "Log In", register: "Sign Up", username: "Username", password: "Password",
@@ -254,8 +274,8 @@ const T = {
     userNotFound: "No user found with that name", top10: "Top 10", loadingLeaderboard: "Loading leaderboard...",
     accept: "Accept", decline: "Decline", adminPanelDesc: "Adjust user scores", increase: "Increase", decrease: "Decrease", setScore: "Set Score",
     congrats: "Congratulations!", earnedMedal: "medal earned!", close: "Close", invalidWord: "Not a valid word, 0 points",
-    soloAllCorrectMsg: "Congratulations, you earned +20 points for getting them all right!",
-    groupAllCorrectMsg: "Congratulations, +20 bonus points were added to the round pool for getting them all right!",
+    soloAllCorrectMsg: "Congratulations, you earned +5 points for getting them all right!",
+    groupAllCorrectMsg: "Congratulations, +5 bonus points were added to the round pool for getting them all right!",
     roundWinnerLabel: "Round Winner", roundWinnerDesc: "Scored the most points and won all the points collected during the round:",
     each: "each", splitPoolLabel: "Total",
     validWord: "Valid word!", checking: "Checking...", groupLimitReached: "You can join at most 50 groups",
@@ -301,6 +321,26 @@ const T = {
     eliminatedByTimeout: "ran out of time and was eliminated!",
     eliminatedByLeft: "left the match and was eliminated!",
     onlyOwnerCanSpin: "Only the group's creator can spin the wheel",
+    rulesButton: "How to Play", rulesTitle: "How to Play",
+    rulesGoalTitle: "🎯 Goal",
+    rulesGoalText: "Score points by writing words that start with the letter the wheel lands on, earn medals, and climb the world leaderboard.",
+    rulesHowTitle: "▶ How It Works",
+    rulesHowText: "Spin the wheel, write a word starting with the letter shown, and submit it before time runs out. A correct word earns points; if time runs out or the word is invalid, you get 0 points and move on to the next round.",
+    rulesMemoryTitle: "🧠 The Most Important Rule: Memory",
+    rulesMemoryText: "Every word you write during a round (or that any player writes in a group match) is remembered. If you write the same word again in that round, you lose the game! So while coming up with words, keep the previous ones in mind and try to think of new, different words. This requirement is exactly what exercises your mind: it strengthens both your vocabulary and your short-term memory.",
+    rulesButtonsTitle: "🔘 What the Buttons Do",
+    rulesSoloDesc1: "Play Solo: Practice at your own pace with no opponents. Every correct word earns ",
+    rulesSoloDesc2: " point(s); if you finish ", rulesSoloDesc3: " words without a single mistake, you earn a +", rulesSoloDesc4: " bonus.",
+    rulesGroupDesc1: "My Groups: Form a group with friends and play matches together. No one is eliminated in a group match; a player who writes a wrong word or runs out of time simply passes the turn to the next player. Every correct word earns ",
+    rulesGroupDesc2: " point(s); the round ends once ", rulesGroupDesc3: " words have been written in total. If all of them were correct, a +", rulesGroupDesc4: " bonus is added to the round score, and whoever scored the most wins.",
+    rulesLeaderboardDesc: "Leaderboard: See who has the highest score, worldwide or within your group.",
+    rulesNotificationsDesc: "Notifications: View and accept group invites and game invites here.",
+    rulesRankTitle: "🏅 How to Rank Up",
+    rulesRankDesc1: "Every correct word earns ", rulesRankDesc2: " point(s); finishing a round without a single mistake earns you a +",
+    rulesRankDesc3: " bonus. This applies both in solo play and in group matches. As your total score grows you earn medals in order and climb the world leaderboard.",
+    rulesLangTitle: "🌍 Bonus: Foreign Language Practice",
+    rulesLangText: "The game also supports English and German. Playing in these languages helps you build vocabulary while getting some fun foreign-language practice.",
+    gotIt: "Got it",
   },
   de: {
     appName: "Wortkette", login: "Anmelden", register: "Registrieren", username: "Benutzername", password: "Passwort",
@@ -321,8 +361,8 @@ const T = {
     userNotFound: "Kein Benutzer mit diesem Namen gefunden", top10: "Top 10", loadingLeaderboard: "Rangliste wird geladen...",
     accept: "Annehmen", decline: "Ablehnen", adminPanelDesc: "Punkte der Nutzer anpassen", increase: "Erhöhen", decrease: "Verringern", setScore: "Punkte setzen",
     congrats: "Glückwunsch!", earnedMedal: "Medaille erhalten!", close: "Schließen", invalidWord: "Ungültiges Wort, 0 Punkte",
-    soloAllCorrectMsg: "Glückwunsch, du hast +20 Punkte für alles richtig erhalten!",
-    groupAllCorrectMsg: "Glückwunsch, dem Rundentopf wurden +20 Bonuspunkte hinzugefügt, weil alles richtig war!",
+    soloAllCorrectMsg: "Glückwunsch, du hast +5 Punkte für alles richtig erhalten!",
+    groupAllCorrectMsg: "Glückwunsch, dem Rundentopf wurden +5 Bonuspunkte hinzugefügt, weil alles richtig war!",
     roundWinnerLabel: "Rundensieger", roundWinnerDesc: "Hat die meisten Punkte gesammelt und alle in dieser Runde gesammelten Punkte gewonnen:",
     each: "je", splitPoolLabel: "Gesamt",
     validWord: "Gültiges Wort!", checking: "Wird geprüft...", groupLimitReached: "Maximal 50 Gruppen möglich",
@@ -368,6 +408,26 @@ const T = {
     eliminatedByTimeout: "hat die Zeit überschritten und ist ausgeschieden!",
     eliminatedByLeft: "hat das Spiel verlassen und ist ausgeschieden!",
     onlyOwnerCanSpin: "Nur der Gründer der Gruppe kann das Rad drehen",
+    rulesButton: "Spielregeln", rulesTitle: "Spielregeln",
+    rulesGoalTitle: "🎯 Ziel",
+    rulesGoalText: "Sammle Punkte, indem du Wörter schreibst, die mit dem vom Rad angezeigten Buchstaben beginnen, verdiene Medaillen und steige in der Weltrangliste auf.",
+    rulesHowTitle: "▶ Spielablauf",
+    rulesHowText: "Dreh das Rad, schreib ein Wort, das mit dem angezeigten Buchstaben beginnt, und sende es ab, bevor die Zeit abläuft. Ein richtiges Wort bringt Punkte; läuft die Zeit ab oder ist das Wort ungültig, bekommst du 0 Punkte und es geht zur nächsten Runde weiter.",
+    rulesMemoryTitle: "🧠 Die wichtigste Regel: Gedächtnis",
+    rulesMemoryText: "Jedes Wort, das du während einer Runde schreibst (oder das im Gruppenspiel irgendein Spieler schreibt), wird sich gemerkt. Schreibst du dasselbe Wort in derselben Runde noch einmal, verlierst du das Spiel! Behalte deshalb beim Wörterbilden die vorherigen Wörter im Kopf und versuche, neue, andere Wörter zu finden. Genau diese Notwendigkeit trainiert deinen Geist: Sie stärkt sowohl deinen Wortschatz als auch dein Kurzzeitgedächtnis.",
+    rulesButtonsTitle: "🔘 Was die Buttons bewirken",
+    rulesSoloDesc1: "Alleine spielen: Übe ohne Gegner in deinem eigenen Tempo. Jedes richtige Wort bringt ",
+    rulesSoloDesc2: " Punkt(e); wenn du ", rulesSoloDesc3: " Wörter ohne einen einzigen Fehler beendest, erhältst du +", rulesSoloDesc4: " Bonuspunkte.",
+    rulesGroupDesc1: "Meine Gruppen: Bilde mit Freunden eine Gruppe und spielt gemeinsam Runden. Im Gruppenspiel scheidet niemand aus; ein Spieler, der ein falsches Wort schreibt oder die Zeit überschreitet, gibt einfach den Zug an den nächsten Spieler weiter. Jedes richtige Wort bringt ",
+    rulesGroupDesc2: " Punkt(e); die Runde endet, sobald insgesamt ", rulesGroupDesc3: " Wörter geschrieben wurden. Sind alle richtig, werden der Rundenpunktzahl +", rulesGroupDesc4: " Bonuspunkte hinzugefügt, und wer die meisten Punkte gesammelt hat, gewinnt.",
+    rulesLeaderboardDesc: "Rangliste: Sieh, wer weltweit oder innerhalb deiner Gruppe die höchste Punktzahl hat.",
+    rulesNotificationsDesc: "Benachrichtigungen: Hier siehst und bestätigst du Gruppen- und Spieleinladungen.",
+    rulesRankTitle: "🏅 Wie du aufsteigst",
+    rulesRankDesc1: "Jedes richtige Wort bringt ", rulesRankDesc2: " Punkt(e); eine Runde ohne einen einzigen Fehler zu beenden bringt dir +",
+    rulesRankDesc3: " Bonuspunkte. Das gilt sowohl im Einzelspiel als auch in Gruppenspielen. Mit steigender Gesamtpunktzahl gewinnst du nacheinander Medaillen und steigst in der Weltrangliste auf.",
+    rulesLangTitle: "🌍 Extra-Vorteil: Fremdsprachenpraxis",
+    rulesLangText: "Das Spiel unterstützt auch Englisch und Deutsch. Wenn du in diesen Sprachen spielst, erweiterst du deinen Wortschatz und übst nebenbei spielerisch eine Fremdsprache.",
+    gotIt: "Verstanden",
   },
 };
 
@@ -1228,6 +1288,7 @@ function App() {
   const [showGroupInvite, setShowGroupInvite] = useState(false);
   const [groupInviteSearch, setGroupInviteSearch] = useState("");
   const [showMedalInfo, setShowMedalInfo] = useState(false);
+  const [showRules, setShowRules] = useState(false);
   const [adminSpectateGameId, setAdminSpectateGameId] = useState(null);
   const [medalPopup, setMedalPopup] = useState(null);
   const [scoreInputs, setScoreInputs] = useState({}); // admin panel: per-user typed score value
@@ -2290,7 +2351,13 @@ function App() {
           <button onClick={() => setShowCreateGroup(true)} className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 text-white text-sm font-semibold hover:bg-white/20">
             <Plus size={16} /> {t.createGroup}
           </button>
-          {TopLangSwitch}
+          <div className="flex items-center gap-2">
+            <button onClick={() => setShowRules(true)} aria-label={t.rulesButton} title={t.rulesButton}
+              className="flex items-center justify-center w-9 h-9 rounded-full bg-white/10 text-white text-base font-bold hover:bg-white/20">
+              ?
+            </button>
+            {TopLangSwitch}
+          </div>
         </div>
 
         <div className="max-w-md mx-auto mb-7 rounded-3xl p-5" style={{ background: "linear-gradient(160deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02))", border: "1px solid rgba(255,255,255,0.1)", backdropFilter: "blur(10px)", boxShadow: "0 20px 40px rgba(0,0,0,0.35)" }}>
@@ -2439,6 +2506,45 @@ function App() {
               })}
             </div>
             <button onClick={() => setShowMedalInfo(false)} className="w-full mt-4 py-2.5 rounded-xl bg-white/10 text-white">{t.close}</button>
+          </Modal>
+        )}
+        {showRules && (
+          <Modal onClose={() => setShowRules(false)}>
+            <div className="max-h-[75vh] overflow-y-auto pr-1 -mr-1">
+              <h3 className="text-white font-bold text-lg mb-3" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.rulesTitle}</h3>
+              <div className="space-y-3.5 text-white/85 text-sm leading-relaxed">
+                <div>
+                  <p className="font-bold text-white mb-1">{t.rulesGoalTitle}</p>
+                  <p>{t.rulesGoalText}</p>
+                </div>
+                <div>
+                  <p className="font-bold text-white mb-1">{t.rulesHowTitle}</p>
+                  <p>{t.rulesHowText}</p>
+                </div>
+                <div>
+                  <p className="font-bold text-white mb-1">{t.rulesMemoryTitle}</p>
+                  <p>{t.rulesMemoryText}</p>
+                </div>
+                <div>
+                  <p className="font-bold text-white mb-1">{t.rulesButtonsTitle}</p>
+                  <ul className="list-disc pl-5 space-y-1.5">
+                    <li>{t.rulesSoloDesc1}{POINTS_PER_WORD}{t.rulesSoloDesc2}{ROUND_WORD_LIMIT}{t.rulesSoloDesc3}{STREAK_BONUS}{t.rulesSoloDesc4}</li>
+                    <li>{t.rulesGroupDesc1}{POINTS_PER_WORD}{t.rulesGroupDesc2}{GROUP_ROUND_WORD_LIMIT}{t.rulesGroupDesc3}{STREAK_BONUS}{t.rulesGroupDesc4}</li>
+                    <li>{t.rulesLeaderboardDesc}</li>
+                    <li>{t.rulesNotificationsDesc}</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-bold text-white mb-1">{t.rulesRankTitle}</p>
+                  <p>{t.rulesRankDesc1}{POINTS_PER_WORD}{t.rulesRankDesc2}{STREAK_BONUS}{t.rulesRankDesc3}</p>
+                </div>
+                <div>
+                  <p className="font-bold text-white mb-1">{t.rulesLangTitle}</p>
+                  <p>{t.rulesLangText}</p>
+                </div>
+              </div>
+            </div>
+            <button onClick={() => setShowRules(false)} className="w-full mt-4 py-2.5 rounded-xl font-bold" style={{ background: "#f2b705", color: "#1b1030", boxShadow: "0 4px 16px rgba(242,183,5,0.35)" }}>{t.gotIt}</button>
           </Modal>
         )}
       </div>
