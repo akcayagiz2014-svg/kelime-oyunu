@@ -10,13 +10,12 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <!-- Firebase (compat build so it works as plain <script> tags, no bundler needed) -->
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyBcV5ATZ6-aPWegXF6z5zp5TkA0iw4x9hA",
     authDomain: "kelime-oyunu-6d187.firebaseapp.com",
-    databaseURL: "https://kelime-oyunu-6d187-default-rtdb.europe-west1.firebasedatabase.app",
     projectId: "kelime-oyunu-6d187",
     storageBucket: "kelime-oyunu-6d187.firebasestorage.app",
     messagingSenderId: "675592794581",
@@ -29,10 +28,17 @@
   // window.__fbInitError üzerinden okunabilir hale getiriyoruz; uygulama
   // tarafında (subscribeShared / loadShared / vb.) bu, "sayfa çöktü" yerine
   // anlaşılır bir hata mesajına çevriliyor.
+  //
+  // NOT: Realtime Database yerine Cloud Firestore kullanıyoruz. RTDB'nin
+  // ücretsiz (Spark) planı aynı anda en fazla 100 istemci bağlantısına izin
+  // veriyordu ve oyuncu sayısı arttıkça bu limite takılmaya başladık.
+  // Firestore'da böyle bir eşzamanlı bağlantı sınırı yok, bu yüzden tüm
+  // depolama katmanı (aşağıdaki loadShared/saveShared/subscribeShared/
+  // transactRecord/updatePaths) Firestore'a göre yeniden yazıldı.
   try {
     if (typeof firebase === "undefined") throw new Error("Firebase SDK yüklenemedi (ağ bağlantısını kontrol edin).");
     firebase.initializeApp(firebaseConfig);
-    window.__fbdb = firebase.database();
+    window.__fbdb = firebase.firestore();
     window.__fbauth = firebase.auth();
     window.__googleProvider = new firebase.auth.GoogleAuthProvider();
   } catch (e) {
@@ -149,6 +155,15 @@ const DAILY_RESET_HOUR = 9; // her sabah 09:00'da süre sıfırlanır
 // bitişi) lastActivityAt'i günceller; bu yenilenmezse oyun "aktif
 // oynanmıyor" sayılır ve süre sayacı durur.
 const STALE_GAME_MS = 3 * 60 * 1000; // 3 dakika hareketsizlik = takılı kalmış sayılır
+// Firestore, RTDB'nin ".info/connected" + "onDisconnect()" mekanizmasını
+// SUNMAZ (bağlantı kopunca sunucu tarafında otomatik silme yok). Bu yüzden
+// "çevrimiçi" durumu artık bir KALP ATIŞI (heartbeat) ile takip ediliyor:
+// giriş yapmış her istemci kendi presence kaydını düzenli aralıklarla
+// "son görülme" zaman damgasıyla günceller; bir kullanıcının kaydı bu
+// süreden daha uzun süredir tazelenmemişse "çevrimdışı" sayılır (sekme
+// kapatıldı, ağ koptu, uygulama çöktü vb.).
+const PRESENCE_HEARTBEAT_MS = 20 * 1000; // 20 saniyede bir "hâlâ buradayım" yaz
+const PRESENCE_STALE_MS = 45 * 1000; // 45 saniyedir güncellenmemişse çevrimdışı say
 function isGameActivelyPlaying(gm, now) {
   if (!gm || (gm.status !== "playing" && gm.status !== "spinning")) return false;
   const last = gm.lastActivityAt || 0;
@@ -595,14 +610,22 @@ function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((email || "").trim());
 }
 
-// ---------- storage helpers (Firebase Realtime Database-backed shared state) ----------
+// ---------- storage helpers (Cloud Firestore-backed shared state) ----------
 // window.__fbdb normally gets set synchronously by the <script> block in
 // <head> right after the Firebase SDK tags. But on a slow/unstable
 // connection those SDK files can fail to load (or initializeApp can throw),
 // leaving window.__fbdb undefined — which used to crash the whole app with
-// "Cannot read properties of undefined (reading 'ref')" the moment
+// a "Cannot read properties of undefined" error the moment
 // subscribeShared ran. waitForFbdb waits a few seconds for it to show up
 // before giving up with a clear, readable error instead of that crash.
+//
+// Migrated from Realtime Database to Firestore: each RTDB "key" ("users",
+// "groups", "games", "presence", "notifications") now maps to a Firestore
+// COLLECTION, and each child under that key (username, group id, game
+// id...) maps to a DOCUMENT inside that collection. Every function below
+// keeps the exact same signature/behavior it had for RTDB, so none of the
+// app code that calls loadShared/saveShared/subscribeShared/transactRecord/
+// updatePaths needed to change.
 function waitForFbdb(timeoutMs = 8000) {
   return new Promise((resolve, reject) => {
     if (window.__fbdb) return resolve(window.__fbdb);
@@ -616,12 +639,30 @@ function waitForFbdb(timeoutMs = 8000) {
     }, 150);
   });
 }
+
+// Firestore doküman kökü sadece bir "map" (obje) olabilir; dizi ya da
+// boolean gibi bir değeri doğrudan doküman olarak yazamayız (ör:
+// "notifications/<username>" bir DİZİ). Bu yüzden obje OLMAYAN değerleri
+// tek alanlı { __v: değer } dokümanına sarıp, okurken tekrar açıyoruz —
+// böylece geri kalan tüm uygulama kodu (dizi/obje ayrımı yapmadan) hiç
+// değişmeden çalışmaya devam ediyor.
+function isPlainObject(v) { return v !== null && typeof v === "object" && !Array.isArray(v); }
+function wrapForFirestore(value) { return isPlainObject(value) ? value : { __v: value }; }
+function unwrapFromFirestore(data) {
+  if (data && typeof data === "object" && !Array.isArray(data) && Object.keys(data).length === 1 && Object.prototype.hasOwnProperty.call(data, "__v")) {
+    return data.__v;
+  }
+  return data;
+}
+
 async function loadShared(key, fallback) {
   try {
     const db = await waitForFbdb();
-    const snap = await db.ref(key).get();
-    const val = snap.exists() ? snap.val() : null;
-    return (val !== null && val !== undefined) ? val : fallback;
+    const snap = await db.collection(key).get();
+    if (snap.empty) return fallback;
+    const obj = {};
+    snap.forEach(doc => { obj[doc.id] = unwrapFromFirestore(doc.data()); });
+    return obj;
   } catch (e) {
     console.error("loadShared(" + key + ") failed", e);
     return fallback;
@@ -630,23 +671,37 @@ async function loadShared(key, fallback) {
 async function saveShared(key, value) {
   try {
     const db = await waitForFbdb();
-    await db.ref(key).set(value);
+    const col = db.collection(key);
+    // Bütün koleksiyonu, verilen objeyle birebir aynı hale getiriyoruz:
+    // objede olmayan ama Firestore'da halen duran dokümanlar silinir —
+    // RTDB'deki db.ref(key).set(value) ile aynı "tam senkronizasyon"
+    // davranışı.
+    const existing = await col.get();
+    const nextIds = new Set(Object.keys(value || {}));
+    const batch = db.batch();
+    existing.forEach(doc => { if (!nextIds.has(doc.id)) batch.delete(doc.ref); });
+    for (const [id, data] of Object.entries(value || {})) {
+      batch.set(col.doc(id), wrapForFirestore(data));
+    }
+    await batch.commit();
   } catch (e) {
     console.error("saveShared(" + key + ") failed", e);
   }
 }
 // live subscription helper (used to push instant updates instead of waiting for the poll interval)
 function subscribeShared(key, cb) {
-  let ref = null, handler = null, cancelled = false;
+  let unsub = null, cancelled = false;
   waitForFbdb().then(db => {
     if (cancelled) return;
-    ref = db.ref(key);
-    handler = (snap) => cb(snap.exists() ? snap.val() : {});
-    ref.on("value", handler);
+    unsub = db.collection(key).onSnapshot(snap => {
+      const obj = {};
+      snap.forEach(doc => { obj[doc.id] = unwrapFromFirestore(doc.data()); });
+      cb(obj);
+    }, e => console.error("subscribeShared(" + key + ") onSnapshot error", e));
   }).catch(e => console.error("subscribeShared(" + key + ") failed", e));
   return () => {
     cancelled = true;
-    if (ref && handler) ref.off("value", handler);
+    if (unsub) unsub();
   };
 }
 
@@ -658,23 +713,57 @@ function subscribeShared(key, cb) {
 // milliseconds of each other (very common in a live group game), the
 // second .set() would silently wipe out whatever the first one had just
 // written — so different players ended up seeing different, diverging
-// states of the same match. Firebase's transaction() runs against a single
+// states of the same match. runTransaction() below runs against a single
 // record (games/<id> or users/<username>) and automatically retries with
 // the latest server value if another client wrote in the meantime, so
 // concurrent actions from different players can no longer clobber each
-// other.
+// other — exactly like the old RTDB transaction() did.
+function splitStoragePath(path) {
+  // "koleksiyon/dokümanId" ya da "koleksiyon/dokümanId/alanAdı" biçimindeki
+  // path'i parçalarına ayırır.
+  const parts = path.split("/");
+  return { col: parts[0], id: parts[1], field: parts.length > 2 ? parts.slice(2).join("/") : null };
+}
 async function transactRecord(path, mutator) {
   const db = await waitForFbdb();
-  const ref = db.ref(path);
-  const result = await ref.transaction(current => mutator(current));
-  return result.committed ? result.snapshot.val() : null;
+  const { col, id } = splitStoragePath(path);
+  const ref = db.collection(col).doc(id);
+  let result = null;
+  await db.runTransaction(async (t) => {
+    const snap = await t.get(ref);
+    const current = snap.exists ? unwrapFromFirestore(snap.data()) : null;
+    const next = mutator(current);
+    if (next === undefined) { result = null; return; } // mutator "değişiklik yok, iptal et" dedi
+    if (next === null) { t.delete(ref); result = null; return; }
+    t.set(ref, wrapForFirestore(next));
+    result = next;
+  });
+  return result;
 }
 async function updatePaths(updates) {
-  // Firebase multi-path update: only the listed paths are touched, so this
-  // never clobbers unrelated games/groups the way overwriting the entire
-  // "games" or "groups" node used to.
+  // Firebase multi-path update'in Firestore karşılığı: her path ayrı bir
+  // dokümana (ya da o dokümanın tek bir alanına) yazılır/silinir, hepsi TEK
+  // bir batch içinde atomik olarak uygulanır — böylece ilişkisiz
+  // grupları/oyunları etkilemez.
   const db = await waitForFbdb();
-  await db.ref().update(updates);
+  const batch = db.batch();
+  for (const [path, value] of Object.entries(updates)) {
+    const { col, id, field } = splitStoragePath(path);
+    const ref = db.collection(col).doc(id);
+    if (field) {
+      // Tek bir alanı güncelle/sil. set(...,{merge:true}) kullanıyoruz
+      // (update() değil) çünkü doküman henüz yoksa update() hata fırlatır;
+      // merge:true hem "yoksa oluştur" hem de "varsa sadece bu alanı
+      // değiştir" davranışını güvenle karşılar.
+      const fieldValue = value === null ? firebase.firestore.FieldValue.delete() : value;
+      batch.set(ref, { [field]: fieldValue }, { merge: true });
+    } else if (value === null) {
+      batch.delete(ref);
+    } else {
+      batch.set(ref, wrapForFirestore(value));
+    }
+  }
+  await batch.commit();
 }
 
 // ---------- word check ----------
@@ -1312,11 +1401,11 @@ function App() {
   const [sessionChecked, setSessionChecked] = useState(false); // "remember this phone" auto-login check
   const [tick, setTick] = useState(Date.now());
   // ---- dünya sıralaması: tüm "users" tablosunu çekmek yerine (maliyet) sadece
-  // en yüksek puanlı 10 kaydı Firebase sorgusuyla (orderByChild+limitToLast)
-  // çekiyoruz; isim aratıldığında ise sadece o kullanıcının kaydını (tek path)
-  // getiriyoruz. Bunun verimli çalışması için Firebase kurallarında
-  // "users" düğümüne ".indexOn": ["score"] eklenmiş olmalı — aksi halde
-  // sunucu sıralama yapabilmek için yine tüm tabloyu okur. ----
+  // en yüksek puanlı 10 kaydı Firestore sorgusuyla (orderBy+limit) çekiyoruz;
+  // isim aratıldığında ise sadece o kullanıcının kaydını (tek doküman)
+  // getiriyoruz. Bunun verimli çalışması için Firestore'da "users"
+  // koleksiyonunda "score" alanı üzerinde bir index olmalı (Firestore tekli
+  // alan indekslerini otomatik oluşturur, ek bir işlem gerekmez). ----
   const [leaderboardTop, setLeaderboardTop] = useState([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [leaderboardSearch, setLeaderboardSearch] = useState("");
@@ -1328,12 +1417,11 @@ function App() {
     let cancelled = false;
     setLeaderboardLoading(true);
     waitForFbdb()
-      .then(db => db.ref("users").orderByChild("score").limitToLast(10).get())
+      .then(db => db.collection("users").orderBy("score", "desc").limit(10).get())
       .then(snap => {
         if (cancelled) return;
         const arr = [];
-        snap.forEach(child => { arr.push([child.key, child.val()]); });
-        arr.reverse(); // limitToLast artan sırada döner, en yükseği en üste almak için ters çeviriyoruz
+        snap.forEach(doc => { arr.push([doc.id, doc.data()]); });
         setLeaderboardTop(arr);
       })
       .catch(e => console.error("leaderboard top10 fetch failed", e))
@@ -1346,8 +1434,8 @@ function App() {
     setLeaderboardSearchLoading(true);
     try {
       const db = await waitForFbdb();
-      const snap = await db.ref("users/" + name).get(); // tek kayıt — tüm tabloyu çekmez
-      setLeaderboardSearchResult(snap.exists() ? { name, ...snap.val() } : null);
+      const snap = await db.collection("users").doc(name).get(); // tek kayıt — tüm koleksiyonu çekmez
+      setLeaderboardSearchResult(snap.exists ? { name, ...snap.data() } : null);
     } catch (e) {
       console.error("leaderboard search failed", e);
       setLeaderboardSearchResult(null);
@@ -1560,7 +1648,7 @@ function App() {
     const unsubUsers = subscribeShared("users", setUsers);
     const unsubGroups = subscribeShared("groups", setGroups);
     const unsubGames = subscribeShared("games", setGames);
-    const unsubPresence = subscribeShared("presence", setOnlineUsers);
+    const unsubPresence = subscribeShared("presence", setPresenceRaw);
     const unsubNotifs = subscribeShared("notifications", setAllNotifs);
     return () => { unsubUsers(); unsubGroups(); unsubGames(); unsubPresence(); unsubNotifs(); };
   }, []);
@@ -1572,31 +1660,47 @@ function App() {
     if (me && me.username) identifyNativePurchaseUser(me.username);
   }, [me && me.username]); // eslint-disable-line
 
-  // ---- online presence: while logged in, mark this username as online in
-  // Firebase and automatically clear it the moment the connection drops
-  // (tab closed, network lost, etc.) so the green dot stays accurate ----
-  const [onlineUsers, setOnlineUsers] = useState({});
+  // ---- online presence: while logged in, this client refreshes its own
+  // "presence/<username>" document every PRESENCE_HEARTBEAT_MS with the
+  // current timestamp (Firestore has no RTDB-style onDisconnect, so there's
+  // no server-side way to detect a dropped connection — staleness of this
+  // timestamp is what tells everyone else the user went offline). See
+  // onlineUsers below for how that staleness is turned into a green dot. ----
+  const [presenceRaw, setPresenceRaw] = useState({});
   useEffect(() => {
     if (!me) return;
-    let presenceRef = null, connectedRef = null, handler = null, cancelled = false;
-    waitForFbdb().then(db => {
+    let cancelled = false;
+    let hb = null;
+    const beat = () => {
       if (cancelled) return;
-      presenceRef = db.ref("presence/" + me.username);
-      connectedRef = db.ref(".info/connected");
-      handler = (snap) => {
-        if (snap.val() === true) {
-          presenceRef.onDisconnect().remove();
-          presenceRef.set(true);
-        }
-      };
-      connectedRef.on("value", handler);
-    }).catch(e => console.error("presence setup failed", e));
+      waitForFbdb()
+        .then(db => db.collection("presence").doc(me.username).set({ lastSeen: Date.now() }))
+        .catch(e => console.error("presence heartbeat failed", e));
+    };
+    beat();
+    hb = setInterval(beat, PRESENCE_HEARTBEAT_MS);
     return () => {
       cancelled = true;
-      if (connectedRef && handler) connectedRef.off("value", handler);
-      if (presenceRef) presenceRef.remove();
+      if (hb) clearInterval(hb);
+      // best-effort: sekme normal kapanıyorsa kaydı hemen temizle (garanti
+      // değil — ağ koparsa/uygulama çökerse bu çalışmaz, ama o durumda da
+      // yukarıdaki "bayatlık" kontrolü zaten birkaç saniye içinde devreye
+      // girip kullanıcıyı çevrimdışı gösterir).
+      waitForFbdb().then(db => db.collection("presence").doc(me.username).delete()).catch(() => {});
     };
   }, [me && me.username]); // eslint-disable-line
+  // Ham "son görülme" zaman damgalarını, her saniye güncellenen `tick`e göre
+  // canlı bir { username: true } haritasına çeviriyoruz — geri kalan tüm
+  // uygulama kodu (isOnline, OnlineDot'lar) hiç değişmeden aynı şekli görür.
+  const onlineUsers = React.useMemo(() => {
+    const out = {};
+    const now = tick;
+    for (const [u, rec] of Object.entries(presenceRaw)) {
+      const lastSeen = rec && typeof rec.lastSeen === "number" ? rec.lastSeen : 0;
+      if (now - lastSeen < PRESENCE_STALE_MS) out[u] = true;
+    }
+    return out;
+  }, [presenceRaw, tick]);
   const isOnline = useCallback((username) => !!onlineUsers[username], [onlineUsers]);
 
   // ---- expiry sweep: group expiry is time-based (not triggered by any data
@@ -1958,32 +2062,42 @@ function App() {
   // satın alınır (purchasedGroupSlots alanında birikir, kalıcıdır).
   async function createGroup() {
     if (!newGroupName.trim()) return;
-    const myGroupCount = Object.values(groups).filter(g => g.members.includes(me.username)).length;
-    if (myGroupCount >= 50) { alert(t.groupLimitReached); return; }
+    // Admin (doğrulanmış ADMIN_GOOGLE_EMAIL hesabı) hiçbir grup kurma
+    // limitine tabi değildir: ne toplam 50 grup üyeliği sınırına, ne
+    // seviyeye göre sahip olunabilecek grup sayısına, ne de ücretli
+    // ek grup hakkı satın alma zorunluluğuna.
+    const isUnlimitedGroupAdmin = me.isAdmin && googleAdminVerified;
 
-    const myRec = users[me.username] || { score: me.score || 0, purchasedGroupSlots: 0 };
-    const myOwnedCount = Object.values(groups).filter(g => g.owner === me.username).length;
-    const level = levelKeyForScore(myRec.score || 0);
-    const rights = LEVEL_GROUP_RIGHTS[level] || { totalSlots: 0, freeSlots: 0 };
+    if (!isUnlimitedGroupAdmin) {
+      // NOT: eskiden burada "en fazla 50 gruba üye olunabilir" diye bir
+      // sınır vardı. Gerçekçi olmayan, kimsenin pratikte ulaşmayacağı bir
+      // sınırdı ve oyunun kurallarında da böyle bir kısıtlama yok — bu
+      // yüzden tamamen kaldırıldı. Aşağıdaki seviyeye göre grup KURMA
+      // (owner olma) hakkı sınırı ayrı bir şey ve olduğu gibi duruyor.
+      const myRec = users[me.username] || { score: me.score || 0, purchasedGroupSlots: 0 };
+      const myOwnedCount = Object.values(groups).filter(g => g.owner === me.username).length;
+      const level = levelKeyForScore(myRec.score || 0);
+      const rights = LEVEL_GROUP_RIGHTS[level] || { totalSlots: 0, freeSlots: 0 };
 
-    if (rights.totalSlots === 0 || myOwnedCount >= rights.totalSlots) {
-      alert(t.groupLevelCapReached);
-      return;
-    }
+      if (rights.totalSlots === 0 || myOwnedCount >= rights.totalSlots) {
+        alert(t.groupLevelCapReached);
+        return;
+      }
 
-    const unlockedSlots = Math.min(rights.totalSlots, (rights.freeSlots || 0) + (myRec.purchasedGroupSlots || 0));
-    if (myOwnedCount >= unlockedSlots) {
-      // Bu seviyede daha yüksek bir hak var ama henüz satın alınmamış (1 USD).
-      const confirmBuy = window.confirm(`${t.groupSlotBuyPrompt} ($${GROUP_SLOT_PRICE_USD})`);
-      if (!confirmBuy) return;
-      const productId = groupSlotProductFor(level);
-      const purchased = productId ? await purchaseProduct(productId) : false;
-      if (!purchased) { alert(t.purchaseFailed); return; }
-      const freshUserRec = await transactRecord("users/" + me.username, current => {
-        const rec = current || { password: "", score: 0, isAdmin: false };
-        return { ...rec, purchasedGroupSlots: (rec.purchasedGroupSlots || 0) + 1 };
-      });
-      if (freshUserRec) setUsers(prev => ({ ...prev, [me.username]: freshUserRec }));
+      const unlockedSlots = Math.min(rights.totalSlots, (rights.freeSlots || 0) + (myRec.purchasedGroupSlots || 0));
+      if (myOwnedCount >= unlockedSlots) {
+        // Bu seviyede daha yüksek bir hak var ama henüz satın alınmamış (1 USD).
+        const confirmBuy = window.confirm(`${t.groupSlotBuyPrompt} ($${GROUP_SLOT_PRICE_USD})`);
+        if (!confirmBuy) return;
+        const productId = groupSlotProductFor(level);
+        const purchased = productId ? await purchaseProduct(productId) : false;
+        if (!purchased) { alert(t.purchaseFailed); return; }
+        const freshUserRec = await transactRecord("users/" + me.username, current => {
+          const rec = current || { password: "", score: 0, isAdmin: false };
+          return { ...rec, purchasedGroupSlots: (rec.purchasedGroupSlots || 0) + 1 };
+        });
+        if (freshUserRec) setUsers(prev => ({ ...prev, [me.username]: freshUserRec }));
+      }
     }
 
     const id = uid();
@@ -1991,7 +2105,7 @@ function App() {
     const g = { id, name: newGroupName.trim(), owner: me.username, members: [me.username], messages: [], createdAt: now, usedMs: 0, activeSince: null, pendingDelete: false, budgetResetAt: nextDailyResetTime(now) };
     // brand-new id, so a plain scoped set is safe — nothing else can already
     // be writing to this path
-    await (await waitForFbdb()).ref("groups/" + id).set(g);
+    await (await waitForFbdb()).collection("groups").doc(id).set(g);
     setGroups(prev => ({ ...prev, [id]: g }));
 
     setNewGroupName(""); setShowCreateGroup(false);
@@ -2029,7 +2143,7 @@ function App() {
   async function deleteGroupFn(groupId) {
     // scoped delete: only this one group's record is removed, every other
     // group is left completely untouched
-    await (await waitForFbdb()).ref("groups/" + groupId).remove();
+    await (await waitForFbdb()).collection("groups").doc(groupId).delete();
     const gm = await loadShared("games", {});
     const ng = { ...gm };
     const deletions = {};
@@ -2102,7 +2216,7 @@ function App() {
     if (!grp) { alert(t.groupGone); return; }
     // Only this brand-new game record is touched — other games in flight
     // elsewhere are left alone.
-    await (await waitForFbdb()).ref("games/" + gameId).set(newGame);
+    await (await waitForFbdb()).collection("games").doc(gameId).set(newGame);
     setGames(prev => ({ ...prev, [gameId]: newGame }));
     setActiveGameId(gameId); setScreen("lobby");
   }
@@ -2128,7 +2242,7 @@ function App() {
       return { ...current, members: nextMembers };
     });
     // Boş kalan (kimsenin bulunmadığı) lobiyi ortada bırakmamak için siliyoruz.
-    if (empty) { await (await waitForFbdb()).ref("games/" + gameId).remove().catch(() => {}); }
+    if (empty) { await (await waitForFbdb()).collection("games").doc(gameId).delete().catch(() => {}); }
     setScreen("chat");
   }
 
@@ -2170,7 +2284,7 @@ function App() {
         lastActivityAt: Date.now(),
       };
     });
-    if (shouldDelete) { await (await waitForFbdb()).ref("games/" + gameId).remove().catch(() => {}); }
+    if (shouldDelete) { await (await waitForFbdb()).collection("games").doc(gameId).delete().catch(() => {}); }
     setScreen(targetScreen);
   }
 
