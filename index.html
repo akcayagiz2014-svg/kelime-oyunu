@@ -41,6 +41,25 @@
     window.__fbdb = firebase.firestore();
     window.__fbauth = firebase.auth();
     window.__googleProvider = new firebase.auth.GoogleAuthProvider();
+    // Firestore güvenlik kuralları HER koleksiyon için request.auth != null
+    // (signedIn()) şartı arıyor. Uygulamanın kendi rumuz/şifre sistemi
+    // Firebase Auth'u KULLANMIYOR (Google girişi sadece admin panel
+    // kontrolü için var) — yani normal kullanıcılarda request.auth hep null
+    // kalıyor ve tüm okuma/yazma istekleri sessizce reddediliyordu ("bağlanmıyor"
+    // gibi görünen asıl sebep buydu). Çözüm: her sekme açıldığında otomatik
+    // ve sessizce ANONİM bir Firebase Auth oturumu açıyoruz; bu, uygulamanın
+    // rumuz/şifre mantığını hiç değiştirmeden signedIn() şartını sağlıyor.
+    // NOT: Bunun çalışması için Firebase Console'da Authentication ->
+    // Sign-in method -> Anonymous seçeneğinin AÇIK olması gerekiyor.
+    window.__fbAuthReady = new Promise((resolve) => {
+      let resolved = false;
+      firebase.auth().onAuthStateChanged(user => {
+        if (user && !resolved) { resolved = true; resolve(user); }
+      });
+      firebase.auth().signInAnonymously().catch(e => {
+        console.error("Anonim Firebase Auth girişi başarısız:", e);
+      });
+    });
   } catch (e) {
     console.error("Firebase başlatılamadı:", e);
     window.__fbInitError = e;
@@ -628,10 +647,20 @@ function isValidEmail(email) {
 // updatePaths needed to change.
 function waitForFbdb(timeoutMs = 8000) {
   return new Promise((resolve, reject) => {
-    if (window.__fbdb) return resolve(window.__fbdb);
     const start = Date.now();
+    // db objesi hazır olsa bile, güvenlik kuralları signedIn() istediği için
+    // anonim auth girişinin de bitmiş olması lazım — bu yüzden Firestore
+    // çağrısına geçmeden önce __fbAuthReady'yi de bekliyoruz.
+    const waitAuthThenResolve = () => {
+      if (window.__fbAuthReady) {
+        window.__fbAuthReady.then(() => resolve(window.__fbdb));
+      } else {
+        resolve(window.__fbdb);
+      }
+    };
+    if (window.__fbdb) { waitAuthThenResolve(); return; }
     const iv = setInterval(() => {
-      if (window.__fbdb) { clearInterval(iv); resolve(window.__fbdb); return; }
+      if (window.__fbdb) { clearInterval(iv); waitAuthThenResolve(); return; }
       if (Date.now() - start > timeoutMs) {
         clearInterval(iv);
         reject(window.__fbInitError || new Error("Firebase'e bağlanılamadı (internet bağlantınızı kontrol edip sayfayı yenileyin)."));
