@@ -40,6 +40,21 @@
     firebase.initializeApp(firebaseConfig);
     window.__fbdb = firebase.firestore();
     window.__fbauth = firebase.auth();
+    // Admin panelinin Google girişi, ayrı ve izole bir Firebase App örneği
+    // ("adminAuth") üzerinden yapılıyor. Sebep: normal firebase.auth() oturumu
+    // (yukarıdaki window.__fbauth) aynı tarayıcıdaki TÜM sekmeler arasında
+    // paylaşılıyor — başka bir sekmede biri kayıt olduğunda/çıkış yaptığında/
+    // giriş yaptığında bu paylaşılan oturum değişiyor. Admin'in Google
+    // doğrulaması bu paylaşılan oturuma bağlıysa, admin panel açıkken başka
+    // bir sekmedeki tamamen alakasız bir işlem admin'in Google oturumunu
+    // sessizce düşürüyor ve bir sonraki puan güncellemesi "Missing or
+    // insufficient permissions" ile patlıyordu — admin ne yaparsa yapsın.
+    // Ayrı bir App örneğinin kendi bağımsız auth durumu (ve kendi bağımsız
+    // saklama alanı) olduğu için, diğer sekmelerdeki hiçbir işlem buna asla
+    // dokunamıyor.
+    window.__fbAdminApp = firebase.initializeApp(firebaseConfig, "adminAuth");
+    window.__fbAdminAuth = window.__fbAdminApp.auth();
+    window.__fbAdminDb = window.__fbAdminApp.firestore();
     window.__googleProvider = new firebase.auth.GoogleAuthProvider();
     // Firestore güvenlik kuralları HER koleksiyon için request.auth != null
     // (signedIn()) şartı arıyor. Uygulamanın kendi rumuz/şifre sistemi
@@ -847,8 +862,11 @@ function splitStoragePath(path) {
   const parts = path.split("/");
   return { col: parts[0], id: parts[1], field: parts.length > 2 ? parts.slice(2).join("/") : null };
 }
-async function transactRecord(path, mutator) {
-  const db = await waitForFbdb();
+async function transactRecord(path, mutator, dbOverride) {
+  // dbOverride verilmişse (admin panelindeki izole "adminAuth" App'inin
+  // Firestore bağlantısı gibi) onu kullanıyoruz; yoksa normal paylaşılan
+  // bağlantıyı bekleyip kullanıyoruz.
+  const db = dbOverride || await waitForFbdb();
   const { col, id } = splitStoragePath(path);
   const ref = db.collection(col).doc(id);
   let result = null;
@@ -1919,7 +1937,7 @@ function App() {
     setGoogleAdminError("");
     setGoogleAdminBusy(true);
     try {
-      const result = await window.__fbauth.signInWithPopup(window.__googleProvider);
+      const result = await window.__fbAdminAuth.signInWithPopup(window.__googleProvider);
       const email = (result.user && result.user.email || "").toLowerCase();
       setGoogleAdminVerified(true);
       setGoogleAdminEmail(email);
@@ -2114,10 +2132,16 @@ function App() {
   async function setScoreExact(username, value) {
     const val = Math.max(0, Math.floor(value));
     try {
+      // Bu yazma isteğini KASITLI olarak window.__fbAdminDb üzerinden
+      // gönderiyoruz (normal paylaşılan window.__fbdb yerine). __fbAdminDb,
+      // admin'in Google girişini tuttuğu izole "adminAuth" App'ine bağlı;
+      // böylece başka bir sekmedeki alakasız bir giriş/çıkış/kayıt işlemi bu
+      // isteğin kimliğini asla etkileyemez.
+      const adminDb = window.__fbAdminDb;
       const freshRec = await transactRecord("users/" + username, current => {
         const rec = current || { password: "", score: 0, isAdmin: false };
         return { ...rec, score: val };
-      });
+      }, adminDb);
       if (freshRec) setUsers(prev => ({ ...prev, [username]: freshRec }));
       return true;
     } catch (e) {
@@ -2128,7 +2152,10 @@ function App() {
       // arka arkaya ikinci bir puan verme denemesinde. Artık hatayı hem konsola
       // hem de admin'e görünür bir uyarıyla gösteriyoruz.
       console.error("setScoreExact(" + username + ") failed:", e);
-      alert("Puan güncellenemedi (" + username + "): " + (e && e.message ? e.message : e));
+      const denied = e && (e.code === "permission-denied" || /permission/i.test(e.message || ""));
+      alert(denied
+        ? "Puan güncellenemedi (" + username + "): Google admin oturumun düşmüş görünüyor. Lütfen çıkış yapıp admin girişinde 'Google ile Doğrula' adımını tekrarla."
+        : "Puan güncellenemedi (" + username + "): " + (e && e.message ? e.message : e));
       return false;
     }
   }
@@ -2829,7 +2856,7 @@ function App() {
               {googleAdminVerified && (
                 <button onClick={async () => {
                     setGoogleAdminVerified(false); setGoogleAdminEmail(null); setGoogleAdminError(""); setAuthError("");
-                    if (window.__fbauth.currentUser) await window.__fbauth.signOut().catch(() => {});
+                    if (window.__fbAdminAuth.currentUser) await window.__fbAdminAuth.signOut().catch(() => {});
                   }}
                   className="w-full text-center text-xs text-white/35 hover:text-white/60 pt-1">
                   {t.switchGoogleAccount}
