@@ -1499,6 +1499,7 @@ function App() {
   const [adminSpectateGameId, setAdminSpectateGameId] = useState(null);
   const [medalPopup, setMedalPopup] = useState(null);
   const [scoreInputs, setScoreInputs] = useState({}); // admin panel: per-user typed score value
+  const [scoreSaving, setScoreSaving] = useState({}); // admin panel: per-user "kaydediliyor" durumu
   const [sessionChecked, setSessionChecked] = useState(false); // "remember this phone" auto-login check
   const [tick, setTick] = useState(Date.now());
   // ---- dünya sıralaması: tüm "users" tablosunu çekmek yerine (maliyet) sadece
@@ -2089,11 +2090,24 @@ function App() {
   // admin panel: set a user's score to the EXACT number typed in the box
   async function setScoreExact(username, value) {
     const val = Math.max(0, Math.floor(value));
-    const freshRec = await transactRecord("users/" + username, current => {
-      const rec = current || { password: "", score: 0, isAdmin: false };
-      return { ...rec, score: val };
-    });
-    if (freshRec) setUsers(prev => ({ ...prev, [username]: freshRec }));
+    try {
+      const freshRec = await transactRecord("users/" + username, current => {
+        const rec = current || { password: "", score: 0, isAdmin: false };
+        return { ...rec, score: val };
+      });
+      if (freshRec) setUsers(prev => ({ ...prev, [username]: freshRec }));
+      return true;
+    } catch (e) {
+      // Eskiden buradaki hata hiçbir yere gitmiyordu: transactRecord() içindeki
+      // db.runTransaction() reddedilirse (örn. ağ kopması, Firestore'un o an
+      // isteği reddetmesi, vb.) promise sessizce reject oluyor, admin ekranı
+      // hiçbir şey göstermiyor ve buton "çalışmıyor" gibi görünüyordu — özellikle
+      // arka arkaya ikinci bir puan verme denemesinde. Artık hatayı hem konsola
+      // hem de admin'e görünür bir uyarıyla gösteriyoruz.
+      console.error("setScoreExact(" + username + ") failed:", e);
+      alert("Puan güncellenemedi (" + username + "): " + (e && e.message ? e.message : e));
+      return false;
+    }
   }
 
   async function addPoints(username, delta) {
@@ -3428,25 +3442,43 @@ function App() {
                   <input
                     type="number"
                     inputMode="numeric"
+                    disabled={!!scoreSaving[name]}
                     value={scoreInputs[name] !== undefined ? scoreInputs[name] : ""}
                     onChange={e => setScoreInputs(prev => ({ ...prev, [name]: e.target.value }))}
-                    onKeyDown={e => {
+                    onKeyDown={async e => {
                       if (e.key === "Enter") {
                         e.preventDefault();
                         const v = parseInt(scoreInputs[name], 10);
-                        if (!isNaN(v)) { setScoreExact(name, v); setScoreInputs(prev => ({ ...prev, [name]: "" })); }
+                        if (!isNaN(v)) {
+                          setScoreSaving(prev => ({ ...prev, [name]: true }));
+                          const ok = await setScoreExact(name, v);
+                          setScoreSaving(prev => ({ ...prev, [name]: false }));
+                          // Sadece başarılı olursa kutuyu temizliyoruz; başarısız
+                          // olursa (örn. ağ hatası) yazılan değer kaybolmasın diye
+                          // kutuda kalır ve kullanıcı tekrar aynı sayıyı yazmak
+                          // zorunda kalmaz — eskiden bu ihtimalden bağımsız her
+                          // zaman temizleniyordu ve ikinci deneme başarısız olunca
+                          // "buton çalışmıyor" gibi görünüyordu.
+                          if (ok) setScoreInputs(prev => ({ ...prev, [name]: "" }));
+                        }
                       }
                     }}
                     placeholder={String(rec.score || 0)}
                     className="w-20 px-2 py-1.5 rounded-full bg-white/10 text-white text-xs text-center outline-none border border-white/20"
                   />
                   <button
-                    onClick={() => {
+                    disabled={!!scoreSaving[name]}
+                    onClick={async () => {
                       const v = parseInt(scoreInputs[name], 10);
-                      if (!isNaN(v)) { setScoreExact(name, v); setScoreInputs(prev => ({ ...prev, [name]: "" })); }
+                      if (!isNaN(v)) {
+                        setScoreSaving(prev => ({ ...prev, [name]: true }));
+                        const ok = await setScoreExact(name, v);
+                        setScoreSaving(prev => ({ ...prev, [name]: false }));
+                        if (ok) setScoreInputs(prev => ({ ...prev, [name]: "" }));
+                      }
                     }}
-                    className="px-3 py-1.5 rounded-full bg-yellow-500/80 text-[#1b1030] text-xs font-bold">
-                    {t.setScore}
+                    className="px-3 py-1.5 rounded-full bg-yellow-500/80 text-[#1b1030] text-xs font-bold disabled:opacity-50">
+                    {scoreSaving[name] ? "..." : t.setScore}
                   </button>
                 </div>
               </div>
