@@ -53,10 +53,11 @@
     // Sign-in method -> Anonymous seçeneğinin AÇIK olması gerekiyor.
     window.__fbAuthReady = new Promise((resolve) => {
       let resolved = false;
+      let sawFirstState = false;
       firebase.auth().onAuthStateChanged(user => {
         if (user) {
           if (!resolved) { resolved = true; resolve(user); }
-        } else if (resolved) {
+        } else if (sawFirstState) {
           // Oturum sonradan null'a düştü — bu, uygulamanın kendi kodunun
           // (kayıt sırasında oluşturulan geçici Firebase Auth hesabından
           // çıkış, "Çıkış Yap" butonu, Google admin doğrulamasını sıfırlama
@@ -70,10 +71,32 @@
           firebase.auth().signInAnonymously().catch(e => {
             console.error("Anonim Firebase Auth yeniden girişi başarısız:", e);
           });
+        } else {
+          // Bu, sayfa ilk açıldığında gelen İLK onAuthStateChanged bildirimi
+          // ve "user" boş — yani bu tarayıcıda (bu sekme dahil, aynı origin'in
+          // TÜM sekmelerinde paylaşılan Firebase Auth oturumunda) gerçekten
+          // hiçbir oturum yok. Sadece bu durumda anonim girişe geçiyoruz.
+          //
+          // ÖNEMLİ BUG NOTU: Eskiden bu kontrol yoktu, signInAnonymously()
+          // burada bekletilmeden HER sayfa yüklemesinde koşulsuz çağrılıyordu.
+          // Firebase Auth oturumu aynı tarayıcıdaki TÜM sekmeler arasında
+          // paylaşıldığı için, admin panelini bir sekmede Google ile
+          // doğrulayıp kullanırken aynı tarayıcıda sitenin başka bir sekmesi
+          // (ör. admin'in kendi ikinci bir sekmesi, ya da arka planda
+          // yenilenen bir sekme) yüklendiğinde, o sekme koşulsuzca yeni bir
+          // anonim oturum açıyor ve bu, PAYLAŞILAN oturumu (admin'in Google
+          // hesabı dahil) sessizce anonim oturumla değiştiriyordu. Sonuç:
+          // admin panelinde puan verme birkaç kez çalışıyor, sonra hiçbir
+          // görünür sebep olmadan "Missing or insufficient permissions"
+          // hatasıyla başarısız oluyordu. Artık sadece gerçekten oturum
+          // yoksa (ilk bildirimde user null) anonim girişe geçiyoruz; zaten
+          // var olan bir oturumu (özellikle admin'in Google oturumunu) asla
+          // ezmiyoruz.
+          firebase.auth().signInAnonymously().catch(e => {
+            console.error("Anonim Firebase Auth girişi başarısız:", e);
+          });
         }
-      });
-      firebase.auth().signInAnonymously().catch(e => {
-        console.error("Anonim Firebase Auth girişi başarısız:", e);
+        sawFirstState = true;
       });
     });
   } catch (e) {
