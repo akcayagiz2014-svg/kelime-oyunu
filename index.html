@@ -142,6 +142,7 @@ const Check = makeIcon("✓");
 const Clock = makeIcon("⏱");
 const Search = makeIcon("🔍");
 const Trash = makeIcon("🗑️");
+const Info = makeIcon("ℹ️");
 
 /* ---------------------------------------------------------
    KELİME TÜRETMECE
@@ -258,8 +259,8 @@ const T = {
     groupAllCorrectMsg: "Tebrikler, hepsini doğru yaptığınız için tur puanına +20 bonus eklendi!",
     roundWinnerLabel: "Turun Galibi", roundWinnerDesc: "Tur boyunca en çok puanı topladı ve toplanan tüm puanları kazandı:",
     each: "her biri", splitPoolLabel: "Toplam",
-    validWord: "Geçerli kelime!", checking: "Kontrol ediliyor...", groupLimitReached: "En fazla 50 gruba katılabilirsin",
-    dailyGroupLimit: "Günde en fazla 3 grup kurabilirsin", dailyLimitReached: "Süre doldu", dailyLimitReachedFull: "Bugünlük 2 saatlik oyun süreniz doldu. Yarın saat 09:00'da tekrar oynayabilirsiniz.", groupGone: "Bu grup artık mevcut değil.",
+    validWord: "Geçerli kelime!", checking: "Kontrol ediliyor...",
+    dailyLimitReached: "Süre doldu", dailyLimitReachedFull: "Bugünlük 2 saatlik oyun süreniz doldu. Yarın saat 09:00'da tekrar oynayabilirsiniz.", groupGone: "Bu grup artık mevcut değil.",
     groupLevelCapReached: "Bu seviyede sahip olabileceğin azami grup sayısına ulaştın. Daha fazla grup kurmak için bir üst seviyeye ulaşman gerekir.",
     groupSlotBuyPrompt: "Bu, mevcut seviyendeki yeni grup hakkını satın almak anlamına gelir.",
     purchaseFailed: "Satın alma tamamlanamadı.",
@@ -272,6 +273,24 @@ const T = {
     buyLevel: "Parayla Seviye Atla", buyLevelConfirm: "seviyesini ve o seviyenin puanını satın almak istediğine emin misin?",
     buyLevelNotAvailable: "Bu seviye parayla satın alınamaz, puanla hak edilmesi gerekir.",
     closesIn: "kapanıyor", worldRank: "sırada", nextMedal: "Sıradaki madalya",
+    rulesButton: "Kurallar ve Fiyatlar",
+    rulesTitle: "Nasıl Oynanır? Kurallar ve Fiyatlandırma",
+    rulesHowToPlayTitle: "Nasıl Oynanır",
+    rulesHowToPlayBody: "Her turda ekranda gösterilen harfle başlayan bir kelime yazmalısın. Süre dolmadan geçerli bir kelime yazarsan puan kazanırsın; aynı kelimeyi bir tur içinde tekrar yazamazsın. Turu en çok puan toplayan oyuncu kazanır ve o turda toplanan tüm puanları alır.",
+    rulesLevelsTitle: "Seviyeler ve Puan Eşikleri",
+    rulesLevelsBody: "Puanın arttıkça sırayla Başlangıç, Bronz, Gümüş, Altın, Elmas, Süper Oyuncu ve Oyun Kralı seviyelerine yükselirsin. Oyun Kralı olduktan sonra her ek 1.000.000 puanda bir yıldız kazanılır (en fazla 5 yıldız).",
+    rulesStartLimitTitle: "Başlangıç Seviyesi Süre Kısıtı",
+    rulesStartLimitBody: "Başlangıç seviyesindeyken günde en fazla 1 saat oynayabilirsin. Bronz seviyeye ulaştığında bu kısıt tamamen kalkar.",
+    rulesGroupRightsTitle: "Grup Kurma Hakları",
+    rulesGroupRightsBody: "Grup kurabilmek için en az Bronz seviyesinde olman gerekir. Her seviye bir alttaki toplam grup hakkını devralır; her seviyenin kendine özgü son hakkı ise ücretlidir (aşağıdaki fiyata bakabilirsin).",
+    rulesGroupDailyTitle: "Grubun Günlük Oynama Süresi",
+    rulesGroupDailyBody: "Her grubun günlük 2 saatlik ortak oyun bütçesi vardır. Bu süre dolduğunda grup, ertesi gün saat 09:00'da tekrar oynayabilir.",
+    rulesBuyLevelTitle: "Parayla Seviye Satın Alma",
+    rulesBuyLevelBody: "Bronz, Gümüş, Altın ve Elmas seviyeleri doğrudan parayla satın alınabilir. Süper Oyuncu ve Oyun Kralı seviyeleri SADECE puan biriktirerek kazanılır, parayla atlanamaz.",
+    rulesGiftPointsTitle: "Puan Hediye Etme",
+    rulesGiftPointsBody: "Yıldız kazanmış Oyun Kralı oyuncuları, her yıldız için günde bir kez başka bir oyuncuya 1.000 puan hediye edebilir.",
+    rulesGroupSlotPriceLabel: "Ek grup hakkı fiyatı",
+    freeLabel: "ücretsiz", groupsWord: "grup",
     lobbyFull: "Lobi dolu (15 kişi)", inviteMember: "Üye Davet Et", invite: "Davet Et", groupChat: "Grup Sohbeti",
     submit: "Gönder", solo: "Tek Oyunculu", roundOf: "Kelime", of: "/", backToWheel: "Çarka Dön",
     groupCallBtn: "Grup Çağırma", searchUser: "İsim ara...", noUserFound: "Kullanıcı bulunamadı",
@@ -339,8 +358,8 @@ const T = {
     groupAllCorrectMsg: "Congratulations, +20 bonus points were added to the round pool for getting them all right!",
     roundWinnerLabel: "Round Winner", roundWinnerDesc: "Scored the most points and won all the points collected during the round:",
     each: "each", splitPoolLabel: "Total",
-    validWord: "Valid word!", checking: "Checking...", groupLimitReached: "You can join at most 50 groups",
-    dailyGroupLimit: "You can create at most 3 groups per day", dailyLimitReached: "Time's up", dailyLimitReachedFull: "You've used today's 2-hour play time for this group. You can play again tomorrow at 09:00.", groupGone: "This group no longer exists.",
+    validWord: "Valid word!", checking: "Checking...",
+    dailyLimitReached: "Time's up", dailyLimitReachedFull: "You've used today's 2-hour play time for this group. You can play again tomorrow at 09:00.", groupGone: "This group no longer exists.",
     groupLevelCapReached: "You've reached the maximum number of groups you can own at this level. Reach a higher level to create more groups.",
     groupSlotBuyPrompt: "This will unlock your next group slot for your current level.",
     purchaseFailed: "Purchase could not be completed.",
@@ -353,6 +372,24 @@ const T = {
     buyLevel: "Buy Level", buyLevelConfirm: "buy this level and its score for real money?",
     buyLevelNotAvailable: "This level cannot be purchased, it must be earned with score.",
     closesIn: "closes in", worldRank: "rank", nextMedal: "Next medal",
+    rulesButton: "Rules & Pricing",
+    rulesTitle: "How to Play, Rules & Pricing",
+    rulesHowToPlayTitle: "How to Play",
+    rulesHowToPlayBody: "Each round you must write a word starting with the letter shown on screen. Submit a valid word before time runs out to score points; you can't reuse the same word twice in one round. Whoever scores the most points in a round wins all the points collected that round.",
+    rulesLevelsTitle: "Levels and Score Thresholds",
+    rulesLevelsBody: "As your score grows you climb through Starter, Bronze, Silver, Gold, Diamond, Super Player and Game King. Once you're Game King, you earn one star for every extra 1,000,000 points (up to 5 stars).",
+    rulesStartLimitTitle: "Starter Level Time Limit",
+    rulesStartLimitBody: "At the Starter level you can play at most 1 hour per day. This limit is fully removed once you reach Bronze.",
+    rulesGroupRightsTitle: "Group Creation Rights",
+    rulesGroupRightsBody: "You need at least Bronze level to create a group. Each level carries over the total slots from the level below; the newest slot at each level is a paid one (see the price below).",
+    rulesGroupDailyTitle: "Group Daily Play Time",
+    rulesGroupDailyBody: "Every group has a shared 2-hour daily play budget. Once it's used up, the group can play again the next day at 09:00.",
+    rulesBuyLevelTitle: "Buying a Level With Money",
+    rulesBuyLevelBody: "Bronze, Silver, Gold and Diamond can be purchased directly with real money. Super Player and Game King can ONLY be earned by score — they can't be bought.",
+    rulesGiftPointsTitle: "Gifting Points",
+    rulesGiftPointsBody: "Game King players with stars can gift 1,000 points to another player once per day, per star.",
+    rulesGroupSlotPriceLabel: "Extra group slot price",
+    freeLabel: "free", groupsWord: "groups",
     lobbyFull: "Lobby full (15 players)", inviteMember: "Invite Member", invite: "Invite", groupChat: "Group Chat",
     submit: "Submit", solo: "Solo", roundOf: "Word", of: "/", backToWheel: "Back to Wheel",
     groupCallBtn: "Invite to Group", searchUser: "Search name...", noUserFound: "No user found",
@@ -420,8 +457,8 @@ const T = {
     groupAllCorrectMsg: "Glückwunsch, dem Rundentopf wurden +20 Bonuspunkte hinzugefügt, weil alles richtig war!",
     roundWinnerLabel: "Rundensieger", roundWinnerDesc: "Hat die meisten Punkte gesammelt und alle in dieser Runde gesammelten Punkte gewonnen:",
     each: "je", splitPoolLabel: "Gesamt",
-    validWord: "Gültiges Wort!", checking: "Wird geprüft...", groupLimitReached: "Maximal 50 Gruppen möglich",
-    dailyGroupLimit: "Du kannst höchstens 3 Gruppen pro Tag erstellen", dailyLimitReached: "Zeit abgelaufen", dailyLimitReachedFull: "Die heutige 2-Stunden-Spielzeit dieser Gruppe ist aufgebraucht. Ihr könnt morgen um 09:00 Uhr wieder spielen.", groupGone: "Diese Gruppe existiert nicht mehr.",
+    validWord: "Gültiges Wort!", checking: "Wird geprüft...",
+    dailyLimitReached: "Zeit abgelaufen", dailyLimitReachedFull: "Die heutige 2-Stunden-Spielzeit dieser Gruppe ist aufgebraucht. Ihr könnt morgen um 09:00 Uhr wieder spielen.", groupGone: "Diese Gruppe existiert nicht mehr.",
     groupLevelCapReached: "Du hast die maximale Anzahl an Gruppen für dein Level erreicht. Erreiche ein höheres Level, um mehr Gruppen zu erstellen.",
     groupSlotBuyPrompt: "Damit schaltest du den nächsten Gruppenplatz für dein aktuelles Level frei.",
     purchaseFailed: "Kauf konnte nicht abgeschlossen werden.",
@@ -434,6 +471,24 @@ const T = {
     buyLevel: "Level kaufen", buyLevelConfirm: "dieses Level und dessen Punktzahl für echtes Geld kaufen?",
     buyLevelNotAvailable: "Dieses Level kann nicht gekauft werden, es muss mit Punkten verdient werden.",
     closesIn: "schließt in", worldRank: "Rang", nextMedal: "Nächste Medaille",
+    rulesButton: "Regeln & Preise",
+    rulesTitle: "Spielanleitung, Regeln & Preise",
+    rulesHowToPlayTitle: "Spielanleitung",
+    rulesHowToPlayBody: "In jeder Runde musst du ein Wort schreiben, das mit dem angezeigten Buchstaben beginnt. Reiche ein gültiges Wort ein, bevor die Zeit abläuft, um Punkte zu sammeln; dasselbe Wort kann in einer Runde nicht zweimal verwendet werden. Wer in einer Runde die meisten Punkte sammelt, gewinnt alle in dieser Runde gesammelten Punkte.",
+    rulesLevelsTitle: "Level und Punkteschwellen",
+    rulesLevelsBody: "Mit steigender Punktzahl erreichst du nacheinander Start, Bronze, Silber, Gold, Diamant, Superspieler und Spielkönig. Als Spielkönig erhältst du für je weitere 1.000.000 Punkte einen Stern (maximal 5 Sterne).",
+    rulesStartLimitTitle: "Zeitlimit im Start-Level",
+    rulesStartLimitBody: "Im Start-Level kannst du höchstens 1 Stunde pro Tag spielen. Diese Begrenzung entfällt vollständig ab Bronze.",
+    rulesGroupRightsTitle: "Recht zur Gruppengründung",
+    rulesGroupRightsBody: "Du brauchst mindestens Bronze, um eine Gruppe zu gründen. Jedes Level übernimmt die Gesamtzahl der Plätze des darunterliegenden Levels; der neueste Platz jedes Levels ist kostenpflichtig (Preis siehe unten).",
+    rulesGroupDailyTitle: "Tägliche Spielzeit der Gruppe",
+    rulesGroupDailyBody: "Jede Gruppe hat ein gemeinsames tägliches Budget von 2 Stunden. Ist es aufgebraucht, kann die Gruppe am nächsten Tag um 09:00 Uhr wieder spielen.",
+    rulesBuyLevelTitle: "Level mit Geld kaufen",
+    rulesBuyLevelBody: "Bronze, Silber, Gold und Diamant können direkt mit echtem Geld gekauft werden. Superspieler und Spielkönig können NUR durch Punkte erreicht werden — sie sind nicht käuflich.",
+    rulesGiftPointsTitle: "Punkte verschenken",
+    rulesGiftPointsBody: "Spielkönige mit Sternen können pro Stern einmal täglich 1.000 Punkte an einen anderen Spieler verschenken.",
+    rulesGroupSlotPriceLabel: "Preis für zusätzlichen Gruppenplatz",
+    freeLabel: "kostenlos", groupsWord: "Gruppen",
     lobbyFull: "Lobby voll (15 Spieler)", inviteMember: "Mitglied einladen", invite: "Einladen", groupChat: "Gruppenchat",
     submit: "Senden", solo: "Solo", roundOf: "Wort", of: "/", backToWheel: "Zurück zum Rad",
     groupCallBtn: "Zur Gruppe einladen", searchUser: "Name suchen...", noUserFound: "Kein Benutzer gefunden",
@@ -1440,6 +1495,7 @@ function App() {
   const [showGroupInvite, setShowGroupInvite] = useState(false);
   const [groupInviteSearch, setGroupInviteSearch] = useState("");
   const [showMedalInfo, setShowMedalInfo] = useState(false);
+  const [showRulesInfo, setShowRulesInfo] = useState(false);
   const [adminSpectateGameId, setAdminSpectateGameId] = useState(null);
   const [medalPopup, setMedalPopup] = useState(null);
   const [scoreInputs, setScoreInputs] = useState({}); // admin panel: per-user typed score value
@@ -2017,16 +2073,27 @@ function App() {
     logout();
   }
 
+  // Eskiden bu fonksiyon saveShared("users", nu) ile TÜM "users" koleksiyonunu
+  // lokal (olası bayat) bir kopyayla eziyordu — oyun aktifken başka
+  // oyunculardan gelen eşzamanlı puan güncellemelerini sessizce siliyordu ve
+  // admin ekranda değişikliğin "geri döndüğü" bir bug'a yol açıyordu.
+  // addPoints ile aynı güvenli, tek-kullanıcı bazlı transaction'a çevrildi.
   async function adjustScore(username, delta) {
-    const nu = { ...users, [username]: { ...users[username], score: Math.max(0, (users[username].score || 0) + delta) } };
-    setUsers(nu); await saveShared("users", nu);
+    const freshRec = await transactRecord("users/" + username, current => {
+      const rec = current || { password: "", score: 0, isAdmin: false };
+      return { ...rec, score: Math.max(0, (rec.score || 0) + delta) };
+    });
+    if (freshRec) setUsers(prev => ({ ...prev, [username]: freshRec }));
   }
 
   // admin panel: set a user's score to the EXACT number typed in the box
   async function setScoreExact(username, value) {
     const val = Math.max(0, Math.floor(value));
-    const nu = { ...users, [username]: { ...users[username], score: val } };
-    setUsers(nu); await saveShared("users", nu);
+    const freshRec = await transactRecord("users/" + username, current => {
+      const rec = current || { password: "", score: 0, isAdmin: false };
+      return { ...rec, score: val };
+    });
+    if (freshRec) setUsers(prev => ({ ...prev, [username]: freshRec }));
   }
 
   async function addPoints(username, delta) {
@@ -2820,6 +2887,9 @@ function App() {
           <button onClick={() => setScreen("leaderboard")} className="flex flex-col items-center justify-center gap-2 py-7 rounded-2xl bg-white/10 text-white font-semibold text-lg hover:bg-white/20 border border-white/10">
             <Trophy size={26} /> {t.leaderboard}
           </button>
+          <button onClick={() => setShowRulesInfo(true)} className="col-span-2 flex items-center justify-center gap-2 py-3 rounded-2xl bg-white/10 text-white/80 font-semibold text-sm hover:bg-white/20 border border-white/10">
+            <Info size={16} /> {t.rulesButton}
+          </button>
           {me.isAdmin && googleAdminVerified && (
             <button onClick={() => setScreen("admin")} className="col-span-2 flex items-center justify-center gap-2 py-4 rounded-2xl bg-purple-900/50 border border-purple-400/30 text-purple-200 font-semibold hover:bg-purple-900/70">
               <Shield size={20} /> {t.admin}
@@ -2903,6 +2973,75 @@ function App() {
               })}
             </div>
             <button onClick={() => setShowMedalInfo(false)} className="w-full mt-4 py-2.5 rounded-xl bg-white/10 text-white">{t.close}</button>
+          </Modal>
+        )}
+        {showRulesInfo && (
+          <Modal onClose={() => setShowRulesInfo(false)}>
+            <h3 className="text-white font-bold mb-3" style={{ fontFamily: "Fredoka, sans-serif" }}>{t.rulesTitle}</h3>
+            <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
+              <div>
+                <p className="text-yellow-400 font-semibold text-xs uppercase tracking-wide mb-1">{t.rulesHowToPlayTitle}</p>
+                <p className="text-white/70 text-sm leading-relaxed">{t.rulesHowToPlayBody}</p>
+              </div>
+              <div>
+                <p className="text-yellow-400 font-semibold text-xs uppercase tracking-wide mb-1">{t.rulesLevelsTitle}</p>
+                <p className="text-white/70 text-sm leading-relaxed mb-2">{t.rulesLevelsBody}</p>
+                <div className="space-y-1">
+                  {MEDAL_TIERS.map(tier => (
+                    <div key={tier.key} className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-white/5">
+                      <span className="text-white/80 text-xs font-semibold">{tier.label[lang]}</span>
+                      <span className="text-white/50 text-xs">{tier.threshold.toLocaleString(lang === "tr" ? "tr-TR" : undefined)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-yellow-400 font-semibold text-xs uppercase tracking-wide mb-1">{t.rulesStartLimitTitle}</p>
+                <p className="text-white/70 text-sm leading-relaxed">{t.rulesStartLimitBody}</p>
+              </div>
+              <div>
+                <p className="text-yellow-400 font-semibold text-xs uppercase tracking-wide mb-1">{t.rulesGroupRightsTitle}</p>
+                <p className="text-white/70 text-sm leading-relaxed mb-2">{t.rulesGroupRightsBody}</p>
+                <div className="space-y-1">
+                  {MEDAL_TIERS.map(tier => {
+                    const rights = LEVEL_GROUP_RIGHTS[tier.key];
+                    if (!rights || rights.totalSlots === 0) return null;
+                    return (
+                      <div key={tier.key} className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-white/5">
+                        <span className="text-white/80 text-xs font-semibold">{tier.label[lang]}</span>
+                        <span className="text-white/50 text-xs">{rights.totalSlots} {t.groupsWord}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="text-white/40 text-xs mt-1.5">{t.rulesGroupSlotPriceLabel}: ${GROUP_SLOT_PRICE_USD}</p>
+              </div>
+              <div>
+                <p className="text-yellow-400 font-semibold text-xs uppercase tracking-wide mb-1">{t.rulesGroupDailyTitle}</p>
+                <p className="text-white/70 text-sm leading-relaxed">{t.rulesGroupDailyBody}</p>
+              </div>
+              <div>
+                <p className="text-yellow-400 font-semibold text-xs uppercase tracking-wide mb-1">{t.rulesBuyLevelTitle}</p>
+                <p className="text-white/70 text-sm leading-relaxed mb-2">{t.rulesBuyLevelBody}</p>
+                <div className="space-y-1">
+                  {Object.entries(LEVEL_BUY_PRICES_USD).map(([key, price]) => {
+                    const tier = MEDAL_TIERS.find(m => m.key === key);
+                    if (!tier) return null;
+                    return (
+                      <div key={key} className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-white/5">
+                        <span className="text-white/80 text-xs font-semibold">{tier.label[lang]}</span>
+                        <span className="text-white/50 text-xs">${price}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              <div>
+                <p className="text-yellow-400 font-semibold text-xs uppercase tracking-wide mb-1">{t.rulesGiftPointsTitle}</p>
+                <p className="text-white/70 text-sm leading-relaxed">{t.rulesGiftPointsBody}</p>
+              </div>
+            </div>
+            <button onClick={() => setShowRulesInfo(false)} className="w-full mt-4 py-2.5 rounded-xl font-bold" style={{ background: "#f2b705", color: "#1b1030" }}>{t.close}</button>
           </Modal>
         )}
       </div>
