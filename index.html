@@ -54,7 +54,23 @@
     window.__fbAuthReady = new Promise((resolve) => {
       let resolved = false;
       firebase.auth().onAuthStateChanged(user => {
-        if (user && !resolved) { resolved = true; resolve(user); }
+        if (user) {
+          if (!resolved) { resolved = true; resolve(user); }
+        } else if (resolved) {
+          // Oturum sonradan null'a düştü — bu, uygulamanın kendi kodunun
+          // (kayıt sırasında oluşturulan geçici Firebase Auth hesabından
+          // çıkış, "Çıkış Yap" butonu, Google admin doğrulamasını sıfırlama
+          // vb.) bilerek signOut() çağırmasından kaynaklanıyor. Bu satır
+          // olmadan anonim oturum bir daha HİÇ yeniden açılmıyordu; Firestore
+          // güvenlik kuralları request.auth != null şartını aradığı için
+          // uygulama o andan itibaren sessizce veritabanına erişemez hale
+          // geliyor ve her işlem (özellikle giriş) hiçbir hata göstermeden
+          // "tepkisiz" kalıyordu. Burada otomatik olarak yeniden anonim
+          // girişle bunu onarıyoruz.
+          firebase.auth().signInAnonymously().catch(e => {
+            console.error("Anonim Firebase Auth yeniden girişi başarısız:", e);
+          });
+        }
       });
       firebase.auth().signInAnonymously().catch(e => {
         console.error("Anonim Firebase Auth girişi başarısız:", e);
@@ -1844,7 +1860,18 @@ function App() {
     const inApp = isRunningInApp();
     if (!inApp && !googleAdminVerified) { setAuthError(t.googleAdminRequired); return; }
     const isAdminGoogle = googleAdminVerified && (googleAdminEmail || "") === ADMIN_GOOGLE_EMAIL.toLowerCase();
-    const { u } = await refreshAll();
+    let u;
+    try {
+      ({ u } = await refreshAll());
+    } catch (e) {
+      // refreshAll() Firestore'dan okuma yapıyor; oturum/ağ sorunu olursa
+      // eskiden bu hata hiçbir yere gitmiyor ve "Giriş Yap" butonu hiçbir
+      // tepki vermeden sessizce takılı kalıyordu. Artık kullanıcıya en
+      // azından görünür bir hata gösteriyoruz.
+      console.error("handleAuth: refreshAll başarısız:", e);
+      setAuthError(t.wrongLogin);
+      return;
+    }
     if (authMode === "login") {
       const rec = u[uname];
       if (!rec || rec.password !== pass) { setAuthError(t.wrongLogin); return; }
