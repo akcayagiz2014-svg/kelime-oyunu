@@ -236,8 +236,11 @@ const STALE_GAME_MS = 3 * 60 * 1000; // 3 dakika hareketsizlik = takılı kalmı
 // "son görülme" zaman damgasıyla günceller; bir kullanıcının kaydı bu
 // süreden daha uzun süredir tazelenmemişse "çevrimdışı" sayılır (sekme
 // kapatıldı, ağ koptu, uygulama çöktü vb.).
-const PRESENCE_HEARTBEAT_MS = 20 * 1000; // 20 saniyede bir "hâlâ buradayım" yaz
-const PRESENCE_STALE_MS = 45 * 1000; // 45 saniyedir güncellenmemişse çevrimdışı say
+// Kalp atışı 20 sn'den 60 sn'ye çıkarıldı (maliyet). Yeşil nokta için 60 saniyelik
+// bir gecikme fark edilmez; buna karşılık yazma sayısı üçte bire iner. Ayrıca
+// uygulama arka plandayken hiç yazılmıyor.
+const PRESENCE_HEARTBEAT_MS = 60 * 1000;
+const PRESENCE_STALE_MS = 150 * 1000; // 2,5 dk güncellenmemişse çevrimdışı say
 function isGameActivelyPlaying(gm, now) {
   if (!gm || (gm.status !== "playing" && gm.status !== "spinning")) return false;
   const last = gm.lastActivityAt || 0;
@@ -320,7 +323,8 @@ const T = {
     rulesStartLimitTitle: "Başlangıç Seviyesi Süre Kısıtı",
     rulesStartLimitBody: "Başlangıç seviyesindeyken günde en fazla 1 saat oynayabilirsin. Bronz seviyeye ulaştığında bu kısıt tamamen kalkar.",
     rulesGroupRightsTitle: "Grup Kurma Hakları",
-    rulesGroupRightsBody: "Grup kurabilmek için en az Bronz seviyesinde olman gerekir. Her seviye bir alttaki toplam grup hakkını devralır; her seviyenin kendine özgü son hakkı ise ücretlidir (aşağıdaki fiyata bakabilirsin).",
+    rulesGroupRightsBody: "Bir gruba KATILMAK her zaman ücretsizdir — ödeme yalnızca kendi grubunu KURARKEN söz konusu olur. Grup kurabilmek için en az Bronz seviyesinde olman gerekir ve ilk grubunu her zaman ücretsiz kurarsın. Seviyen yükseldikçe ek grup kurma hakları açılır; bu ek hakların her biri tek seferlik 1 USD'dir ve kalıcı olarak hesabında kalır.",
+    rulesFreeWord: "ücretsiz",
     rulesGroupDailyTitle: "Grubun Günlük Oynama Süresi",
     rulesGroupDailyBody: "Her grubun günlük 2 saatlik ortak oyun bütçesi vardır. Bu süre dolduğunda grup, ertesi gün saat 09:00'da tekrar oynayabilir.",
     rulesBuyLevelTitle: "Parayla Seviye Satın Alma",
@@ -419,7 +423,8 @@ const T = {
     rulesStartLimitTitle: "Starter Level Time Limit",
     rulesStartLimitBody: "At the Starter level you can play at most 1 hour per day. This limit is fully removed once you reach Bronze.",
     rulesGroupRightsTitle: "Group Creation Rights",
-    rulesGroupRightsBody: "You need at least Bronze level to create a group. Each level carries over the total slots from the level below; the newest slot at each level is a paid one (see the price below).",
+    rulesGroupRightsBody: "JOINING a group is always free — payment only applies when you CREATE your own group. You need at least Bronze level to create one, and your first group is always free. As your level rises, extra group slots unlock; each extra slot is a one-time 1 USD purchase and stays on your account permanently.",
+    rulesFreeWord: "free",
     rulesGroupDailyTitle: "Group Daily Play Time",
     rulesGroupDailyBody: "Every group has a shared 2-hour daily play budget. Once it's used up, the group can play again the next day at 09:00.",
     rulesBuyLevelTitle: "Buying a Level With Money",
@@ -518,7 +523,8 @@ const T = {
     rulesStartLimitTitle: "Zeitlimit im Start-Level",
     rulesStartLimitBody: "Im Start-Level kannst du höchstens 1 Stunde pro Tag spielen. Diese Begrenzung entfällt vollständig ab Bronze.",
     rulesGroupRightsTitle: "Recht zur Gruppengründung",
-    rulesGroupRightsBody: "Du brauchst mindestens Bronze, um eine Gruppe zu gründen. Jedes Level übernimmt die Gesamtzahl der Plätze des darunterliegenden Levels; der neueste Platz jedes Levels ist kostenpflichtig (Preis siehe unten).",
+    rulesGroupRightsBody: "Einer Gruppe BEIZUTRETEN ist immer kostenlos — bezahlt wird nur, wenn du eine eigene Gruppe GRÜNDEST. Dafür brauchst du mindestens Bronze, und deine erste Gruppe ist immer kostenlos. Mit steigendem Level werden weitere Gruppenplätze freigeschaltet; jeder zusätzliche Platz kostet einmalig 1 USD und bleibt dauerhaft in deinem Konto.",
+    rulesFreeWord: "kostenlos",
     rulesGroupDailyTitle: "Tägliche Spielzeit der Gruppe",
     rulesGroupDailyBody: "Jede Gruppe hat ein gemeinsames tägliches Budget von 2 Stunden. Ist es aufgebraucht, kann die Gruppe am nächsten Tag um 09:00 Uhr wieder spielen.",
     rulesBuyLevelTitle: "Level mit Geld kaufen",
@@ -826,6 +832,61 @@ async function saveShared(key, value) {
     console.error("saveShared(" + key + ") failed", e);
   }
 }
+// ============================================================================
+// MALİYET NOTU — koleksiyon geneli dinleme kaldırıldı
+// ----------------------------------------------------------------------------
+// Eskiden "users", "groups", "games", "presence" ve "notifications"
+// koleksiyonlarının TAMAMI onSnapshot ile dinleniyordu. Bunun iki bedeli vardı:
+//   1) Uygulama her açıldığında bu koleksiyonlardaki HER belge okunuyordu.
+//   2) Herhangi bir belge değiştiğinde, o değişiklik bağlı olan HER istemciye
+//      birer okuma olarak iniyordu. "presence" 20 saniyede bir yazdığı için
+//      maliyet kullanıcı sayısının KARESİYLE büyüyordu (100 eşzamanlı kullanıcı
+//      ≈ günde 43 milyon okuma).
+// Artık her dinleyici yalnızca kullanıcının gerçekten görmesi gereken belgeleri
+// kapsıyor. Grup oyununda kimsenin verisi eksilmedi — üyesi olunan grup ve
+// içinde olunan oyun belgeleri eskisi gibi anlık geliyor.
+// ============================================================================
+
+// Tek bir belgeyi dinler (ör. users/<rumuz>).
+function subscribeDoc(col, id, cb) {
+  let unsub = null, cancelled = false;
+  waitForFbdb().then(db => {
+    if (cancelled) return;
+    unsub = db.collection(col).doc(id).onSnapshot(
+      doc => cb(doc.exists ? unwrapFromFirestore(doc.data()) : null),
+      e => console.error("subscribeDoc(" + col + "/" + id + ") error", e),
+    );
+  }).catch(e => console.error("subscribeDoc(" + col + "/" + id + ") failed", e));
+  return () => { cancelled = true; if (unsub) unsub(); };
+}
+
+// Bir koleksiyonu VERİLEN SORGUYLA dinler (ör. üyesi olduğum gruplar).
+function subscribeQuery(col, buildQuery, cb) {
+  let unsub = null, cancelled = false;
+  waitForFbdb().then(db => {
+    if (cancelled) return;
+    unsub = buildQuery(db.collection(col)).onSnapshot(snap => {
+      const obj = {};
+      snap.forEach(doc => { obj[doc.id] = unwrapFromFirestore(doc.data()); });
+      cb(obj);
+    }, e => console.error("subscribeQuery(" + col + ") error", e));
+  }).catch(e => console.error("subscribeQuery(" + col + ") failed", e));
+  return () => { cancelled = true; if (unsub) unsub(); };
+}
+
+// Rumuz önekine göre kullanıcı arar (tüm koleksiyonu çekmeden).
+async function fetchUsersByPrefix(prefix, max) {
+  const db = await waitForFbdb();
+  const q = prefix
+    ? db.collection("users").orderBy(firebase.firestore.FieldPath.documentId())
+        .startAt(prefix).endAt(prefix + "\uf8ff").limit(max || 20)
+    : db.collection("users").orderBy("score", "desc").limit(max || 20);
+  const snap = await q.get();
+  const out = {};
+  snap.forEach(doc => { out[doc.id] = unwrapFromFirestore(doc.data()); });
+  return out;
+}
+
 // live subscription helper (used to push instant updates instead of waiting for the poll interval)
 function subscribeShared(key, cb) {
   let unsub = null, cancelled = false;
@@ -1687,7 +1748,13 @@ function App() {
     const nextGames = { ...gamesObj };
     const gameUpdates = {};
     for (const [gid, game] of Object.entries(gamesObj)) {
-      if (!nextGroups[game.groupId]) { delete nextGames[gid]; gameUpdates["games/" + gid] = null; continue; }
+      // NOT: eskiden burada "grubu artık var olmayan" oyunlar siliniyordu. Bu
+      // cihazda artık TÜM gruplar değil, sadece üyesi olduğum gruplar
+      // bulunduğu için böyle bir çıkarım yapmak yanlış olur (grup duruyor
+      // olabilir, sadece bizim listemizde olmayabilir) — canlı bir oyunu
+      // yanlışlıkla silme riski taşır. Grup gerçekten silindiğinde ona ait
+      // oyunlar zaten deleteGroupFn içinde temizleniyor.
+      if (!nextGroups[game.groupId]) continue;
       // Takılı kalmış (3+ dakikadır hareketsiz) "playing"/"spinning" bir tur
       // varsa, oyuncuları sonsuza dek beklemeye/kilitli kalmaya mahkum
       // etmemek için otomatik olarak lobiye geri döndürülür. Böylece hem
@@ -1703,20 +1770,24 @@ function App() {
   }
 
   // ---- initial load (also reusable as a one-off refresh, e.g. right after auth) ----
-  const refreshAll = useCallback(async () => {
-    const [u, g0, gm0] = await Promise.all([
-      loadShared("users", {}),
-      loadShared("groups", {}),
-      loadShared("games", {}),
-    ]);
-    const { groups: g, games: gm, groupUpdates, gameUpdates } = cleanExpiredGroups(g0, gm0);
-    const cleanupUpdates = { ...groupUpdates, ...gameUpdates };
-    if (Object.keys(cleanupUpdates).length) await updatePaths(cleanupUpdates);
-    setUsers(u); setGroups(g); setGames(gm);
-    return { u, g, gm };
-  }, []);
-
-  useEffect(() => { refreshAll(); }, [refreshAll]);
+  // MALİYET: eskiden burada "users", "groups" ve "games" koleksiyonlarının
+  // TAMAMI çekiliyordu — üstelik uygulama her açılışında. Artık tek bir
+  // kullanıcı kaydı okunuyor; grup/oyun verisi zaten daraltılmış canlı
+  // dinleyicilerden geliyor. Dönüş şekli aynı bırakıldı ({ u, g, gm }) ki
+  // çağıran kodların hiçbiri değişmesin.
+  const refreshAll = useCallback(async (username) => {
+    const uname = username || (me && me.username);
+    let u = {};
+    if (uname) {
+      try {
+        const db = await waitForFbdb();
+        const snap = await db.collection("users").doc(uname).get();
+        if (snap.exists) u = { [uname]: unwrapFromFirestore(snap.data()) };
+      } catch (e) { console.error("refreshAll user fetch failed", e); }
+      if (u[uname]) setUsers(prev => ({ ...prev, ...u }));
+    }
+    return { u, g: groupsRef.current || {}, gm: gamesRef.current || {} };
+  }, [me && me.username]); // eslint-disable-line
 
   // ---- Şifre sıfırlama bağlantısı doğrulaması: sayfa ?mode=resetPassword
   // &oobCode=... ile açıldıysa, bu kodun hâlâ geçerli olup olmadığını ve
@@ -1745,8 +1816,12 @@ function App() {
       // veritabanımızda bu e-postaya sahip hesab(ları)ın şifresini de
       // aynı değere eşitliyoruz (bir e-posta birden fazla rumuza bağlıysa
       // hepsi güncellenir).
-      const { u } = await refreshAll();
-      const matches = Object.entries(u).filter(([, rec]) => (rec.email || "").toLowerCase() === (resetEmail || "").toLowerCase());
+      // MALİYET: eskiden tüm "users" koleksiyonu çekilip e-postaya göre
+      // taranıyordu. Artık doğrudan e-posta alanı üzerinden sorgulanıyor.
+      const dbRP = await waitForFbdb();
+      const rpSnap = await dbRP.collection("users").where("email", "==", (resetEmail || "")).get();
+      const matches = [];
+      rpSnap.forEach(d => matches.push([d.id, unwrapFromFirestore(d.data())]));
       for (const [uname] of matches) {
         await transactRecord("users/" + uname, current => current ? { ...current, password: resetNewPassword } : current);
       }
@@ -1767,7 +1842,7 @@ function App() {
       try {
         const saved = JSON.parse(localStorage.getItem("kt_session") || "null");
         if (saved && saved.username) {
-          const { u } = await refreshAll();
+          const { u } = await refreshAll(saved.username);
           const rec = u[saved.username];
           if (rec) {
             setGoogleAdminVerified(true);
@@ -1787,14 +1862,33 @@ function App() {
 
   // ---- live sync: Firebase Realtime Database pushes changes to every
   // connected client instantly, so no more polling on an interval ----
+  // Dinleyiciler artık kullanıcıya bağlı: giriş yapılmadan hiçbir şey dinlenmiyor.
+  // (presence ayrı bir effect'te, sadece ekranda görünen kişilerle sınırlı.)
   useEffect(() => {
-    const unsubUsers = subscribeShared("users", setUsers);
-    const unsubGroups = subscribeShared("groups", setGroups);
-    const unsubGames = subscribeShared("games", setGames);
-    const unsubPresence = subscribeShared("presence", setPresenceRaw);
-    const unsubNotifs = subscribeShared("notifications", setAllNotifs);
-    return () => { unsubUsers(); unsubGroups(); unsubGames(); unsubPresence(); unsubNotifs(); };
-  }, []);
+    if (!me || !me.username) return;
+    const uname = me.username;
+
+    // Kendi kullanıcı kaydım (puan, madalya, satın alınan haklar).
+    const unsubMe = subscribeDoc("users", uname, rec => {
+      if (rec) setUsers(prev => ({ ...prev, [uname]: rec }));
+    });
+
+    // Sadece ÜYESİ OLDUĞUM gruplar. Grup sohbeti, üye listesi, bütçe sayacı —
+    // hepsi eskisi gibi anlık güncelleniyor.
+    const unsubGroups = subscribeQuery("groups", col => col.where("members", "array-contains", uname), setGroups);
+
+    // Sadece İÇİNDE OLDUĞUM oyunlar. Tur akışı, sıra, kelime zinciri, elenenler —
+    // hepsi anlık. Başkalarının oyunları bu cihaza hiç inmiyor.
+    const unsubGames = subscribeQuery("games", col => col.where("members", "array-contains", uname), setGames);
+
+    // Sadece kendi bildirimlerim.
+    const unsubNotifs = subscribeDoc("notifications", uname, list => {
+      const arr = Array.isArray(list) ? list : []; // subscribeDoc zaten unwrap ediyor
+      setAllNotifs(prev => ({ ...prev, [uname]: arr }));
+    });
+
+    return () => { unsubMe(); unsubGroups(); unsubGames(); unsubNotifs(); };
+  }, [me && me.username]); // eslint-disable-line
 
   // ---- native RevenueCat köprüsüne giriş yapan kullanıcıyı bildir ----
   // (satın almaların doğru rumza bağlanması ve cihaz değişince geri
@@ -1816,14 +1910,19 @@ function App() {
     let hb = null;
     const beat = () => {
       if (cancelled) return;
+      // Uygulama arka plandayken yazma yapma — kullanıcı zaten oynamıyor.
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
       waitForFbdb()
         .then(db => db.collection("presence").doc(me.username).set({ lastSeen: Date.now() }))
         .catch(e => console.error("presence heartbeat failed", e));
     };
     beat();
+    const onVisible = () => { if (document.visibilityState === "visible") beat(); };
+    document.addEventListener("visibilitychange", onVisible);
     hb = setInterval(beat, PRESENCE_HEARTBEAT_MS);
     return () => {
       cancelled = true;
+      document.removeEventListener("visibilitychange", onVisible);
       if (hb) clearInterval(hb);
       // best-effort: sekme normal kapanıyorsa kaydı hemen temizle (garanti
       // değil — ağ koparsa/uygulama çökerse bu çalışmaz, ama o durumda da
@@ -1835,6 +1934,108 @@ function App() {
   // Ham "son görülme" zaman damgalarını, her saniye güncellenen `tick`e göre
   // canlı bir { username: true } haritasına çeviriyoruz — geri kalan tüm
   // uygulama kodu (isOnline, OnlineDot'lar) hiç değişmeden aynı şekli görür.
+  // ---- çevrimiçi durumu: sadece EKRANDA GÖRDÜĞÜM kişiler ----------------
+  // Yeşil nokta yalnızca kendi gruplarımın ve içinde olduğum oyunların
+  // üyeleri için gösteriliyor; dolayısıyla sadece o kişilerin presence
+  // belgelerini dinliyoruz. Eskiden tüm "presence" koleksiyonu dinleniyordu ve
+  // her kullanıcının her kalp atışı herkese bir okuma olarak iniyordu.
+  // Yeşil nokta yalnızca bu ekranlarda görünüyor; başka ekranlardayken
+  // (menü, solo, sıralama...) çevrimiçi durumunu dinlemenin bir anlamı yok.
+  const PRESENCE_SCREENS = ["groups", "chat", "lobby", "game", "admin"];
+  const presenceWatchKey = React.useMemo(() => {
+    if (!me || !me.username) return "";
+    if (!PRESENCE_SCREENS.includes(screen)) return "";
+    const set = new Set();
+    Object.values(groups || {}).forEach(g => (g && g.members || []).forEach(m => set.add(m)));
+    Object.values(games || {}).forEach(gm => (gm && gm.members || []).forEach(m => set.add(m)));
+    set.delete(me.username);
+    // Firestore documentId() "in" sorgusu sınırlı sayıda değer alır; 30 kişiyle
+    // sınırlıyoruz (bir grubun üye sayısından fazlası zaten ekranda görünmüyor).
+    return Array.from(set).sort().slice(0, 30).join(",");
+  }, [groups, games, screen, me && me.username]); // eslint-disable-line
+
+  useEffect(() => {
+    if (!presenceWatchKey) return; // ekrandan çıkınca dinleyici kapanır, son bilinen durum kalır
+    const names = presenceWatchKey.split(",");
+    const chunks = [];
+    for (let i = 0; i < names.length; i += 10) chunks.push(names.slice(i, i + 10));
+    let cancelled = false;
+    const unsubs = [];
+    const acc = {};
+    waitForFbdb().then(db => {
+      if (cancelled) return;
+      chunks.forEach(ch => {
+        const u = db.collection("presence")
+          .where(firebase.firestore.FieldPath.documentId(), "in", ch)
+          .onSnapshot(snap => {
+            snap.forEach(d => { acc[d.id] = unwrapFromFirestore(d.data()); });
+            setPresenceRaw({ ...acc });
+          }, e => console.error("presence watch error", e));
+        unsubs.push(u);
+      });
+    }).catch(e => console.error("presence watch failed", e));
+    return () => { cancelled = true; unsubs.forEach(u => u && u()); };
+  }, [presenceWatchKey]);
+
+  // ---- kullanıcı arama: tüm "users" tablosunu bellekte tutmak yerine, sadece
+  // yazılan öneke uyan en fazla 20 kaydı Firestore'dan çekiyoruz. Davet etme ve
+  // puan hediye etme ekranları bunu kullanıyor. ----
+  const [userSearchResults, setUserSearchResults] = useState({});
+  const activeUserSearchTerm =
+    screen === "giftPoints" ? giftSearchTerm :
+    screen === "chat" ? groupInviteSearch : "";
+  useEffect(() => {
+    const term = (activeUserSearchTerm || "").trim();
+    if (term.length < 2) { setUserSearchResults({}); return; }
+    let cancelled = false;
+    const h = setTimeout(() => {
+      fetchUsersByPrefix(term, 20)
+        .then(res => { if (!cancelled) setUserSearchResults(res); })
+        .catch(e => console.error("user search failed", e));
+    }, 350); // yazarken her harfte sorgu atmasın
+    return () => { cancelled = true; clearTimeout(h); };
+  }, [activeUserSearchTerm]);
+
+  // ---- yönetici paneli: kullanıcı listesi sadece bu ekran açıldığında çekilir ----
+  const [adminUsers, setAdminUsers] = useState({});
+  useEffect(() => {
+    if (screen !== "admin") return;
+    let cancelled = false;
+    waitForFbdb()
+      .then(db => db.collection("users").orderBy("score", "desc").limit(200).get())
+      .then(snap => {
+        if (cancelled) return;
+        const out = {};
+        snap.forEach(d => { out[d.id] = unwrapFromFirestore(d.data()); });
+        setAdminUsers(out);
+      })
+      .catch(e => console.error("admin user list failed", e));
+    return () => { cancelled = true; };
+  }, [screen]);
+
+  // ---- dünya sıralaması: tüm kullanıcıları çekip sıralamak yerine, kendi
+  // puanımdan yüksek kaç kişi olduğunu Firestore'un sayım (count) sorgusuyla
+  // öğreniyoruz — bu tek bir okuma kadar ucuzdur. Sayım desteklenmiyorsa
+  // sıralama gösterilmez (oyunun geri kalanı etkilenmez). ----
+  const [myRankState, setMyRankState] = useState(0);
+  useEffect(() => {
+    if (!me || screen !== "menu") return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const db = await waitForFbdb();
+        const q = db.collection("users").where("score", ">", me.score || 0);
+        if (typeof q.count !== "function") return; // eski SDK: sıralama gösterilmez
+        const res = await q.count().get();
+        const higher = res.data().count;
+        if (!cancelled) setMyRankState(higher + 1);
+      } catch (e) {
+        console.error("rank count failed", e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [screen, me && me.score]); // eslint-disable-line
+
   const onlineUsers = React.useMemo(() => {
     const out = {};
     const now = tick;
@@ -1914,7 +2115,13 @@ function App() {
     if (!isActivelyPlayingGroup && !isActivelyPlayingSolo) return;
 
     dailyPlayAccumRef.current += elapsed;
-    if (dailyPlayAccumRef.current < 5000) return; // 5 sn altında Firebase'e yazmıyoruz
+    // MALİYET: eskiden 5 saniyede bir transaction çalışıyordu (transaction hem
+    // okuma hem yazma sayılır). 2 saatlik bir oturumda bu tek başına 1.440
+    // yazma + 1.440 okuma demekti. Ölçtüğümüz şey GÜNLÜK 1 saatlik bir sınır
+    // olduğu için 60 saniyelik hassasiyet fazlasıyla yeterli; sınıra en fazla
+    // 1 dakikalık bir sapmayla ulaşılır. Oynamayı bırakınca biriken artık
+    // (aşağıdaki effect) hemen yazıldığı için süre de kaybolmuyor.
+    if (dailyPlayAccumRef.current < 60000) return;
     const toFlush = dailyPlayAccumRef.current;
     dailyPlayAccumRef.current = 0;
     transactRecord("users/" + me.username, current => {
@@ -1924,6 +2131,34 @@ function App() {
       return { ...rec, dailyPlayMsUsed: usedSoFar + toFlush, dailyPlayResetAt: Date.now() >= resetAt ? nextDailyResetTime(Date.now()) : resetAt };
     }).then(fresh => { if (fresh) setUsers(prev => ({ ...prev, [me.username]: fresh })); });
   }, [tick]); // eslint-disable-line
+
+  // Oynamayı bıraktığında (ekran değiştirme, uygulamayı arka plana atma,
+  // sekmeyi kapatma) biriken artık süreyi tek yazmada kaydeder — böylece
+  // 60 saniyelik biriktirme yüzünden süre kaybı olmaz.
+  const flushDailyPlay = useCallback(() => {
+    if (!me || !me.username) return;
+    const toFlush = dailyPlayAccumRef.current;
+    if (toFlush <= 0) return;
+    dailyPlayAccumRef.current = 0;
+    transactRecord("users/" + me.username, current => {
+      const rec = current || { password: "", score: 0, isAdmin: false };
+      const resetAt = rec.dailyPlayResetAt || 0;
+      const usedSoFar = Date.now() >= resetAt ? 0 : (rec.dailyPlayMsUsed || 0);
+      return { ...rec, dailyPlayMsUsed: usedSoFar + toFlush, dailyPlayResetAt: Date.now() >= resetAt ? nextDailyResetTime(Date.now()) : resetAt };
+    }).then(fresh => { if (fresh) setUsers(prev => ({ ...prev, [me.username]: fresh })); })
+      .catch(e => console.error("daily play flush failed", e));
+  }, [me && me.username]); // eslint-disable-line
+
+  useEffect(() => {
+    const onHide = () => { if (document.visibilityState === "hidden") flushDailyPlay(); };
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("pagehide", flushDailyPlay);
+    return () => {
+      document.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("pagehide", flushDailyPlay);
+      flushDailyPlay(); // ekran/oturum değişiminde de kalanı yaz
+    };
+  }, [flushDailyPlay]);
 
   // ---------------- AUTH ----------------
   // Google sign-in is now a mandatory first security step for EVERY user,
@@ -1960,7 +2195,7 @@ function App() {
     const isAdminGoogle = googleAdminVerified && (googleAdminEmail || "") === ADMIN_GOOGLE_EMAIL.toLowerCase();
     let u;
     try {
-      ({ u } = await refreshAll());
+      ({ u } = await refreshAll(uname));
     } catch (e) {
       // refreshAll() Firestore'dan okuma yapıyor; oturum/ağ sorunu olursa
       // eskiden bu hata hiçbir yere gitmiyor ve "Giriş Yap" butonu hiçbir
@@ -1978,8 +2213,15 @@ function App() {
       // korunur (aksi halde uygulamadan giriş yapan bir admin, hakkını
       // kaybederdi).
       const nextIsAdmin = googleAdminVerified ? isAdminGoogle : !!rec.isAdmin;
-      const nu = { ...u, [uname]: { ...rec, isAdmin: nextIsAdmin } };
-      await saveShared("users", nu); setUsers(nu);
+      // DİKKAT: burada eskiden saveShared("users", nu) çağrılıyordu. O fonksiyon
+      // koleksiyonu verilen objeyle BİREBİR eşitler; yani objede olmayan her
+      // kullanıcı belgesini SİLER. Tüm kullanıcı tablosu bellekte tutulduğu
+      // sürece bu (pahalı ama) çalışıyordu; artık sadece kendi kaydımızı
+      // tuttuğumuz için aynı çağrı diğer bütün hesapları silerdi. Bu yüzden
+      // yalnızca kendi belgemizi yazıyoruz.
+      const nuRec = { ...rec, isAdmin: nextIsAdmin };
+      await transactRecord("users/" + uname, current => ({ ...(current || rec), isAdmin: nextIsAdmin }));
+      setUsers(prev => ({ ...prev, [uname]: nuRec }));
       setMe({ username: uname, isAdmin: nextIsAdmin, score: rec.score || 0, medals: medalsForScore(rec.score || 0) });
       setScreen("menu");
       localStorage.setItem("kt_session", JSON.stringify({ username: uname, googleAdminEmail }));
@@ -1989,8 +2231,9 @@ function App() {
       if (!isValidEmail(authForm.email)) { setAuthError(t.emailRequired); return; }
       const email = authForm.email.trim().toLowerCase();
       const rec = { password: pass, email, score: 0, isAdmin: isAdminGoogle };
-      const nu = { ...u, [uname]: rec };
-      await saveShared("users", nu); setUsers(nu);
+      // (Yukarıdaki nedenle) tüm koleksiyonu değil, sadece yeni kaydı yazıyoruz.
+      await (await waitForFbdb()).collection("users").doc(uname).set(wrapForFirestore(rec));
+      setUsers(prev => ({ ...prev, [uname]: rec }));
       // "Şifremi Unuttum" akışının çalışabilmesi için, bu e-posta/şifre
       // ile Firebase Authentication'da da gerçek bir hesap oluşturuyoruz
       // (Realtime Database'deki rumuz tabanlı hesabımızdan bağımsız olarak
@@ -2027,7 +2270,7 @@ function App() {
     if (!uname) { setForgotMsg(t.forgotEnterUsername); return; }
     setForgotBusy(true);
     try {
-      const { u } = await refreshAll();
+      const { u } = await refreshAll(uname);
       const rec = u[uname];
       if (!rec || !rec.email) { setForgotMsg(t.forgotNoEmail); setForgotBusy(false); return; }
       await window.__fbauth.sendPasswordResetEmail(rec.email);
@@ -2052,10 +2295,16 @@ function App() {
   // Diğer gruplar/maçlar/kullanıcılar hiç etkilenmez. ----
   async function deleteAccountFn() {
     const username = me.username;
-    const [g0, gm0] = await Promise.all([
-      loadShared("groups", {}),
-      loadShared("games", {}),
+    // MALİYET: eskiden tüm "groups" ve "games" koleksiyonları çekiliyordu.
+    // Hesap silme yalnızca kullanıcının üyesi olduğu kayıtları etkilediği için
+    // sadece onları çekiyoruz.
+    const dbDel = await waitForFbdb();
+    const [gSnap, gmSnap] = await Promise.all([
+      dbDel.collection("groups").where("members", "array-contains", username).get(),
+      dbDel.collection("games").where("members", "array-contains", username).get(),
     ]);
+    const g0 = {}; gSnap.forEach(d => { g0[d.id] = unwrapFromFirestore(d.data()); });
+    const gm0 = {}; gmSnap.forEach(d => { gm0[d.id] = unwrapFromFirestore(d.data()); });
 
     const updates = {};
     const nextGroups = { ...g0 };
@@ -2125,7 +2374,10 @@ function App() {
       const rec = current || { password: "", score: 0, isAdmin: false };
       return { ...rec, score: Math.max(0, (rec.score || 0) + delta) };
     });
-    if (freshRec) setUsers(prev => ({ ...prev, [username]: freshRec }));
+    if (freshRec) {
+      setUsers(prev => ({ ...prev, [username]: freshRec }));
+      setAdminUsers(prev => (prev[username] ? { ...prev, [username]: freshRec } : prev));
+    }
   }
 
   // admin panel: set a user's score to the EXACT number typed in the box
@@ -2142,7 +2394,10 @@ function App() {
         const rec = current || { password: "", score: 0, isAdmin: false };
         return { ...rec, score: val };
       }, adminDb);
-      if (freshRec) setUsers(prev => ({ ...prev, [username]: freshRec }));
+      if (freshRec) {
+        setUsers(prev => ({ ...prev, [username]: freshRec }));
+        setAdminUsers(prev => (prev[username] ? { ...prev, [username]: freshRec } : prev));
+      }
       return true;
     } catch (e) {
       // Eskiden buradaki hata hiçbir yere gitmiyordu: transactRecord() içindeki
@@ -2331,12 +2586,14 @@ function App() {
     // scoped delete: only this one group's record is removed, every other
     // group is left completely untouched
     await (await waitForFbdb()).collection("groups").doc(groupId).delete();
-    const gm = await loadShared("games", {});
-    const ng = { ...gm };
+    // MALİYET: eskiden tüm "games" koleksiyonu çekiliyordu. Artık yalnızca bu
+    // gruba ait oyunlar sorgulanıyor.
+    const dbDG = await waitForFbdb();
+    const gmSnap = await dbDG.collection("games").where("groupId", "==", groupId).get();
+    const gm = {}; gmSnap.forEach(d => { gm[d.id] = unwrapFromFirestore(d.data()); });
+    const ng = { ...gamesRef.current };
     const deletions = {};
-    for (const [gid, game] of Object.entries(gm)) {
-      if (game.groupId === groupId) { delete ng[gid]; deletions["games/" + gid] = null; }
-    }
+    for (const [gid] of Object.entries(gm)) { delete ng[gid]; deletions["games/" + gid] = null; }
     if (Object.keys(deletions).length) { await updatePaths(deletions); setGames(ng); }
     setActiveGroupId(null); setScreen("groups");
   }
@@ -2368,9 +2625,9 @@ function App() {
     if (me) setMyNotifs(allNotifs[me.username] || []);
     else setMyNotifs([]);
   }, [allNotifs, me]);
-  useEffect(() => {
-    if (me) loadShared("notifications", {}).then(n => setAllNotifs(n || {}));
-  }, [me && me.username]); // eslint-disable-line
+  // (Bildirimler artık yukarıdaki daraltılmış dinleyiciden geliyor —
+  // notifications/<rumuz> tek belgesi. Tüm koleksiyonu çeken eski ilk yükleme
+  // kaldırıldı; dinleyici zaten ilk anda mevcut değeri getiriyor.)
 
   // ---------------- CHAT / GAME INVITE ----------------
   const [chatInput, setChatInput] = useState("");
@@ -2870,8 +3127,7 @@ function App() {
   }
 
   const myGroups = Object.values(groups).filter(g => g.members.includes(me.username));
-  const sortedUsersForRank = Object.entries(users).sort((a, b) => (b[1].score || 0) - (a[1].score || 0));
-  const myRank = sortedUsersForRank.findIndex(([name]) => name === me.username) + 1;
+  const myRank = myRankState; // bkz. yukarıdaki count() tabanlı hesaplama
   const nextTier = MEDAL_TIERS.find(mt => me.score < mt.threshold);
   const prevThreshold = nextTier ? (MEDAL_TIERS[MEDAL_TIERS.indexOf(nextTier) - 1]?.threshold || 0) : MEDAL_TIERS[MEDAL_TIERS.length - 1].threshold;
   const progressPct = nextTier ? Math.min(100, Math.max(0, ((me.score - prevThreshold) / (nextTier.threshold - prevThreshold)) * 100)) : 100;
@@ -3073,7 +3329,15 @@ function App() {
                     return (
                       <div key={tier.key} className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-white/5">
                         <span className="text-white/80 text-xs font-semibold">{tier.label[lang]}</span>
-                        <span className="text-white/50 text-xs">{rights.totalSlots} {t.groupsWord}</span>
+                        <span className="text-white/50 text-xs">
+                          {rights.totalSlots} {t.groupsWord}
+                          {rights.totalSlots > (rights.freeSlots || 0) && (
+                            <span className="text-white/35"> · {rights.freeSlots} {t.rulesFreeWord} + {rights.totalSlots - (rights.freeSlots || 0)} × ${GROUP_SLOT_PRICE_USD}</span>
+                          )}
+                          {rights.totalSlots === (rights.freeSlots || 0) && (
+                            <span className="text-white/35"> · {t.rulesFreeWord}</span>
+                          )}
+                        </span>
                       </div>
                     );
                   })}
@@ -3172,7 +3436,9 @@ function App() {
     }
     const remaining = groupRemainingMs(grp, games, tick);
     const isOwner = grp.owner === me.username;
-    const filteredUsers = Object.keys(users).filter(u => u !== me.username && u.toLocaleLowerCase(lang === "tr" ? "tr-TR" : undefined).includes(groupInviteSearch.trim().toLocaleLowerCase(lang === "tr" ? "tr-TR" : undefined)));
+    // Arama sonuçları Firestore'dan geliyor (bkz. userSearchResults); tüm
+    // kullanıcı tablosu artık bellekte tutulmuyor.
+    const filteredUsers = Object.keys(userSearchResults).filter(u => u !== me.username);
     return (
       <div className="h-screen overflow-hidden w-full p-5 flex flex-col" style={{ fontFamily: "Inter, sans-serif" }}>
         {bg}
@@ -3412,7 +3678,7 @@ function App() {
     const myRec = users[me.username] || { score: me.score || 0 };
     const { limit, remaining } = giftsRemainingToday(myRec);
     const results = giftSearchTerm.trim()
-      ? Object.entries(users).filter(([name]) => name !== me.username && name.toLocaleLowerCase(lang === "tr" ? "tr-TR" : undefined).includes(giftSearchTerm.trim().toLocaleLowerCase(lang === "tr" ? "tr-TR" : undefined))).slice(0, 20)
+      ? Object.entries(userSearchResults).filter(([name]) => name !== me.username).slice(0, 20)
       : [];
     return (
       <div className="h-screen overflow-hidden w-full p-5 flex flex-col" style={{ fontFamily: "Inter, sans-serif" }}>
@@ -3481,7 +3747,7 @@ function App() {
         {Header(t.admin, true)}
         <p className="text-white/50 text-sm mb-4 max-w-md mx-auto">{t.adminPanelDesc}</p>
         <div className="max-w-md mx-auto w-full space-y-2 flex-1 min-h-0 overflow-y-auto pb-4">
-          {Object.entries(users).map(([name, rec]) => {
+          {Object.entries(adminUsers).map(([name, rec]) => {
             return (
               <div key={name} className="flex items-center justify-between px-4 py-3 rounded-2xl bg-white/10">
                 <div>
